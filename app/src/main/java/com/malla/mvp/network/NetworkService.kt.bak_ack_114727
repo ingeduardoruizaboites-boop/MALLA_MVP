@@ -1,0 +1,194 @@
+package com.malla.mvp.network
+
+import com.malla.mvp.crypto.CryptoEngine
+import com.malla.mvp.data.entity.MeshMessage
+import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.*
+import java.io.*
+import java.net.*
+import java.security.*
+import javax.crypto.SecretKey
+import android.util.Log
+
+object NetworkService {
+    private const val TAG = "NetworkService"
+    const val DEFAULT_PORT = 8888
+
+    private val _messages = MutableSharedFlow<MeshMessage>(replay = 10)
+    val messages: SharedFlow<MeshMessage> = _messages.asSharedFlow()
+
+    private val _connectedClientsCount = MutableStateFlow(0)
+    val connectedClientsCount: StateFlow<Int> = _connectedClientsCount.asStateFlow()
+
+    private var serverSocket: ServerSocket? = null
+    private val serverJob = Job()
+    internal val serverScope = CoroutineScope(Dispatchers.IO + serverJob)
+
+    // Clientes conectados (handler)
+    private val clients = mutableMapOf<String, ClientHandler>()
+
+    // Pares de claves propio
+    private val localKeyPair: KeyPair = CryptoEngine.generateKeyPair()
+    val localPublicKeyBase64: String = CryptoEngine.publicKeyToBase64(localKeyPair.public)
+
+    fun startServer(port: Int = DEFAULT_PORT) {
+        if (serverSocket != null) return
+        serverScope.launch {
+            try {
+                serverSocket = ServerSocket(port)
+                Log.d(TAG, "Servidor iniciado en puerto $port")
+                while (isActive) {
+                    val clientSocket = serverSocket!!.accept()
+                    Log.d(TAG, "Nuevo cliente conectado: ${clientSocket.inetAddress}")
+                    val handler = ClientHandler(clientSocket)
+                    clients[handler.clientId] = handler
+                    handler.startHandshakeAndListen()
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Error en servidor: ${e.message}")
+            }
+        }
+    }
+
+    fun stopServer() {
+        serverJob.cancel()
+        serverSocket?.close()
+        serverSocket = null
+        clients.values.forEach { it.disconnect() }
+        clients.clear()
+        _connectedClientsCount.value = 0
+    }
+
+    fun connectToPeer(address: String, port: Int = DEFAULT_PORT) {
+        serverScope.launch {
+            try {
+                val socket = Socket(address, port)
+                val handler = ClientHandler(socket)
+                clients[handler.clientId] = handler
+                handler.startHandshakeAndListen()
+            } catch (e: Exception) {
+                Log.e(TAG, "Error conectando a peer: ${e.message}")
+            }
+        }
+    }
+
+    fun sendMessage(message: MeshMessage) {
+        serverScope.launch {
+            if (clients.isEmpty()) {
+                Log.w(TAG, "No hay clientes conectados")
+                return@launch
+            }
+            clients.values.forEach { handler ->
+                try {
+                    handler.sendEncrypted(message.content)
+                } catch (e: Exception) {
+                    Log.e(TAG, "Error enviando a ${handler.clientId}: ${e.message}")
+                }
+            }
+        }
+    }
+
+    fun disconnectPeer(clientId: String) {
+        clients.remove(clientId)?.disconnect()
+        _connectedClientsCount.value = clients.size
+    }
+
+    // Cliente individual (sin inner, accede al singleton explícitamente)
+    class ClientHandler(private val socket: Socket) {
+        val clientId: String = socket.inetAddress.hostAddress + ":" + socket.port
+        private var input: DataInputStream? = null
+        private var output: DataOutputStream? = null
+        private var secretKey: SecretKey? = null
+        private var running = false
+
+        fun startHandshakeAndListen() {
+            running = true
+            try {
+                input = DataInputStream(socket.getInputStream())
+                output = DataOutputStream(socket.getOutputStream())
+
+                val localPubKey = NetworkService.localPublicKeyBase64
+                output?.writeUTF(localPubKey)
+                output?.flush()
+
+                val remotePubKeyStr = input?.readUTF() ?: throw Exception("No se recibió clave remota")
+                val remotePublicKey = CryptoEngine.base64ToPublicKey(remotePubKeyStr)
+
+                secretKey = CryptoEngine.deriveSharedSecret(NetworkService.localKeyPair.private, remotePublicKey)
+                Log.d(TAG, "Handshake completado con $clientId")
+
+                NetworkService._connectedClientsCount.value = NetworkService.clients.size
+
+                // Lanzar escucha en el ámbito del servidor
+                NetworkService.serverScope.launch {
+                    listenForMessages()
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Handshake fallido con $clientId: ${e.message}")
+                disconnect()
+            }
+        }
+
+        private suspend fun listenForMessages() {
+            try {
+                while (running) {
+                    val lengthBytes = ByteArray(4)
+                    input?.readFully(lengthBytes)
+                    val length = ((lengthBytes[0].toInt() and 0xFF) shl 24) or
+                            ((lengthBytes[1].toInt() and 0xFF) shl 16) or
+                            ((lengthBytes[2].toInt() and 0xFF) shl 8) or
+                            (lengthBytes[3].toInt() and 0xFF)
+
+                    val iv = ByteArray(12)
+                    input?.readFully(iv)
+
+                    val encrypted = ByteArray(length)
+                    input?.readFully(encrypted)
+
+                    val decrypted = CryptoEngine.decrypt(iv, encrypted, secretKey!!)
+                    val msg = MeshMessage(
+                        senderId = clientId,
+                        content = decrypted,
+                        isOwn = false
+                    )
+                    NetworkService._messages.emit(msg)
+                    Log.d(TAG, "Mensaje recibido de $clientId: $decrypted")
+                }
+            } catch (e: EOFException) {
+                Log.d(TAG, "Cliente $clientId desconectado")
+            } catch (e: Exception) {
+                Log.e(TAG, "Error escuchando $clientId: ${e.message}")
+            } finally {
+                disconnect()
+            }
+        }
+
+        fun sendEncrypted(plainText: String) {
+            try {
+                val (iv, encrypted) = CryptoEngine.encrypt(plainText, secretKey!!)
+                val length = encrypted.size
+                val header = byteArrayOf(
+                    ((length shr 24) and 0xFF).toByte(),
+                    ((length shr 16) and 0xFF).toByte(),
+                    ((length shr 8) and 0xFF).toByte(),
+                    (length and 0xFF).toByte()
+                )
+                output?.write(header)
+                output?.write(iv)
+                output?.write(encrypted)
+                output?.flush()
+            } catch (e: Exception) {
+                Log.e(TAG, "Error cifrando mensaje: ${e.message}")
+            }
+        }
+
+        fun disconnect() {
+            running = false
+            try {
+                socket.close()
+            } catch (_: Exception) {}
+            NetworkService.clients.remove(clientId)
+            NetworkService._connectedClientsCount.value = NetworkService.clients.size
+        }
+    }
+}

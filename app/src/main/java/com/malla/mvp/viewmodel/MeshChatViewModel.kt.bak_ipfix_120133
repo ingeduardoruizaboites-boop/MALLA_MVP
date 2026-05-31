@@ -1,0 +1,198 @@
+package com.malla.mvp.viewmodel
+
+import android.app.Application
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewModelScope
+import com.malla.mvp.data.AppDatabase
+import com.malla.mvp.data.entity.ConversationEntity
+import com.malla.mvp.data.entity.MeshMessage
+import com.malla.mvp.data.entity.MessageEntity
+import com.malla.mvp.network.NetworkService
+import com.malla.mvp.notification.NotificationHelper
+import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
+import java.util.UUID
+
+data class ChatMessage(
+    val id: String,
+    val senderId: String,
+    val content: String,
+    val timestamp: Long,
+    val isOwn: Boolean,
+    val status: Int = 0
+)
+
+class MeshChatViewModel(private val app: Application) : ViewModel() {
+
+    private val _chatMessages = MutableStateFlow<List<ChatMessage>>(emptyList())
+    val chatMessages: StateFlow<List<ChatMessage>> = _chatMessages.asStateFlow()
+
+    val connectedCount: StateFlow<Int> = NetworkService.connectedClientsCount
+
+    private val _localIp = MutableStateFlow(NetworkService.getLocalIpAddress())
+    val localIp: StateFlow<String> = _localIp.asStateFlow()
+
+    private val db = AppDatabase.getInstance(app)
+    private val messageDao = db.messageDao()
+    private val conversationDao = db.conversationDao()
+
+    private val createdConversations = mutableSetOf<String>()
+
+    init {
+        _localIp.value = NetworkService.getLocalIpAddress()
+        viewModelScope.launch {
+            NetworkService.messages.collect { meshMsg ->
+                val chatMsg = ChatMessage(
+                    id = meshMsg.id,
+                    senderId = meshMsg.senderId,
+                    content = meshMsg.content,
+                    timestamp = meshMsg.timestamp,
+                    isOwn = false,
+                    status = 2 // asumimos leído
+                )
+                _chatMessages.update { it + chatMsg }
+                NotificationHelper.showMessageNotification(app, meshMsg.senderId, meshMsg.content)
+
+                ensureConversationExists(meshMsg.senderId)
+
+                messageDao.insertMessage(
+                    MessageEntity(
+                        id = meshMsg.id,
+                        conversationId = meshMsg.senderId,
+                        senderId = meshMsg.senderId,
+                        content = meshMsg.content,
+                        timestamp = meshMsg.timestamp,
+                        isOwn = false,
+                        status = 2
+                    )
+                )
+            }
+        }
+
+        // Recolectar ACKs
+        viewModelScope.launch {
+            NetworkService.acks.collect { ack ->
+                when (ack.type) {
+                    1 -> { // ACK de entrega
+                        updateMessageStatus(ack.originalMessageId ?: "", 1)
+                    }
+                    2 -> { // ACK de lectura
+                        updateMessageStatus(ack.originalMessageId ?: "", 2)
+                    }
+                }
+            }
+        }
+    }
+
+    private suspend fun updateMessageStatus(messageId: String, newStatus: Int) {
+        // Actualizar en Room
+        messageDao.updateStatus(messageId, newStatus)
+        // Actualizar en la lista local si está presente
+        _chatMessages.update { list ->
+            list.map { msg ->
+                if (msg.id == messageId && msg.status < newStatus) msg.copy(status = newStatus)
+                else msg
+            }
+        }
+    }
+
+    private suspend fun ensureConversationExists(conversationId: String) {
+        if (createdConversations.contains(conversationId)) return
+        val existing = conversationDao.getConversationById(conversationId)
+        if (existing == null) {
+            val newConv = ConversationEntity(
+                id = conversationId,
+                title = "Peer ${conversationId.take(8)}",
+                lastMessage = null,
+                timestamp = System.currentTimeMillis()
+            )
+            conversationDao.insertConversation(newConv)
+        }
+        createdConversations.add(conversationId)
+    }
+
+    fun startMeshService() {
+        NetworkService.startServer()
+    }
+
+    fun connectToDevice(address: String) {
+        NetworkService.connectToPeer(address)
+    }
+
+    fun sendMessage(text: String, conversationId: String) {
+        val msg = MeshMessage(
+            senderId = "self",
+            content = text,
+            isOwn = true,
+            status = 0,
+            type = 0
+        )
+        val chatMsg = ChatMessage(
+            id = msg.id,
+            senderId = msg.senderId,
+            content = msg.content,
+            timestamp = msg.timestamp,
+            isOwn = true,
+            status = 0
+        )
+        _chatMessages.update { it + chatMsg }
+
+        viewModelScope.launch {
+            ensureConversationExists(conversationId)
+            messageDao.insertMessage(
+                MessageEntity(
+                    id = msg.id,
+                    conversationId = conversationId,
+                    senderId = msg.senderId,
+                    content = msg.content,
+                    timestamp = msg.timestamp,
+                    isOwn = true,
+                    status = 0
+                )
+            )
+            conversationDao.updateLastMessage(conversationId, msg.content, msg.timestamp)
+        }
+        NetworkService.sendMessage(msg)
+    }
+
+    fun disconnect() {
+        NetworkService.stopServer()
+    }
+
+    fun markMessageAsDelivered(messageId: String) {
+        _chatMessages.update { list ->
+            list.map { if (it.id == messageId && it.status < 1) it.copy(status = 1) else it }
+        }
+    }
+
+    fun markMessageAsRead(messageId: String) {
+        _chatMessages.update { list ->
+            list.map { if (it.id == messageId && it.status < 2) it.copy(status = 2) else it }
+        }
+    }
+
+    fun createConversation(title: String = "Nueva conversación"): String {
+        val id = UUID.randomUUID().toString()
+        viewModelScope.launch {
+            val conv = ConversationEntity(
+                id = id,
+                title = title,
+                timestamp = System.currentTimeMillis()
+            )
+            conversationDao.insertConversation(conv)
+            createdConversations.add(id)
+        }
+        return id
+    }
+}
+
+class MeshChatViewModelFactory(private val app: Application) : ViewModelProvider.Factory {
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        if (modelClass.isAssignableFrom(MeshChatViewModel::class.java)) {
+            @Suppress("UNCHECKED_CAST")
+            return MeshChatViewModel(app) as T
+        }
+        throw IllegalArgumentException("Unknown ViewModel class")
+    }
+}

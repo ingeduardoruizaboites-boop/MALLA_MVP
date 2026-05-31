@@ -1,0 +1,93 @@
+package com.malla.mvp.viewmodel
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.malla.mvp.data.entity.MeshMessage
+import com.malla.mvp.network.NetworkService
+import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
+
+data class ChatMessage(
+    val id: String,
+    val senderId: String,
+    val content: String,
+    val timestamp: Long,
+    val isOwn: Boolean,
+    val status: Int = 0  // 0=enviado, 1=entregado, 2=leído
+)
+
+class MeshChatViewModel : ViewModel() {
+
+    private val _chatMessages = MutableStateFlow<List<ChatMessage>>(emptyList())
+    val chatMessages: StateFlow<List<ChatMessage>> = _chatMessages.asStateFlow()
+
+    val connectedCount: StateFlow<Int> = NetworkService.connectedClientsCount
+
+    init {
+        // Recolectar mensajes entrantes de la red
+        viewModelScope.launch {
+            NetworkService.messages.collect { meshMsg ->
+                val chatMsg = ChatMessage(
+                    id = meshMsg.id,
+                    senderId = meshMsg.senderId,
+                    content = meshMsg.content,
+                    timestamp = meshMsg.timestamp,
+                    isOwn = false,
+                    status = 2 // asumimos leído al recibir
+                )
+                _chatMessages.update { currentList -> currentList + chatMsg }
+            }
+        }
+    }
+
+    fun startMeshService() {
+        NetworkService.startServer()
+    }
+
+    fun connectToDevice(address: String) {
+        NetworkService.connectToPeer(address)
+    }
+
+    fun sendMessage(text: String) {
+        val msg = MeshMessage(
+            senderId = "self",
+            content = text,
+            isOwn = true,
+            status = 0
+        )
+        // Agregar localmente con estado enviado
+        val chatMsg = ChatMessage(
+            id = msg.id,
+            senderId = msg.senderId,
+            content = msg.content,
+            timestamp = msg.timestamp,
+            isOwn = true,
+            status = 0
+        )
+        _chatMessages.update { currentList -> currentList + chatMsg }
+        // Enviar por red
+        NetworkService.sendMessage(msg)
+    }
+
+    fun disconnect() {
+        NetworkService.stopServer()
+    }
+
+    fun markMessageAsDelivered(messageId: String) {
+        _chatMessages.update { list ->
+            list.map { msg ->
+                if (msg.id == messageId && msg.status < 1) msg.copy(status = 1)
+                else msg
+            }
+        }
+    }
+
+    fun markMessageAsRead(messageId: String) {
+        _chatMessages.update { list ->
+            list.map { msg ->
+                if (msg.id == messageId && msg.status < 2) msg.copy(status = 2)
+                else msg
+            }
+        }
+    }
+}

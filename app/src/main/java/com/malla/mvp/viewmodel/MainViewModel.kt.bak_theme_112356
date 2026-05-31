@@ -1,0 +1,83 @@
+package com.malla.mvp.viewmodel
+
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.viewModelScope
+import com.malla.mvp.data.AppDatabase
+import com.malla.mvp.data.entity.ConversationEntity
+import com.malla.mvp.data.entity.MessageEntity
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
+
+sealed class Screen {
+    object Splash : Screen()
+    object Onboarding : Screen()
+    object Conversations : Screen()
+    object Settings : Screen()
+    object Diagnostic : Screen()
+    object MyProfile : Screen()
+    object WallProfile : Screen()
+    object EditProfile : Screen()
+    data class Chat(val conversationId: String) : Screen()
+    data class ContactProfile(val contactId: String) : Screen()
+    data class Call(val contactId: String) : Screen()
+    object MediaGallery : Screen()
+    object NodesHeatmap : Screen()
+}
+
+class MainViewModel(application: Application) : AndroidViewModel(application) {
+
+    private val _currentScreen = MutableStateFlow<Screen>(Screen.Splash)
+    val currentScreen: StateFlow<Screen> = _currentScreen.asStateFlow()
+
+    val meshViewModel = MeshChatViewModel(application)
+    val meshMessages: StateFlow<List<ChatMessage>> = meshViewModel.chatMessages
+    val connectedDevicesCount: StateFlow<Int> = meshViewModel.connectedCount
+
+    val isOfflineMode = MutableStateFlow(false)
+    var isForeground: Boolean = false
+
+    private val db = AppDatabase.getInstance(application)
+    private val conversationDao = db.conversationDao()
+    private val messageDao = db.messageDao()
+
+    val conversations: StateFlow<List<ConversationEntity>> = conversationDao.getAllConversations()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    private val messagesCache = mutableMapOf<String, StateFlow<List<MessageEntity>>>()
+
+    fun messagesForConversation(conversationId: String): StateFlow<List<MessageEntity>> {
+        return messagesCache.getOrPut(conversationId) {
+            messageDao.getMessagesForConversation(conversationId)
+                .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+        }
+    }
+
+    init {
+        viewModelScope.launch {
+            delay(1500)
+            _currentScreen.value = Screen.Conversations
+        }
+    }
+
+    fun navigateTo(screen: Screen) {
+        _currentScreen.value = screen
+    }
+
+    fun goBack() {
+        _currentScreen.value = Screen.Conversations
+    }
+
+    fun startMeshIfNeeded() {
+        meshViewModel.startMeshService()
+    }
+
+    fun stopMesh() {
+        meshViewModel.disconnect()
+    }
+
+    fun sendMeshMessage(text: String, conversationId: String) {
+        meshViewModel.sendMessage(text, conversationId)
+    }
+}

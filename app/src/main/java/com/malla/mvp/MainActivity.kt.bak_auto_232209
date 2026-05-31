@@ -1,0 +1,256 @@
+package com.malla.mvp
+
+import android.os.Bundle
+import android.widget.Toast
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Chat
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
+import com.malla.mvp.data.AppDatabase
+import com.malla.mvp.data.entity.ConversationEntity
+import com.malla.mvp.data.entity.MessageEntity
+import com.malla.mvp.network.MeshMessageHandler
+import com.malla.mvp.network.NetworkService
+import com.malla.mvp.ui.components.MainTopBar
+import com.malla.mvp.ui.screen.*
+import com.malla.mvp.ui.theme.MallaTheme
+import kotlinx.coroutines.launch
+import java.util.UUID
+
+class MainActivity : ComponentActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        NetworkService.startServer()
+        MeshMessageHandler.start(application)
+        insertSimulatedDataIfNeeded()
+
+        setContent {
+            var primaryColor by remember { mutableStateOf(Color(0xFF00FFFF)) }
+            var userSelectedColor by remember { mutableStateOf(Color(0xFF00FFFF)) }
+            var showQrScanner by remember { mutableStateOf(false) }
+            var currentConversationId by remember { mutableStateOf<String?>(null) }
+
+            LaunchedEffect(primaryColor) {
+                if (primaryColor != Color(0xFF2E7D32)) {
+                    userSelectedColor = primaryColor
+                }
+            }
+
+            MallaTheme(primaryColor = primaryColor) {
+                if (showQrScanner) {
+                    QrScanScreen(
+                        onQrScanned = { ip ->
+                            showQrScanner = false
+                            connectToPeerAndCreateConversation(ip) { convId ->
+                                currentConversationId = convId
+                            }
+                        },
+                        onBack = { showQrScanner = false }
+                    )
+                } else {
+                    MainApp(
+                        primaryColor = primaryColor,
+                        userSelectedColor = userSelectedColor,
+                        onChangeColor = { newColor: Color ->
+                            primaryColor = newColor
+                            userSelectedColor = newColor
+                        },
+                        onNavigateToQrScanner = { showQrScanner = true },
+                        onConnectToPeer = { ip ->
+                            connectToPeerAndCreateConversation(ip) { convId ->
+                                currentConversationId = convId
+                            }
+                        },
+                        currentConversationId = currentConversationId,
+                        onConversationChanged = { convId -> currentConversationId = convId }
+                    )
+                }
+            }
+        }
+    }
+
+    private fun insertSimulatedDataIfNeeded() {
+        kotlinx.coroutines.MainScope().launch {
+            val db = AppDatabase.getInstance(application) ?: return@launch
+            val convDao = db.conversationDao()
+            val msgDao = db.messageDao()
+
+            // Verificar si ya existe el chat simulado de Alicia
+            val existing = convDao.getConversationById("sim_alicia")
+            if (existing != null) return@launch
+
+            // 3 chats simulados
+            val alicia = ConversationEntity(
+                id = "sim_alicia",
+                title = "Alicia",
+                lastMessage = "Hola, ¿cómo estás?",
+                timestamp = System.currentTimeMillis() - 60000
+            )
+            val carlos = ConversationEntity(
+                id = "sim_carlos",
+                title = "Carlos",
+                lastMessage = "Nos vemos en la red",
+                timestamp = System.currentTimeMillis() - 3600000
+            )
+            val oficina = ConversationEntity(
+                id = "sim_oficina",
+                title = "Oficina",
+                lastMessage = "Recordatorio: reunión mesh",
+                timestamp = System.currentTimeMillis() - 86400000
+            )
+            convDao.insertConversation(alicia)
+            convDao.insertConversation(carlos)
+            convDao.insertConversation(oficina)
+
+            // Mensajes de ejemplo
+            val now = System.currentTimeMillis()
+            msgDao.insertMessage(
+                MessageEntity(
+                    id = UUID.randomUUID().toString(),
+                    conversationId = "sim_alicia",
+                    content = "¡Hola!",
+                    isOwn = false,
+                    timestamp = now - 120000
+                )
+            )
+            msgDao.insertMessage(
+                MessageEntity(
+                    id = UUID.randomUUID().toString(),
+                    conversationId = "sim_alicia",
+                    content = "¿Todo bien?",
+                    isOwn = true,
+                    timestamp = now - 60000
+                )
+            )
+            msgDao.insertMessage(
+                MessageEntity(
+                    id = UUID.randomUUID().toString(),
+                    conversationId = "sim_carlos",
+                    content = "Conéctate a la mesh",
+                    isOwn = false,
+                    timestamp = now - 7200000
+                )
+            )
+            msgDao.insertMessage(
+                MessageEntity(
+                    id = UUID.randomUUID().toString(),
+                    conversationId = "sim_oficina",
+                    content = "Reunión a las 10",
+                    isOwn = true,
+                    timestamp = now - 86400000
+                )
+            )
+        }
+    }
+
+    private fun connectToPeerAndCreateConversation(ip: String, onCreated: (String) -> Unit) {
+        NetworkService.connectToPeer(ip)
+        val db = AppDatabase.getInstance(application)
+        val conversationId = UUID.randomUUID().toString()
+        val conv = ConversationEntity(
+            id = conversationId,
+            title = "Peer ${ip.take(8)}",
+            timestamp = System.currentTimeMillis()
+        )
+        kotlinx.coroutines.MainScope().launch {
+            try {
+                db?.conversationDao()?.insertConversation(conv)
+                Toast.makeText(this@MainActivity, "Conectado a $ip", Toast.LENGTH_SHORT).show()
+                onCreated(conversationId)
+            } catch (e: Exception) {
+                Toast.makeText(this@MainActivity, "Error al crear conversación", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+}
+
+@Composable
+fun MainApp(
+    primaryColor: Color,
+    userSelectedColor: Color,
+    onChangeColor: (Color) -> Unit,
+    onNavigateToQrScanner: () -> Unit,
+    onConnectToPeer: (String) -> Unit,
+    currentConversationId: String?,
+    onConversationChanged: (String?) -> Unit
+) {
+    var selectedTab by remember { mutableStateOf(0) }
+
+    LaunchedEffect(selectedTab) {
+        if (selectedTab == 1) {
+            onChangeColor(Color(0xFF2E7D32))
+        } else {
+            onChangeColor(userSelectedColor)
+        }
+    }
+
+    if (currentConversationId != null) {
+        ChatScreen(
+            conversationId = currentConversationId,
+            onBack = { onConversationChanged(null) }
+        )
+        return
+    }
+
+    Scaffold(
+        topBar = { MainTopBar() },
+        bottomBar = {
+            NavigationBar(modifier = Modifier.height(56.dp)) {
+                NavigationBarItem(
+                    selected = selectedTab == 0,
+                    onClick = { selectedTab = 0 },
+                    icon = { Icon(Icons.AutoMirrored.Filled.Chat, "Chats") },
+                    label = { Text("Chats") }
+                )
+                NavigationBarItem(
+                    selected = selectedTab == 1,
+                    onClick = { selectedTab = 1 },
+                    icon = { Icon(Icons.Filled.Wifi, "Red") },
+                    label = { Text("Red") }
+                )
+                NavigationBarItem(
+                    selected = selectedTab == 2,
+                    onClick = { selectedTab = 2 },
+                    icon = { Icon(Icons.Filled.Person, "Perfil") },
+                    label = { Text("Perfil") }
+                )
+                NavigationBarItem(
+                    selected = selectedTab == 3,
+                    onClick = { selectedTab = 3 },
+                    icon = { Icon(Icons.Filled.Settings, "Ajustes") },
+                    label = { Text("Ajustes") }
+                )
+            }
+        }
+    ) { padding ->
+        Box(modifier = Modifier.padding(padding)) {
+            when (selectedTab) {
+                0 -> ConversationsScreen(onChatClicked = { convId -> onConversationChanged(convId) })
+                1 -> NodesHeatmapScreen(
+                    onNavigateToQrScanner = onNavigateToQrScanner,
+                    onConnectToPeer = onConnectToPeer
+                )
+                2 -> PlaceholderScreen("Perfil")
+                3 -> SettingsScreen(
+                    currentColor = primaryColor,
+                    onColorSelected = { selectedColor: Color -> onChangeColor(selectedColor) }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun PlaceholderScreen(name: String) {
+    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        Text(name)
+    }
+}

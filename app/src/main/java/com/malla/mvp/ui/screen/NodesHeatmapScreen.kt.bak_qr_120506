@@ -1,0 +1,116 @@
+package com.malla.mvp.ui.screen
+
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
+import com.malla.mvp.viewmodel.MainViewModel
+
+@Composable
+fun NodesHeatmapScreen(viewModel: MainViewModel) {
+    val connectedCount by viewModel.connectedDevicesCount.collectAsState()
+    val localIp by viewModel.meshViewModel.localIp.collectAsState()
+    var peerIp by remember { mutableStateOf("") }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            text = "Mapa de Calor de Nodos",
+            style = MaterialTheme.typography.headlineSmall,
+            modifier = Modifier.padding(bottom = 8.dp)
+        )
+
+        Text(
+            text = "Tu IP: $localIp",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.primary
+        )
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // Mapa de calor
+        Canvas(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(200.dp)
+        ) {
+            val center = Offset(size.width / 2, size.height / 2)
+            val maxRadius = size.minDimension / 2 - 16.dp.toPx()
+
+            drawCircle(
+                color = Color(0xFF1976D2),
+                radius = 16.dp.toPx(),
+                center = center
+            )
+
+            for (i in 0 until connectedCount) {
+                val angle = (i * 360.0 / connectedCount.coerceAtLeast(1))
+                val radians = Math.toRadians(angle)
+                val radius = maxRadius * 0.7f
+                val nodeCenter = Offset(
+                    center.x + radius * Math.cos(radians).toFloat(),
+                    center.y + radius * Math.sin(radians).toFloat()
+                )
+                drawCircle(
+                    color = Color(0xFF4CAF50).copy(alpha = 0.7f),
+                    radius = 12.dp.toPx(),
+                    center = nodeCenter
+                )
+                drawCircle(
+                    color = Color(0xFF4CAF50).copy(alpha = 0.2f),
+                    radius = 20.dp.toPx(),
+                    center = nodeCenter
+                )
+            }
+
+            if (connectedCount == 0) {
+                drawCircle(
+                    color = Color.Gray.copy(alpha = 0.2f),
+                    radius = maxRadius,
+                    center = center
+                )
+            }
+        }
+
+        if (connectedCount == 0) {
+            Text(
+                text = "No hay otros dispositivos en la red mesh",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+            )
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Sección de conexión manual
+        OutlinedTextField(
+            value = peerIp,
+            onValueChange = { peerIp = it },
+            label = { Text("IP del otro dispositivo") },
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Button(
+            onClick = {
+                if (peerIp.isNotBlank()) {
+                    viewModel.meshViewModel.connectToDevice(peerIp)
+                }
+            },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("Conectar")
+        }
+    }
+}

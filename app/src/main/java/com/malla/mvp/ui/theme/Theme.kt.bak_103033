@@ -1,0 +1,62 @@
+package com.malla.mvp.ui.theme
+
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.*
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
+
+@Composable
+fun AncoraMVPTheme(
+    isMeshMode: Boolean = false,
+    themeName: String = "Azul",
+    content: @Composable () -> Unit
+) {
+    val primaryColor = when (themeName) {
+        "Rojo" -> Color(0xFFFF4C4C)
+        "Rosa" -> Color(0xFFFF4081)
+        "Morado" -> Color(0xFF7C4DFF)
+        "Gris oscuro" -> Color(0xFF607D8B)
+        "Blanco" -> Color(0xFFCFD8DC)
+        else -> ElectricCyan
+    }
+    val secondaryColor = when (themeName) {
+        "Rojo" -> Color(0xFFD32F2F)
+        "Rosa" -> Color(0xFFF06292)
+        "Morado" -> Color(0xFF651FFF)
+        "Gris oscuro" -> Color(0xFF455A64)
+        "Blanco" -> Color(0xFF90A4AE)
+        else -> MallaBlue
+    }
+
+    val colors = if (isMeshMode) {
+        darkColorScheme(
+            primary = NeonGreen, secondary = NeonGreen,
+            background = MidnightBlack, surface = Color(0xFF111111),
+            surfaceVariant = Color(0xFF1A1A1A),
+            onPrimary = Color.Black, onSecondary = Color.Black,
+            onBackground = LightGrayText, onSurface = LightGrayText,
+            error = Rojo
+        )
+    } else {
+        darkColorScheme(
+            primary = primaryColor, secondary = secondaryColor,
+            background = DeepMidnight, surface = DarkSurface,
+            surfaceVariant = DarkCard,
+            onPrimary = Color.White, onSecondary = Color.White,
+            onBackground = WhiteText, onSurface = WhiteText,
+            error = Rojo
+        )
+    }
+
+    MaterialTheme(
+        colorScheme = colors,
+        typography = Typography,
+        shapes = Shapes(
+            small = RoundedCornerShape(12.dp),
+            medium = RoundedCornerShape(16.dp),
+            large = RoundedCornerShape(24.dp)
+        ),
+        content = content
+    )
+}

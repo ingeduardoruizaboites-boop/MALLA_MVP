@@ -1,0 +1,9 @@
+package com.malla.mvp.viewmodel
+
+import androidx.lifecycle.ViewModel
+
+sealed class Screen {
+    object Conversations : Screen()
+}
+
+class MainViewModel : ViewModel()

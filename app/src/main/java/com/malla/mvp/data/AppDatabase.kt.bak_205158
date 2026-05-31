@@ -1,0 +1,50 @@
+package com.malla.mvp.data
+
+import android.content.Context
+import androidx.room.Database
+import androidx.room.Room
+import androidx.room.RoomDatabase
+import com.malla.mvp.data.dao.ConversationDao
+import com.malla.mvp.data.dao.MedicalRecordDao
+import com.malla.mvp.data.dao.MeshMessageDao
+import com.malla.mvp.data.dao.MessageDao
+import com.malla.mvp.data.entity.ConversationEntity
+import com.malla.mvp.data.entity.MedicalRecordEntity
+import com.malla.mvp.data.entity.MeshMessageEntity
+import com.malla.mvp.data.entity.MessageEntity
+
+@Database(
+    entities = [
+        ConversationEntity::class,
+        MedicalRecordEntity::class,
+        MeshMessageEntity::class,
+        MessageEntity::class
+    ],
+    version = 2,
+    exportSchema = false
+)
+abstract class AppDatabase : RoomDatabase() {
+    abstract fun conversationDao(): ConversationDao
+    abstract fun medicalRecordDao(): MedicalRecordDao
+    abstract fun meshMessageDao(): MeshMessageDao
+    abstract fun messageDao(): MessageDao
+
+    companion object {
+        @Volatile
+        private var INSTANCE: AppDatabase? = null
+
+        fun getInstance(context: Context): AppDatabase {
+            return INSTANCE ?: synchronized(this) {
+                val instance = Room.databaseBuilder(
+                    context.applicationContext,
+                    AppDatabase::class.java,
+                    "malla_database"
+                )
+                .fallbackToDestructiveMigration()
+                .build()
+                INSTANCE = instance
+                instance
+            }
+        }
+    }
+}

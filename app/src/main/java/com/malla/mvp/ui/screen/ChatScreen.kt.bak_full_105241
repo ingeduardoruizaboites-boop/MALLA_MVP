@@ -1,0 +1,51 @@
+package com.malla.mvp.ui.screen
+
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import com.malla.mvp.data.entity.MessageEntity
+import com.malla.mvp.viewmodel.MainViewModel
+
+@Composable
+fun ChatScreen(conversationId: String, viewModel: MainViewModel) {
+    val messages by viewModel.messagesForConversation(conversationId).collectAsState()
+
+    Column(modifier = Modifier.fillMaxSize()) {
+        // Área de mensajes (placeholder)
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth()
+                .padding(8.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            if (messages.isEmpty()) {
+                Text("No hay mensajes aún. ID: $conversationId")
+            } else {
+                // Por ahora solo mostramos el último mensaje
+                Text("Último mensaje: ${messages.last().content}")
+            }
+        }
+
+        // Barra inferior de envío (placeholder)
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(8.dp)
+        ) {
+            TextField(
+                value = "",
+                onValueChange = {},
+                modifier = Modifier.weight(1f),
+                placeholder = { Text("Escribe un mensaje...") }
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Button(onClick = { /* TODO: enviar mensaje */ }) {
+                Text("Enviar")
+            }
+        }
+    }
+}

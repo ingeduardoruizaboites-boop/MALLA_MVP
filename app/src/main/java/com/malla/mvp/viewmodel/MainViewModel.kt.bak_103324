@@ -1,0 +1,65 @@
+package com.malla.mvp.viewmodel
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.malla.mvp.network.NetworkService
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
+
+sealed class Screen {
+    object Splash : Screen()
+    object Onboarding : Screen()
+    object Conversations : Screen()
+    object Settings : Screen()
+    object Diagnostic : Screen()
+    object MyProfile : Screen()
+    object WallProfile : Screen()
+    object EditProfile : Screen()
+    data class Chat(val conversationId: String) : Screen()
+    data class ContactProfile(val contactId: String) : Screen()
+    data class Call(val contactId: String) : Screen()
+    object MediaGallery : Screen()
+    object NodesHeatmap : Screen()
+}
+
+class MainViewModel : ViewModel() {
+
+    private val _currentScreen = MutableStateFlow<Screen>(Screen.Splash)
+    val currentScreen: StateFlow<Screen> = _currentScreen.asStateFlow()
+
+    val meshViewModel = MeshChatViewModel()
+    val meshMessages: StateFlow<List<ChatMessage>> = meshViewModel.chatMessages
+    val connectedDevicesCount: StateFlow<Int> = meshViewModel.connectedCount
+
+    val isOfflineMode = MutableStateFlow(false)
+
+    var isForeground: Boolean = false
+
+    init {
+        viewModelScope.launch {
+            delay(1500)
+            _currentScreen.value = Screen.Conversations
+        }
+    }
+
+    fun navigateTo(screen: Screen) {
+        _currentScreen.value = screen
+    }
+
+    fun goBack() {
+        _currentScreen.value = Screen.Conversations
+    }
+
+    fun startMeshIfNeeded() {
+        meshViewModel.startMeshService()
+    }
+
+    fun stopMesh() {
+        meshViewModel.disconnect()
+    }
+
+    fun sendMeshMessage(text: String) {
+        meshViewModel.sendMessage(text)
+    }
+}

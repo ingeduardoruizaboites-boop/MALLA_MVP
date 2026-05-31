@@ -1,0 +1,14 @@
+[
+    {
+        "merged": "com.malla.mvp.app-merged_res-52:/xml_file_paths.xml.flat",
+        "source": "com.malla.mvp.app-main-54:/xml/file_paths.xml"
+    },
+    {
+        "merged": "/home/codespace/.gradle/daemon/8.4/com.malla.mvp.app-merged_res-52:/raw_zumbido.mp3.flat",
+        "source": "/home/codespace/.gradle/daemon/8.4/com.malla.mvp.app-main-54:/raw/zumbido.mp3"
+    },
+    {
+        "merged": "/home/codespace/.gradle/daemon/8.4/com.malla.mvp.app-merged_res-52:/drawable_ic_launcher_foreground.xml.flat",
+        "source": "/home/codespace/.gradle/daemon/8.4/com.malla.mvp.app-main-54:/drawable/ic_launcher_foreground.xml"
+    }
+]

@@ -1,0 +1,154 @@
+package com.malla.mvp
+
+import android.os.Bundle
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
+import androidx.activity.compose.setContent
+import androidx.activity.viewModels
+import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.malla.mvp.ui.components.MainTopBar
+import com.malla.mvp.ui.screen.ChatScreen
+import com.malla.mvp.ui.screen.ConversationsScreen
+import com.malla.mvp.ui.screen.NodesHeatmapScreen
+import com.malla.mvp.ui.screen.MyProfileScreen
+import com.malla.mvp.ui.screen.WallProfileScreen
+import com.malla.mvp.ui.screen.EditProfileScreen
+import com.malla.mvp.ui.theme.MallaTheme
+import com.malla.mvp.viewmodel.MainViewModel
+import com.malla.mvp.viewmodel.Screen
+
+class MainActivity : ComponentActivity() {
+
+    companion object {
+        var isForeground = false
+    }
+
+    private val viewModel: MainViewModel by viewModels()
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        viewModel.startMeshIfNeeded()
+        setContent {
+            MallaTheme {
+                MainScreen(viewModel)
+            }
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        isForeground = true
+        viewModel.isForeground = true
+    }
+
+    override fun onPause() {
+        super.onPause()
+        isForeground = false
+        viewModel.isForeground = false
+    }
+}
+
+@Composable
+fun MainScreen(viewModel: MainViewModel) {
+    val currentScreen by viewModel.currentScreen.collectAsState()
+    val context = LocalContext.current
+
+    if (currentScreen == Screen.Conversations) {
+        var backPressedOnce by remember { mutableStateOf(false) }
+        BackHandler(enabled = true) {
+            if (backPressedOnce) {
+                (context as? android.app.Activity)?.finishAffinity()
+            } else {
+                backPressedOnce = true
+            }
+        }
+    }
+
+    Scaffold(
+        topBar = {
+            MainTopBar(viewModel = viewModel, currentScreen = currentScreen)
+        },
+        bottomBar = {
+            NavigationBar(
+                modifier = Modifier.height(56.dp)
+            ) {
+                NavigationBarItem(
+                    selected = currentScreen == Screen.Conversations,
+                    onClick = { viewModel.navigateTo(Screen.Conversations) },
+                    icon = { Icon(Icons.Filled.Chat, contentDescription = "Chats") },
+                    label = { Text("Chats") }
+                )
+                NavigationBarItem(
+                    selected = currentScreen == Screen.NodesHeatmap,
+                    onClick = { viewModel.navigateTo(Screen.NodesHeatmap) },
+                    icon = { Icon(Icons.Filled.Wifi, contentDescription = "Red") },
+                    label = { Text("Red") }
+                )
+                NavigationBarItem(
+                    selected = currentScreen == Screen.MyProfile,
+                    onClick = { viewModel.navigateTo(Screen.MyProfile) },
+                    icon = { Icon(Icons.Filled.Person, contentDescription = "Perfil") },
+                    label = { Text("Perfil") }
+                )
+                NavigationBarItem(
+                    selected = currentScreen == Screen.Settings,
+                    onClick = { viewModel.navigateTo(Screen.Settings) },
+                    icon = { Icon(Icons.Filled.Settings, contentDescription = "Ajustes") },
+                    label = { Text("Ajustes") }
+                )
+            }
+        }
+    ) { padding ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding),
+            contentAlignment = Alignment.Center
+        ) {
+            val screen = currentScreen
+            when (screen) {
+                Screen.Splash -> SplashContent()
+                Screen.Conversations -> ConversationsScreen(viewModel = viewModel)
+                Screen.Settings -> PlaceholderScreen("SettingsScreen")
+                Screen.Diagnostic -> PlaceholderScreen("DiagnosticScreen")
+                Screen.MyProfile -> MyProfileScreen(viewModel = viewModel)
+                Screen.WallProfile -> WallProfileScreen(viewModel = viewModel)
+                Screen.EditProfile -> EditProfileScreen(viewModel = viewModel)
+                is Screen.Chat -> ChatScreen(conversationId = screen.conversationId, viewModel = viewModel)
+                is Screen.ContactProfile -> PlaceholderScreen("ContactProfile: ${screen.contactId}")
+                Screen.MediaGallery -> PlaceholderScreen("MediaGalleryScreen")
+                Screen.NodesHeatmap -> NodesHeatmapScreen(viewModel = viewModel)
+                Screen.Onboarding -> PlaceholderScreen("OnboardingScreen")
+                is Screen.Call -> PlaceholderScreen("CallScreen: ${screen.contactId}")
+            }
+        }
+    }
+}
+
+@Composable
+fun SplashContent() {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = "MALLA",
+            style = MaterialTheme.typography.headlineLarge,
+            letterSpacing = 8.sp
+        )
+    }
+}
+
+@Composable
+fun PlaceholderScreen(name: String) {
+    Text(text = name, style = MaterialTheme.typography.bodyLarge)
+}
