@@ -125,7 +125,20 @@ object NetworkService {
                     val encrypted = ByteArray(length)
                     input?.readFully(encrypted)
                     val decrypted = CryptoEngine.decrypt(encrypted, secretKey!!)
-                    _messages.emit(MeshMessage(content = decrypted, senderId = clientId))
+                    // El wire format es: type|quotedId|quotedContent|text
+                    val parts = decrypted.split("|", limit = 4)
+                    val type = parts.getOrElse(0) { "chat" }
+                    val quoteId = parts.getOrElse(1) { "" }.ifBlank { null }
+                    val quoteContent = parts.getOrElse(2) { "" }.ifBlank { null }
+                    val text = parts.getOrElse(3) { decrypted }
+                    val message = MeshMessage(
+                        content = text,
+                        senderId = clientId,
+                        type = type,
+                        quotedMessageId = quoteId,
+                        quotedMessageContent = quoteContent
+                    )
+                    _messages.emit(message)
                 }
             } catch (e: Exception) {
                 Log.e(TAG, "Error recibiendo mensaje: ${e.message}")
@@ -136,7 +149,9 @@ object NetworkService {
 
         suspend fun send(message: MeshMessage) {
             try {
-                val encrypted = CryptoEngine.encrypt(message.content, secretKey!!)
+                // Construir wire format
+                val wire = "${message.type}|${message.quotedMessageId ?: ""}|${message.quotedMessageContent ?: ""}|${message.content}"
+                val encrypted = CryptoEngine.encrypt(wire, secretKey!!)
                 output?.writeInt(encrypted.size)
                 output?.write(encrypted)
                 output?.flush()
@@ -157,5 +172,8 @@ object NetworkService {
 data class MeshMessage(
     val content: String,
     val senderId: String = "self",
-    val timestamp: Long = System.currentTimeMillis()
+    val timestamp: Long = System.currentTimeMillis(),
+    val type: String = "chat",                // "chat", "delete", "reply"
+    val quotedMessageId: String? = null,      // ID del mensaje citado
+    val quotedMessageContent: String? = null  // Contenido del mensaje citado
 )
