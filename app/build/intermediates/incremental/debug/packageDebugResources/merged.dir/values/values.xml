@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="background_color">#001219</color>
+    <color name="foreground_color">#00E5FF</color>
+    <string name="app_name">MALLA</string>
+    <style name="Theme.MALLAMVP" parent="android:Theme.Material.NoActionBar"/>
+</resources>

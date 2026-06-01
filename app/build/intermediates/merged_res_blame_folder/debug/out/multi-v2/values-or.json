@@ -1,7 +1,7 @@
 {
     "logs": [
         {
-            "outputFile": "com.malla.mvp.app-mergeDebugResources-50:/values-or/values-or.xml",
+            "outputFile": "com.malla.mvp.app-mergeDebugResources-51:/values-or/values-or.xml",
             "map": [
                 {
                     "source": "/home/codespace/.gradle/caches/transforms-3/0074f76451607ba4f91a6f49f0da20dd/transformed/foundation-release/res/values-or/values-or.xml",

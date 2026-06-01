@@ -6,6 +6,7 @@ import androidx.room.PrimaryKey
 @Entity(tableName = "polls")
 data class PollEntity(
     @PrimaryKey val id: String,
+    val createdAt: Long = System.currentTimeMillis(),
     val groupId: String,
     val question: String,
     val creatorId: String,

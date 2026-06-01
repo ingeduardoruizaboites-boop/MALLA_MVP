@@ -1,7 +1,7 @@
 {
     "logs": [
         {
-            "outputFile": "com.malla.mvp.app-mergeDebugResources-50:/values-pt-rPT/values-pt-rPT.xml",
+            "outputFile": "com.malla.mvp.app-mergeDebugResources-51:/values-pt-rPT/values-pt-rPT.xml",
             "map": [
                 {
                     "source": "/home/codespace/.gradle/caches/transforms-3/8cfdf5cbc71dff4d1bc740f4b153dc35/transformed/material3-release/res/values-pt-rPT/values-pt-rPT.xml",

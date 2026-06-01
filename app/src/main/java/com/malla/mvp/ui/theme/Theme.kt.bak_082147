@@ -1,0 +1,80 @@
+package com.malla.mvp.ui.theme
+
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.darkColorScheme
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.unit.sp
+
+val LocalFontScale = staticCompositionLocalOf { 1.0f }
+val LocalFontFamily = staticCompositionLocalOf { FontFamily.Default }
+val LocalGrayscale = staticCompositionLocalOf { false }
+val LocalReducedAnimations = staticCompositionLocalOf { false }
+
+@Composable
+fun MallaTheme(
+    primaryColor: Color = Color(0xFF26C6DA),
+    fontScale: Float = 1.0f,
+    fontFamily: FontFamily = FontFamily.Default,
+    grayscale: Boolean = false,
+    reducedAnimations: Boolean = false,
+    content: @Composable () -> Unit
+) {
+    val onPrimary = if (primaryColor.luminance() > 0.5) Color.Black else Color.White
+    
+    // Aplicar escala de grises a los colores si el modo lectura está activo
+    val effectivePrimary = if (grayscale) primaryColor.toGrayscale() else primaryColor
+    val effectiveBackground = if (grayscale) Color(0xFF0A1B2A).toGrayscale() else Color(0xFF0A1B2A)
+    val effectiveSurface = if (grayscale) Color(0xFF0A1B2A).toGrayscale() else Color(0xFF0A1B2A)
+    val effectiveOnBackground = if (grayscale) Color(0xFFE0E0E0).toGrayscale() else Color(0xFFE0E0E0)
+    val effectiveOnSurface = if (grayscale) Color(0xFFE0E0E0).toGrayscale() else Color(0xFFE0E0E0)
+    
+    val colorScheme = darkColorScheme(
+        primary = effectivePrimary,
+        onPrimary = if (grayscale) Color.White else onPrimary,
+        primaryContainer = effectivePrimary.copy(alpha = 0.15f),
+        secondary = if (grayscale) Color(0xFF66BB6A).toGrayscale() else Color(0xFF66BB6A),
+        onSecondary = Color.Black,
+        secondaryContainer = (if (grayscale) Color(0xFF66BB6A).toGrayscale() else Color(0xFF66BB6A)).copy(alpha = 0.15f),
+        background = effectiveBackground,
+        surface = effectiveSurface,
+        onBackground = effectiveOnBackground,
+        onSurface = effectiveOnSurface,
+        outline = effectivePrimary,
+        surfaceVariant = if (grayscale) Color(0xFF1A2C3E).toGrayscale() else Color(0xFF1A2C3E)
+    )
+
+    CompositionLocalProvider(
+        LocalFontScale provides fontScale,
+        LocalFontFamily provides fontFamily,
+        LocalGrayscale provides grayscale,
+        LocalReducedAnimations provides reducedAnimations
+    ) {
+        MaterialTheme(
+            colorScheme = colorScheme,
+            typography = MaterialTheme.typography.copy(
+                bodyLarge = MaterialTheme.typography.bodyLarge.copy(fontSize = 16.sp * fontScale, fontFamily = fontFamily),
+                bodyMedium = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp * fontScale, fontFamily = fontFamily),
+                bodySmall = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp * fontScale, fontFamily = fontFamily),
+                titleMedium = MaterialTheme.typography.titleMedium.copy(fontSize = 16.sp * fontScale, fontFamily = fontFamily),
+                headlineSmall = MaterialTheme.typography.headlineSmall.copy(fontSize = 24.sp * fontScale, fontFamily = fontFamily),
+                labelSmall = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp * fontScale, fontFamily = fontFamily)
+            ),
+            content = content
+        )
+    }
+}
+
+// Extensión para convertir un color a escala de grises
+fun Color.toGrayscale(): Color {
+    val luminance = 0.299f * this.red + 0.587f * this.green + 0.114f * this.blue
+    return Color(luminance, luminance, luminance, this.alpha)
+}
+
+fun Color.luminance(): Float {
+    return 0.299f * this.red + 0.587f * this.green + 0.114f * this.blue
+}

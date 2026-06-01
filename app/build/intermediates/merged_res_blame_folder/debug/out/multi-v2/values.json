@@ -1,7 +1,7 @@
 {
     "logs": [
         {
-            "outputFile": "com.malla.mvp.app-mergeDebugResources-50:/values/values.xml",
+            "outputFile": "com.malla.mvp.app-mergeDebugResources-51:/values/values.xml",
             "map": [
                 {
                     "source": "/workspaces/MALLA_MVP/app/src/main/res/values/themes.xml",

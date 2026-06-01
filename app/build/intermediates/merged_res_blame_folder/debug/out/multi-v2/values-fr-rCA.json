@@ -1,7 +1,7 @@
 {
     "logs": [
         {
-            "outputFile": "com.malla.mvp.app-mergeDebugResources-50:/values-fr-rCA/values-fr-rCA.xml",
+            "outputFile": "com.malla.mvp.app-mergeDebugResources-51:/values-fr-rCA/values-fr-rCA.xml",
             "map": [
                 {
                     "source": "/home/codespace/.gradle/caches/transforms-3/01be542a8a7642ecba403b94caa2bdf6/transformed/core-1.12.0/res/values-fr-rCA/values-fr-rCA.xml",

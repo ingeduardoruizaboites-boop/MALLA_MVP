@@ -55,6 +55,9 @@ class MainActivity : ComponentActivity() {
             prefs?.getBoolean("first_launch", true) ?: true
         } catch (e: Exception) { true }
 
+        // Obtener instancia de la base de datos
+        val database = AppDatabase.getInstance(application)
+
         setContent {
             var appState by remember { mutableStateOf(AppState.Splash) }
             var primaryColor by remember { mutableStateOf(Color(0xFF26C6DA)) }
@@ -63,7 +66,7 @@ class MainActivity : ComponentActivity() {
             var currentConversationId by remember { mutableStateOf<String?>(null) }
             var selectedContact by remember { mutableStateOf<String?>(null) }
             var showSettings by remember { mutableStateOf(false) }
-            var showTutorial by remember { mutableStateOf(false) }  // ← declarado aquí
+            var showTutorial by remember { mutableStateOf(false) } 
             val context = LocalContext.current
 
             val isOnline by ConnectivityMonitor.isOnline.collectAsState()
@@ -87,7 +90,6 @@ class MainActivity : ComponentActivity() {
                 if (primaryColor != Color(0xFF2E7D32)) userSelectedColor = primaryColor
             }
 
-            // Determinar si mostrar el tutorial (solo la primera vez después del onboarding)
             LaunchedEffect(appState) {
                 if (appState == AppState.Main && !isFirstLaunch) {
                     val tutorialPrefs = try {
@@ -153,7 +155,8 @@ class MainActivity : ComponentActivity() {
                                 currentConversationId = currentConversationId,
                                 onConversationChanged = { convId -> currentConversationId = convId },
                                 onSettingsClick = { showSettings = true },
-                                onProfileClicked = { contactName -> selectedContact = contactName }
+                                onProfileClicked = { contactName -> selectedContact = contactName },
+                                db = database
                             )
                         }
                     }
@@ -232,10 +235,17 @@ fun SplashContent(onFinished: () -> Unit) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainApp(
-    isMeshMode: Boolean, primaryColor: Color, userSelectedColor: Color, onChangeColor: (Color) -> Unit,
-    onNavigateToQrScanner: () -> Unit, onConnectToPeer: (String) -> Unit,
-    currentConversationId: String?, onConversationChanged: (String?) -> Unit, onSettingsClick: () -> Unit,
-    onProfileClicked: (String) -> Unit
+    isMeshMode: Boolean,
+    primaryColor: Color,
+    userSelectedColor: Color,
+    onChangeColor: (Color) -> Unit,
+    onNavigateToQrScanner: () -> Unit,
+    onConnectToPeer: (String) -> Unit,
+    currentConversationId: String?,
+    onConversationChanged: (String?) -> Unit,
+    onSettingsClick: () -> Unit,
+    onProfileClicked: (String) -> Unit,
+    db: AppDatabase?  // Nuevo parámetro
 ) {
     var selectedTab by remember { mutableStateOf(0) }
     var currentContactName by remember { mutableStateOf("Chat") }
@@ -243,7 +253,13 @@ fun MainApp(
         if (selectedTab == 1) onChangeColor(Color(0xFF2E7D32)) else onChangeColor(userSelectedColor)
     }
     if (currentConversationId != null) {
-        ChatScreen(conversationId = currentConversationId, contactName = currentContactName, onBack = { onConversationChanged(null) }, isMeshMode = isMeshMode)
+        ChatScreen(
+            conversationId = currentConversationId,
+            db = db,
+            contactName = currentContactName,
+            onBack = { onConversationChanged(null) },
+            isMeshMode = isMeshMode
+        )
         return
     }
     Scaffold(
