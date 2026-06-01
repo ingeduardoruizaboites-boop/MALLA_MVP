@@ -17,10 +17,4 @@ interface MessageDao {
 
     @Query("DELETE FROM messages WHERE id = :messageId")
     suspend fun deleteMessage(messageId: String)
-
-    @Query("SELECT * FROM messages ORDER BY timestamp ASC")
-    fun observeAllMessages(): Flow<List<MessageEntity>>
-
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertAll(messages: List<MessageEntity>)
 }
