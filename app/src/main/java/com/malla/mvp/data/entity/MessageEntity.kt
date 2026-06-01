@@ -14,5 +14,7 @@ data class MessageEntity(
     val reaction: String? = null,
     val expireAt: Long? = null,
     val mediaUri: String? = null,
-    val viewOnce: Boolean = false      // nuevo campo
+    val viewOnce: Boolean = false,
+    val quotedMessageId: String? = null,        // NUEVO
+    val quotedMessageContent: String? = null    // NUEVO
 )

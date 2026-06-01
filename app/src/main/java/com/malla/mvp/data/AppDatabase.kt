@@ -17,7 +17,7 @@ import com.malla.mvp.data.entity.PollOptionEntity
 
 @Database(
     entities = [ConversationEntity::class, MessageEntity::class, StoryEntity::class, PollEntity::class, PollOptionEntity::class],
-    version = 7,
+    version = 8,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
