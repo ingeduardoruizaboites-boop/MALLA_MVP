@@ -32,6 +32,10 @@ object BleManager {
     private val _foundDevices = MutableStateFlow<List<String>>(emptyList())
     val foundDevices: StateFlow<List<String>> = _foundDevices
 
+    // NUEVO: lista de dispositivos Bluetooth encontrados (para MeshConnector)
+    private val _foundBluetoothDevices = MutableStateFlow<List<BluetoothDevice>>(emptyList())
+    val foundBluetoothDevices: StateFlow<List<BluetoothDevice>> = _foundBluetoothDevices
+
     fun start(context: Context) {
         appContext = context.applicationContext
         val btManager = context.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
@@ -96,7 +100,7 @@ object BleManager {
     suspend fun connectAndReadIp(device: BluetoothDevice): String? =
         suspendCancellableCoroutine { continuation ->
             val context = appContext ?: run {
-                Log.e(TAG, "Contexto no inicializado")
+                Log.e(TAG, "[GATT] Contexto no inicializado")
                 continuation.resume(null)
                 return@suspendCancellableCoroutine
             }
@@ -116,12 +120,11 @@ object BleManager {
                     if (newState == BluetoothProfile.STATE_CONNECTED) {
                         gatt?.discoverServices()
                     } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
-                        // Si aún no hemos devuelto resultado, devolvemos null
                         if (ipResult == null && !continuation.isCompleted) {
+                            Log.w(TAG, "[GATT] Desconectado sin obtener IP de ${device.address}")
                             continuation.resume(null)
                         }
                         gatt?.close()
-                        // Reanudar escaneo si estaba activo
                         if (wasScanning && appContext != null) {
                             start(appContext!!)
                         }
@@ -135,11 +138,11 @@ object BleManager {
                         if (characteristic != null) {
                             gatt?.readCharacteristic(characteristic)
                         } else {
-                            Log.w(TAG, "Característica de IP no encontrada")
+                            Log.w(TAG, "[GATT] Característica de IP no encontrada en ${gatt?.device?.address}")
                             gatt?.disconnect()
                         }
                     } else {
-                        Log.w(TAG, "Descubrimiento de servicios fallido: $status")
+                        Log.w(TAG, "[GATT] Descubrimiento de servicios fallido: $status")
                         gatt?.disconnect()
                     }
                 }
@@ -152,9 +155,9 @@ object BleManager {
                     if (status == BluetoothGatt.GATT_SUCCESS && characteristic?.uuid == ipCharacteristicUuid) {
                         val bytes = characteristic?.value
                         ipResult = bytes?.toString(Charsets.UTF_8)
-                        Log.d(TAG, "IP leída del dispositivo ${device.address}: $ipResult")
+                        Log.d(TAG, "[GATT] IP leída de ${device.address}: $ipResult")
                     } else {
-                        Log.w(TAG, "Fallo al leer característica de IP: status=$status")
+                        Log.w(TAG, "[GATT] Fallo al leer característica de IP: status=$status")
                     }
                     gatt?.disconnect()
                     if (ipResult != null && !continuation.isCompleted) {
@@ -167,7 +170,7 @@ object BleManager {
 
             gatt = device.connectGatt(context, false, callback)
             if (gatt == null) {
-                Log.e(TAG, "No se pudo conectar al dispositivo ${device.address}")
+                Log.e(TAG, "[GATT] No se pudo conectar a ${device.address}")
                 if (wasScanning && appContext != null) start(appContext!!)
                 continuation.resume(null)
             }
@@ -179,6 +182,10 @@ object BleManager {
             val name = device.name ?: device.address
             Log.d(TAG, "Dispositivo BLE encontrado: $name")
             _foundDevices.value = _foundDevices.value + name
+            // Agregar dispositivo a la lista si no está ya
+            if (!_foundBluetoothDevices.value.contains(device)) {
+                _foundBluetoothDevices.value = _foundBluetoothDevices.value + device
+            }
         }
     }
 

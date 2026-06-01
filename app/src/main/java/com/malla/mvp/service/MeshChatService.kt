@@ -9,6 +9,7 @@ import android.util.Log
 import com.malla.mvp.network.BleManager
 import com.malla.mvp.network.DiscoveryService
 import com.malla.mvp.network.GattServerManager
+import com.malla.mvp.network.MeshConnector
 import com.malla.mvp.network.WifiDirectManager
 
 class MeshChatService : Service() {
@@ -30,6 +31,8 @@ class MeshChatService : Service() {
             WifiDirectManager.start(this@MeshChatService)
             BleManager.start(this@MeshChatService)
             DiscoveryService.start(this@MeshChatService)
+            // Iniciar el conector mesh automático (procesa dispositivos BLE)
+            MeshConnector.start()
 
             // Programar la detención del escaneo después de SCAN_DURATION_MS
             handler.postDelayed(stopScanRunnable, SCAN_DURATION_MS)
@@ -43,6 +46,8 @@ class MeshChatService : Service() {
             WifiDirectManager.stop()
             BleManager.stop()
             DiscoveryService.stop()
+            // Detener el conector mesh automático
+            MeshConnector.stop()
             isScanning = false
 
             // Programar el próximo escaneo después de PAUSE_DURATION_MS
@@ -54,7 +59,7 @@ class MeshChatService : Service() {
 
     override fun onCreate() {
         super.onCreate()
-        Log.d(TAG, "Servicio mesh creado – iniciando ciclo de escaneo, advertising y servidor GATT")
+        Log.d(TAG, "Servicio mesh creado – iniciando ciclo de escaneo, advertising, GATT y conector automático")
         // Iniciar el primer escaneo inmediatamente
         handler.post(startScanRunnable)
         // Iniciar advertising BLE para que el dispositivo siempre sea visible
@@ -73,6 +78,7 @@ class MeshChatService : Service() {
             WifiDirectManager.stop()
             BleManager.stop()
             DiscoveryService.stop()
+            MeshConnector.stop()
         }
 
         // Detener el advertising BLE
@@ -80,7 +86,7 @@ class MeshChatService : Service() {
         // Detener el servidor GATT
         GattServerManager.stop()
 
-        Log.d(TAG, "Servicio mesh destruido – escaneos, advertising y GATT detenidos")
+        Log.d(TAG, "Servicio mesh destruido – escaneos, advertising, GATT y conector detenidos")
         super.onDestroy()
     }
 }
