@@ -53,9 +53,11 @@ class MeshChatService : Service() {
 
     override fun onCreate() {
         super.onCreate()
-        Log.d(TAG, "Servicio mesh creado – iniciando ciclo de escaneo intermitente")
+        Log.d(TAG, "Servicio mesh creado – iniciando ciclo de escaneo intermitente y advertising continuo")
         // Iniciar el primer escaneo inmediatamente
         handler.post(startScanRunnable)
+        // Iniciar advertising BLE para que el dispositivo siempre sea visible
+        BleManager.startAdvertising()
     }
 
     override fun onDestroy() {
@@ -70,7 +72,10 @@ class MeshChatService : Service() {
             DiscoveryService.stop()
         }
 
-        Log.d(TAG, "Servicio mesh destruido – escaneos detenidos")
+        // Detener el advertising BLE
+        BleManager.stopAdvertising()
+
+        Log.d(TAG, "Servicio mesh destruido – escaneos y advertising detenidos")
         super.onDestroy()
     }
 }
