@@ -118,6 +118,14 @@ class ConversationRepository(private val db: AppDatabase) {
         conversationDao.insertAll(convs)
         messageDao.insertAll(messages)
     }
+
+    suspend fun hideConversation(id: String) {
+        conversationDao.hideConversation(id)
+    }
+
+    suspend fun deleteConversation(conversation: ConversationEntity) {
+        conversationDao.deleteConversation(conversation)
+    }
 }
 
 data class ConversationWithLastMessage(

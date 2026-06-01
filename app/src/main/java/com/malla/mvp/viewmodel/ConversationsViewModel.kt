@@ -2,6 +2,7 @@ package com.malla.mvp.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.malla.mvp.data.entity.ConversationEntity
 import com.malla.mvp.data.repository.ConversationRepository
 import com.malla.mvp.data.repository.ConversationWithLastMessage
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -45,6 +46,18 @@ class ConversationsViewModel(
                 searchQuery = query,
                 filteredConversations = filterConversations(currentState.conversations, query)
             )
+        }
+    }
+
+    fun hideConversation(id: String) {
+        viewModelScope.launch {
+            repository.hideConversation(id)
+        }
+    }
+
+    fun deleteConversation(conversation: ConversationEntity) {
+        viewModelScope.launch {
+            repository.deleteConversation(conversation)
         }
     }
 
