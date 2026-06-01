@@ -8,6 +8,7 @@ import android.os.Looper
 import android.util.Log
 import com.malla.mvp.network.BleManager
 import com.malla.mvp.network.DiscoveryService
+import com.malla.mvp.network.GattServerManager
 import com.malla.mvp.network.WifiDirectManager
 
 class MeshChatService : Service() {
@@ -53,11 +54,13 @@ class MeshChatService : Service() {
 
     override fun onCreate() {
         super.onCreate()
-        Log.d(TAG, "Servicio mesh creado – iniciando ciclo de escaneo intermitente y advertising continuo")
+        Log.d(TAG, "Servicio mesh creado – iniciando ciclo de escaneo, advertising y servidor GATT")
         // Iniciar el primer escaneo inmediatamente
         handler.post(startScanRunnable)
         // Iniciar advertising BLE para que el dispositivo siempre sea visible
         BleManager.startAdvertising()
+        // Iniciar servidor GATT para exponer la IP local a otros nodos
+        GattServerManager.start(this)
     }
 
     override fun onDestroy() {
@@ -74,8 +77,10 @@ class MeshChatService : Service() {
 
         // Detener el advertising BLE
         BleManager.stopAdvertising()
+        // Detener el servidor GATT
+        GattServerManager.stop()
 
-        Log.d(TAG, "Servicio mesh destruido – escaneos y advertising detenidos")
+        Log.d(TAG, "Servicio mesh destruido – escaneos, advertising y GATT detenidos")
         super.onDestroy()
     }
 }
