@@ -76,7 +76,7 @@ private val sampleMessages = mapOf(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ChatScreen(conversationId: String, contactName: String = "Chat", onBack: () -> Unit, isMeshMode: Boolean = false, isGroup: Boolean = false) {
+fun ChatScreen(conversationId: String, contactName: String = "Chat", onBack: () -> Unit, isMeshMode: Boolean = false, isGroup: Boolean = false, db: AppDatabase? = null) {
     val context = LocalContext.current
     val db = remember { AppDatabase.getInstance(context) }
     var messages by remember { mutableStateOf<List<MessageEntity>>(emptyList()) }
@@ -403,7 +403,7 @@ fun ChatScreen(conversationId: String, contactName: String = "Chat", onBack: () 
                         val options = optionsMap[poll.id] ?: emptyList()
                         PollCard(poll = poll, options = options, onVote = { optionId ->
                             coroutineScope.launch {
-                                db?.pollDao()?.incrementVote(optionId)
+                                db?.pollDao()?.incrementVoteCount(optionId, 1)
                                 val updated = options.map { opt ->
                                     if (opt.id == optionId) opt.copy(voteCount = opt.voteCount + 1) else opt
                                 }
