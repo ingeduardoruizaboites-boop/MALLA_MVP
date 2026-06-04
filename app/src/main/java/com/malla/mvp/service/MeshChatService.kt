@@ -10,6 +10,7 @@ import com.malla.mvp.network.BleManager
 import com.malla.mvp.network.DiscoveryService
 import com.malla.mvp.network.GattServerManager
 import com.malla.mvp.network.MeshConnector
+import com.malla.mvp.network.MessageBridge
 import com.malla.mvp.network.WifiDirectManager
 
 class MeshChatService : Service() {
@@ -66,6 +67,7 @@ class MeshChatService : Service() {
         BleManager.startAdvertising()
         // Iniciar servidor GATT para exponer la IP local a otros nodos
         GattServerManager.start(this)
+        MessageBridge.start(this)
     }
 
     override fun onDestroy() {
@@ -85,6 +87,7 @@ class MeshChatService : Service() {
         BleManager.stopAdvertising()
         // Detener el servidor GATT
         GattServerManager.stop()
+        MessageBridge.stop()
 
         Log.d(TAG, "Servicio mesh destruido – escaneos, advertising, GATT y conector detenidos")
         super.onDestroy()
