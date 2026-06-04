@@ -21,6 +21,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import kotlin.math.roundToInt
 import androidx.compose.ui.unit.sp
+import com.malla.mvp.data.repository.PulsoRepository
 import com.malla.mvp.network.NetworkService
 
 data class MeshNode(
@@ -36,16 +37,6 @@ data class MeshNode(
 
 enum class ConnectionType { BLE, WIFI_AWARE, RELAY }
 
-private fun getDiscoveredNodes(): List<MeshNode> {
-    return listOf(
-        MeshNode("n1", "MR", 0.72f, 0.28f, 1, ConnectionType.BLE, -42, 2),
-        MeshNode("n2", "LG", 0.25f, 0.22f, 1, ConnectionType.WIFI_AWARE, -61, 8),
-        MeshNode("n3", "JT", 0.78f, 0.68f, 2, ConnectionType.RELAY, -72, 45),
-        MeshNode("n4", "AP", 0.2f, 0.72f, 2, ConnectionType.RELAY, -79, 90),
-        MeshNode("n5", null, 0.55f, 0.85f, 3, ConnectionType.RELAY, -86, 180)
-    )
-}
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PulsoScreen(
@@ -54,6 +45,12 @@ fun PulsoScreen(
 ) {
     var selectedTab by remember { mutableStateOf(0) }
     val localIp = remember { NetworkService.getLocalIpAddress() }
+
+    // Datos reales desde PulsoRepository
+    val isOnline by PulsoRepository.isOnline.collectAsState()
+    val meshNodes by PulsoRepository.meshNodes.collectAsState()
+    val connectedPeers by PulsoRepository.connectedPeersCount.collectAsState()
+    val relayedMessages by PulsoRepository.relayedMessagesCount.collectAsState()
 
     Column(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         Surface(
@@ -66,6 +63,8 @@ fun PulsoScreen(
                     modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
+                    // Indicador de modo (normal vs mesh)
+                    val dotColor = if (isOnline) MaterialTheme.colorScheme.primary else Color(0xFFFFD700)
                     val infiniteTransition = rememberInfiniteTransition(label = "dot")
                     val alpha by infiniteTransition.animateFloat(
                         initialValue = 1f, targetValue = 0.2f,
@@ -73,12 +72,18 @@ fun PulsoScreen(
                     )
                     Box(
                         modifier = Modifier.size(8.dp).clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.primary.copy(alpha = alpha))
+                            .background(dotColor.copy(alpha = alpha))
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text("Pulso de la Red", style = MaterialTheme.typography.titleMedium)
                     Spacer(modifier = Modifier.weight(1f))
-                    Text("IP: $localIp", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
+                    // Indicador de modo
+                    Text(
+                        if (isOnline) "📶 Normal" else "🕸️ Mesh",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = if (isOnline) MaterialTheme.colorScheme.primary else Color(0xFFFFD700)
+                    )
+                    Text(" · IP: $localIp", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
                 }
                 TabRow(selectedTabIndex = selectedTab) {
                     Tab(selected = selectedTab == 0, onClick = { selectedTab = 0 }, text = { Text("PULSO") })
@@ -90,8 +95,8 @@ fun PulsoScreen(
         }
 
         when (selectedTab) {
-            0 -> TabPulso()
-            1 -> TabNodos()
+            0 -> TabPulso(meshNodes, connectedPeers, relayedMessages, isOnline)
+            1 -> TabNodos(meshNodes)
             2 -> TabLogros()
             3 -> TabModos()
         }
@@ -99,21 +104,25 @@ fun PulsoScreen(
 }
 
 @Composable
-fun TabPulso() {
-    val nodes = remember { getDiscoveredNodes() }
+fun TabPulso(
+    nodes: List<MeshNode>,
+    connectedPeers: Int,
+    relayedMessages: Int,
+    isOnline: Boolean
+) {
     LazyColumn(
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         item {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                StatCard(value = "${nodes.size}", label = "Nodos", delta = "+2 hoy", deltaPositive = true, modifier = Modifier.weight(1f))
-                StatCard(value = "3", label = "Saltos máx.", delta = "~900m", deltaPositive = null, modifier = Modifier.weight(1f))
-                StatCard(value = "148", label = "Msgs relay", delta = "+23/h", deltaPositive = true, modifier = Modifier.weight(1f))
+                StatCard(value = "${nodes.size}", label = "Nodos BLE", delta = "+${nodes.size} visibles", deltaPositive = true, modifier = Modifier.weight(1f))
+                StatCard(value = "$connectedPeers", label = "Conectados", delta = "TCP activos", deltaPositive = null, modifier = Modifier.weight(1f))
+                StatCard(value = "$relayedMessages", label = "Msgs relay", delta = "desde inicio", deltaPositive = true, modifier = Modifier.weight(1f))
             }
         }
         item {
-            GlobeCard(totalUsers = 1847)
+            GlobeCard(totalUsers = nodes.size + connectedPeers)
         }
         item {
             Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
@@ -169,7 +178,7 @@ fun GlobeCard(totalUsers: Int) {
                     color = MaterialTheme.colorScheme.primary
                 )
                 Text(
-                    "$totalUsers conectados",
+                    "$totalUsers nodos visibles",
                     style = MaterialTheme.typography.headlineSmall,
                     color = MaterialTheme.colorScheme.onSurface
                 )
@@ -202,8 +211,7 @@ fun UptimeBanner() {
 }
 
 @Composable
-fun TabNodos() {
-    val nodes = remember { getDiscoveredNodes() }
+fun TabNodos(nodes: List<MeshNode>) {
     LazyColumn(contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         item { Text("NODOS ALCANZABLES AHORA", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)) }
         items(nodes) { node -> NodeCard(node) }
