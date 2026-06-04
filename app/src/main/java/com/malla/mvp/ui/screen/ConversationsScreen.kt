@@ -54,12 +54,9 @@ fun ConversationsScreen(
         if (conversationDao != null) {
             conversationDao.getAllVisibleConversations().collect { list ->
                 conversations = list
-                if (list.isEmpty()) {
-                    sampleConversations.forEach { conversationDao.insertConversation(it) }
-                }
             }
         } else {
-            conversations = sampleConversations
+            conversations = emptyList()
         }
     }
 
