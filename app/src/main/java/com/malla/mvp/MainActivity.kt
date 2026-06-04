@@ -278,7 +278,7 @@ fun MainApp(
                     onChatClicked = { convId, name -> currentContactName = name; onConversationChanged(convId) },
                     onProfileClicked = onProfileClicked
                 )
-                1 -> NodesHeatmapScreen(onNavigateToQrScanner = onNavigateToQrScanner, onConnectToPeer = onConnectToPeer)
+                1 -> PulsoScreen(onNavigateToQrScanner = onNavigateToQrScanner, onConnectToPeer = onConnectToPeer)
                 2 -> PerfilScreen()
             }
         }
