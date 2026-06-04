@@ -1,20 +1,20 @@
 -- Merging decision tree log ---
 provider#androidx.core.content.FileProvider
-INJECTED from /workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:43:9-51:20
+INJECTED from /workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:44:9-52:20
 	android:grantUriPermissions
-		ADDED from /workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:47:13-47
+		ADDED from /workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:48:13-47
 	android:authorities
 		INJECTED from /workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml
-		ADDED from /workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:45:13-64
+		ADDED from /workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:46:13-64
 	android:exported
-		ADDED from /workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:46:13-37
+		ADDED from /workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:47:13-37
 	android:name
-		ADDED from /workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:44:13-62
+		ADDED from /workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:45:13-62
 manifest
-ADDED from /workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:2:1-53:12
-INJECTED from /workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:2:1-53:12
-INJECTED from /workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:2:1-53:12
-INJECTED from /workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:2:1-53:12
+ADDED from /workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:2:1-54:12
+INJECTED from /workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:2:1-54:12
+INJECTED from /workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:2:1-54:12
+INJECTED from /workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:2:1-54:12
 MERGED from [androidx.compose.material3:material3-android:1.2.0] /home/codespace/.gradle/caches/transforms-3/8cfdf5cbc71dff4d1bc740f4b153dc35/transformed/material3-release/AndroidManifest.xml:17:1-22:12
 MERGED from [io.coil-kt:coil-compose:2.6.0] /home/codespace/.gradle/caches/transforms-3/8afff82b4a94e135216c1e823847eb09/transformed/coil-compose-2.6.0/AndroidManifest.xml:2:1-7:12
 MERGED from [io.coil-kt:coil-compose-base:2.6.0] /home/codespace/.gradle/caches/transforms-3/b381845d15a13d89ba2d9d24d5f588c5/transformed/coil-compose-base-2.6.0/AndroidManifest.xml:2:1-7:12
@@ -170,8 +170,8 @@ ADDED from /workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:22:5-87
 	android:name
 		ADDED from /workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:22:22-84
 application
-ADDED from /workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:23:5-52:19
-INJECTED from /workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:23:5-52:19
+ADDED from /workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:23:5-53:19
+INJECTED from /workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:23:5-53:19
 MERGED from [androidx.compose.ui:ui-tooling-android:1.6.1] /home/codespace/.gradle/caches/transforms-3/115e372b6b942b8ddd4fa4d11b75899a/transformed/ui-tooling-release/AndroidManifest.xml:22:5-26:19
 MERGED from [androidx.compose.ui:ui-tooling-android:1.6.1] /home/codespace/.gradle/caches/transforms-3/115e372b6b942b8ddd4fa4d11b75899a/transformed/ui-tooling-release/AndroidManifest.xml:22:5-26:19
 MERGED from [androidx.compose.ui:ui-test-manifest:1.6.1] /home/codespace/.gradle/caches/transforms-3/59e231d7ea8189a1873ee39594648a68/transformed/ui-test-manifest-1.6.1/AndroidManifest.xml:22:5-26:19
@@ -195,49 +195,51 @@ MERGED from [androidx.startup:startup-runtime:1.1.1] /home/codespace/.gradle/cac
 	android:appComponentFactory
 		ADDED from [androidx.core:core:1.12.0] /home/codespace/.gradle/caches/transforms-3/01be542a8a7642ecba403b94caa2bdf6/transformed/core-1.12.0/AndroidManifest.xml:28:18-86
 	android:supportsRtl
-		ADDED from /workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:27:9-35
+		ADDED from /workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:28:9-35
 	android:label
-		ADDED from /workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:26:9-41
+		ADDED from /workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:27:9-41
+	android:roundIcon
+		ADDED from /workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:26:9-48
 	android:icon
-		ADDED from /workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:25:9-56
+		ADDED from /workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:25:9-43
 	android:allowBackup
 		ADDED from /workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:24:9-35
 	android:theme
-		ADDED from /workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:28:9-46
+		ADDED from /workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:29:9-46
 activity#com.malla.mvp.MainActivity
-ADDED from /workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:29:9-38:20
+ADDED from /workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:30:9-39:20
 	android:windowSoftInputMode
-		ADDED from /workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:32:13-55
+		ADDED from /workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:33:13-55
 	android:exported
-		ADDED from /workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:31:13-36
+		ADDED from /workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:32:13-36
 	android:theme
-		ADDED from /workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:33:13-50
+		ADDED from /workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:34:13-50
 	android:name
-		ADDED from /workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:30:13-41
+		ADDED from /workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:31:13-41
 intent-filter#action:name:android.intent.action.MAIN+category:name:android.intent.category.LAUNCHER
-ADDED from /workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:34:13-37:29
+ADDED from /workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:35:13-38:29
 action#android.intent.action.MAIN
-ADDED from /workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:35:17-69
+ADDED from /workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:36:17-69
 	android:name
-		ADDED from /workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:35:25-66
+		ADDED from /workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:36:25-66
 category#android.intent.category.LAUNCHER
-ADDED from /workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:36:17-77
+ADDED from /workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:37:17-77
 	android:name
-		ADDED from /workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:36:27-74
+		ADDED from /workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:37:27-74
 service#com.malla.mvp.service.MeshChatService
-ADDED from /workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:39:9-42:40
+ADDED from /workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:40:9-43:40
 	android:exported
-		ADDED from /workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:42:13-37
+		ADDED from /workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:43:13-37
 	android:foregroundServiceType
-		ADDED from /workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:41:13-53
+		ADDED from /workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:42:13-53
 	android:name
-		ADDED from /workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:40:13-52
+		ADDED from /workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:41:13-52
 meta-data#android.support.FILE_PROVIDER_PATHS
-ADDED from /workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:48:13-50:54
+ADDED from /workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:49:13-51:54
 	android:resource
-		ADDED from /workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:50:17-51
+		ADDED from /workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:51:17-51
 	android:name
-		ADDED from /workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:49:17-67
+		ADDED from /workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:50:17-67
 uses-sdk
 INJECTED from /workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml reason: use-sdk injection requested
 INJECTED from /workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml

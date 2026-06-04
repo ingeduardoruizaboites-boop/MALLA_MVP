@@ -2,7 +2,10 @@ R_DEF: Internal format may change without notice
 local
 color background_color
 color foreground_color
+drawable ic_launcher_background
 drawable ic_launcher_foreground
+drawable ic_launcher_logo
+mipmap ic_launcher
 raw zumbido
 string app_name
 style Theme.MALLAMVP
