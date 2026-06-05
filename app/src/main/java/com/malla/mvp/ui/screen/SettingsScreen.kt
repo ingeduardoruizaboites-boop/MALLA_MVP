@@ -1,16 +1,24 @@
 package com.malla.mvp.ui.screen
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.malla.mvp.ui.components.ThemeSelectorCard
+import com.malla.mvp.ui.settings.AccessibilitySettings
 import com.malla.mvp.ui.theme.MallaColorScheme
 
 @Composable
@@ -18,6 +26,8 @@ fun SettingsScreen(
     currentScheme: MallaColorScheme,
     onSchemeSelected: (MallaColorScheme) -> Unit
 ) {
+    val context = LocalContext.current
+
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
@@ -59,8 +69,43 @@ fun SettingsScreen(
         // Chats
         item {
             SettingsCard(title = "Chats", icon = Icons.Filled.Chat) {
-                Text("Fondo de pantalla")
-                Text("Tamaño de fuente")
+                val bubbleColors = listOf(
+                    null to "Tema",
+                    Color(0xFF00E5FF) to "Cyan",
+                    Color(0xFF4CAF50) to "Verde",
+                    Color(0xFFFF7043) to "Naranja",
+                    Color(0xFF9575CD) to "Morado",
+                    Color(0xFF78909C) to "Gris"
+                )
+                Text("Color de burbujas propias", style = MaterialTheme.typography.labelMedium)
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    bubbleColors.forEach { (color, _) ->
+                        val isSelected = AccessibilitySettings.ownBubbleColor.value == color
+                        Box(
+                            modifier = Modifier
+                                .size(32.dp)
+                                .clip(CircleShape)
+                                .background(color ?: MaterialTheme.colorScheme.primaryContainer)
+                                .then(if (isSelected) Modifier.border(2.dp, MaterialTheme.colorScheme.onSurface, CircleShape) else Modifier)
+                                .clickable { AccessibilitySettings.ownBubbleColor.value = color; AccessibilitySettings.save(context) }
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+                Text("Color de burbujas del contacto", style = MaterialTheme.typography.labelMedium)
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    bubbleColors.forEach { (color, _) ->
+                        val isSelected = AccessibilitySettings.otherBubbleColor.value == color
+                        Box(
+                            modifier = Modifier
+                                .size(32.dp)
+                                .clip(CircleShape)
+                                .background(color ?: MaterialTheme.colorScheme.secondaryContainer)
+                                .then(if (isSelected) Modifier.border(2.dp, MaterialTheme.colorScheme.onSurface, CircleShape) else Modifier)
+                                .clickable { AccessibilitySettings.otherBubbleColor.value = color; AccessibilitySettings.save(context) }
+                        )
+                    }
+                }
             }
         }
 

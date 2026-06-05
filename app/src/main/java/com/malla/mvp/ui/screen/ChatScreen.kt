@@ -828,8 +828,14 @@ fun MessageBubble(
     onForward: (MessageEntity) -> Unit = {}
 ) {
     val context = LocalContext.current
-    val color = if (message.isOwn) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.secondaryContainer
-    val textColor = if (message.isOwn) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSecondaryContainer
+    val ownBubble = AccessibilitySettings.ownBubbleColor.value
+    val otherBubble = AccessibilitySettings.otherBubbleColor.value
+    val color = if (message.isOwn) ownBubble ?: MaterialTheme.colorScheme.primaryContainer else otherBubble ?: MaterialTheme.colorScheme.secondaryContainer
+    val textColor = if (message.isOwn) {
+        if (ownBubble != null) Color.White else MaterialTheme.colorScheme.onPrimaryContainer
+    } else {
+        if (otherBubble != null) Color.White else MaterialTheme.colorScheme.onSecondaryContainer
+    }
     val topPadding = if (isGrouped) 2.dp else 12.dp
     val currentStyle = AccessibilitySettings.bubbleStyle.value
     val shape = when (currentStyle) {
