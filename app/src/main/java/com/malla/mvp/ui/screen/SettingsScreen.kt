@@ -8,14 +8,15 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
+import com.malla.mvp.ui.components.ThemeSelectorCard
+import com.malla.mvp.ui.theme.MallaColorScheme
 
 @Composable
 fun SettingsScreen(
-    currentColor: Color,
-    onColorSelected: (Color) -> Unit
+    currentScheme: MallaColorScheme,
+    onSchemeSelected: (MallaColorScheme) -> Unit
 ) {
     LazyColumn(
         modifier = Modifier
@@ -35,7 +36,6 @@ fun SettingsScreen(
         // Perfil
         item {
             SettingsCard(title = "Perfil", icon = Icons.Filled.Person) {
-                // Contenido del perfil (placeholder)
                 Text("Nombre: Usuario Malla")
                 Text("Estado: Conectado")
             }
@@ -49,7 +49,6 @@ fun SettingsScreen(
                     Text("Servidor TCP", modifier = Modifier.weight(1f))
                     Switch(checked = serverEnabled, onCheckedChange = { serverEnabled = it })
                 }
-                // Más opciones mesh...
                 Text("Intervalo de escaneo: 30s / 5min")
                 TextButton(onClick = { /* Navegar a diagnóstico */ }) {
                     Text("Diagnóstico de red")
@@ -79,20 +78,10 @@ fun SettingsScreen(
         // Tema
         item {
             SettingsCard(title = "Tema", icon = Icons.Filled.Palette) {
-                val availableThemes = listOf(
-                    "Cian neón" to Color(0xFF00FFFF),
-                    "Magenta neón" to Color(0xFFFF00FF),
-                    "Verde neón" to Color(0xFF39FF14),
-                    "Naranja neón" to Color(0xFFFF6600),
-                    "Morado neón" to Color(0xFFBF00FF),
-                    "Blanco" to Color(0xFFFFFFFF)
+                ThemeSelectorCard(
+                    currentScheme = currentScheme,
+                    onSchemeSelected = onSchemeSelected
                 )
-                availableThemes.forEach { (name, color) ->
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        RadioButton(selected = currentColor == color, onClick = { onColorSelected(color) })
-                        Text(name)
-                    }
-                }
             }
         }
 

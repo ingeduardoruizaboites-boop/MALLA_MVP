@@ -20,7 +20,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -34,7 +33,9 @@ import com.malla.mvp.ui.components.MainTopBar
 import com.malla.mvp.ui.components.TutorialOverlay
 import com.malla.mvp.ui.screen.*
 import com.malla.mvp.ui.settings.AccessibilitySettings
+import com.malla.mvp.ui.theme.MallaColorScheme
 import com.malla.mvp.ui.theme.MallaTheme
+import com.malla.mvp.viewmodel.AppThemeState
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -48,6 +49,9 @@ class MainActivity : ComponentActivity() {
         ConnectivityMonitor.start(application)
         insertSampleStories()
 
+        // Inicializar el estado del tema
+        val appThemeState = AppThemeState.create(this)
+
         val prefs = try {
             getSharedPreferences("malla_prefs", Context.MODE_PRIVATE)
         } catch (e: Exception) { null }
@@ -60,14 +64,15 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             var appState by remember { mutableStateOf(AppState.Splash) }
-            var primaryColor by remember { mutableStateOf(Color(0xFF26C6DA)) }
-            var userSelectedColor by remember { mutableStateOf(Color(0xFF26C6DA)) }
             var showQrScanner by remember { mutableStateOf(false) }
             var currentConversationId by remember { mutableStateOf<String?>(null) }
             var selectedContact by remember { mutableStateOf<String?>(null) }
             var showSettings by remember { mutableStateOf(false) }
             var showTutorial by remember { mutableStateOf(false) } 
             val context = LocalContext.current
+
+            // Tema efectivo (cambia automáticamente a OLED en modo mesh)
+            val effectiveScheme by appThemeState.currentTheme.collectAsState()
 
             val isOnline by ConnectivityMonitor.isOnline.collectAsState()
             LaunchedEffect(isOnline) {
@@ -86,10 +91,6 @@ class MainActivity : ComponentActivity() {
                 }
             }
 
-            LaunchedEffect(primaryColor) {
-                if (primaryColor != Color(0xFF2E7D32)) userSelectedColor = primaryColor
-            }
-
             LaunchedEffect(appState) {
                 if (appState == AppState.Main && !isFirstLaunch) {
                     val tutorialPrefs = try {
@@ -104,7 +105,7 @@ class MainActivity : ComponentActivity() {
                 }
             }
 
-            MallaTheme(primaryColor = primaryColor, fontScale = AccessibilitySettings.fontScale.floatValue) {
+            MallaTheme(colorScheme = effectiveScheme, fontScale = AccessibilitySettings.fontScale.floatValue) {
                 when (appState) {
                     AppState.Splash -> SplashContent {
                         if (isFirstLaunch) {
@@ -135,27 +136,24 @@ class MainActivity : ComponentActivity() {
                                 onBack = { showQrScanner = false }
                             )
                         } else if (showSettings) {
-                            SettingsScreenWrapper(primaryColor = primaryColor, onChangeColor = { selectedColor ->
-                                primaryColor = selectedColor; userSelectedColor = selectedColor
-                            }, onBack = { showSettings = false })
+                            SettingsScreenWrapper(
+                                currentScheme = effectiveScheme,
+                                onSchemeSelected = { scheme -> appThemeState.selectScheme(scheme) },
+                                onBack = { showSettings = false }
+                            )
                         } else if (selectedContact != null) {
                             ContactProfileScreen(contactName = selectedContact!!, onBack = { selectedContact = null })
                         } else {
                             MainApp(
                                 isMeshMode = !isOnline,
-                                primaryColor = primaryColor,
-                                userSelectedColor = userSelectedColor,
-                                onChangeColor = { newColor ->
-                                    primaryColor = newColor; userSelectedColor = newColor
-                                },
-                                onNavigateToQrScanner = { showQrScanner = true },
-                                onConnectToPeer = { ip ->
-                                    connectToPeerAndCreateConversation(ip) { convId -> currentConversationId = convId }
-                                },
                                 currentConversationId = currentConversationId,
                                 onConversationChanged = { convId -> currentConversationId = convId },
                                 onSettingsClick = { showSettings = true },
                                 onProfileClicked = { contactName -> selectedContact = contactName },
+                                onNavigateToQrScanner = { showQrScanner = true },
+                                onConnectToPeer = { ip ->
+                                    connectToPeerAndCreateConversation(ip) { convId -> currentConversationId = convId }
+                                },
                                 db = database
                             )
                         }
@@ -195,7 +193,11 @@ class MainActivity : ComponentActivity() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SettingsScreenWrapper(primaryColor: Color, onChangeColor: (Color) -> Unit, onBack: () -> Unit) {
+fun SettingsScreenWrapper(
+    currentScheme: MallaColorScheme,
+    onSchemeSelected: (MallaColorScheme) -> Unit,
+    onBack: () -> Unit
+) {
     Scaffold(
         topBar = {
             TopAppBar(
@@ -204,7 +206,14 @@ fun SettingsScreenWrapper(primaryColor: Color, onChangeColor: (Color) -> Unit, o
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surface, titleContentColor = MaterialTheme.colorScheme.onSurface)
             )
         }
-    ) { padding -> Box(modifier = Modifier.padding(padding)) { SettingsScreen(currentColor = primaryColor, onColorSelected = onChangeColor) } }
+    ) { padding ->
+        Box(modifier = Modifier.padding(padding)) {
+            SettingsScreen(
+                currentScheme = currentScheme,
+                onSchemeSelected = onSchemeSelected
+            )
+        }
+    }
 }
 
 @Composable
@@ -236,22 +245,17 @@ fun SplashContent(onFinished: () -> Unit) {
 @Composable
 fun MainApp(
     isMeshMode: Boolean,
-    primaryColor: Color,
-    userSelectedColor: Color,
-    onChangeColor: (Color) -> Unit,
-    onNavigateToQrScanner: () -> Unit,
-    onConnectToPeer: (String) -> Unit,
     currentConversationId: String?,
     onConversationChanged: (String?) -> Unit,
     onSettingsClick: () -> Unit,
     onProfileClicked: (String) -> Unit,
-    db: AppDatabase?  // Nuevo parámetro
+    onNavigateToQrScanner: () -> Unit,
+    onConnectToPeer: (String) -> Unit,
+    db: AppDatabase?
 ) {
     var selectedTab by remember { mutableStateOf(0) }
     var currentContactName by remember { mutableStateOf("Chat") }
-    LaunchedEffect(selectedTab) {
-        if (selectedTab == 1) onChangeColor(Color(0xFF2E7D32)) else onChangeColor(userSelectedColor)
-    }
+
     if (currentConversationId != null) {
         ChatScreen(
             conversationId = currentConversationId,
