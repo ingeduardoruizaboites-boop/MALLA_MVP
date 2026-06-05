@@ -1,5 +1,6 @@
 package com.malla.mvp.ui.screen
 
+import android.bluetooth.BluetoothDevice
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
@@ -14,15 +15,16 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import kotlin.math.roundToInt
 import androidx.compose.ui.unit.sp
 import com.malla.mvp.data.repository.PulsoRepository
+import com.malla.mvp.network.BleManager
 import com.malla.mvp.network.NetworkService
+import kotlinx.coroutines.launch
+import kotlin.math.roundToInt
 
 data class MeshNode(
     val id: String,
@@ -32,7 +34,8 @@ data class MeshNode(
     val hopCount: Int,
     val connectionType: ConnectionType,
     val signalStrength: Int,
-    val latencyMs: Int
+    val latencyMs: Int,
+    val bluetoothDevice: BluetoothDevice? = null
 )
 
 enum class ConnectionType { BLE, WIFI_AWARE, RELAY }
@@ -46,7 +49,6 @@ fun PulsoScreen(
     var selectedTab by remember { mutableStateOf(0) }
     val localIp = remember { NetworkService.getLocalIpAddress() }
 
-    // Datos reales desde PulsoRepository
     val isOnline by PulsoRepository.isOnline.collectAsState()
     val meshNodes by PulsoRepository.meshNodes.collectAsState()
     val connectedPeers by PulsoRepository.connectedPeersCount.collectAsState()
@@ -63,7 +65,6 @@ fun PulsoScreen(
                     modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // Indicador de modo (normal vs mesh)
                     val dotColor = if (isOnline) MaterialTheme.colorScheme.primary else Color(0xFFFFD700)
                     val infiniteTransition = rememberInfiniteTransition(label = "dot")
                     val alpha by infiniteTransition.animateFloat(
@@ -77,7 +78,6 @@ fun PulsoScreen(
                     Spacer(modifier = Modifier.width(8.dp))
                     Text("Pulso de la Red", style = MaterialTheme.typography.titleMedium)
                     Spacer(modifier = Modifier.weight(1f))
-                    // Indicador de modo
                     Text(
                         if (isOnline) "📶 Normal" else "🕸️ Mesh",
                         style = MaterialTheme.typography.labelSmall,
@@ -96,7 +96,7 @@ fun PulsoScreen(
 
         when (selectedTab) {
             0 -> TabPulso(meshNodes, connectedPeers, relayedMessages, isOnline)
-            1 -> TabNodos(meshNodes)
+            1 -> TabNodos(meshNodes, onConnectToPeer)
             2 -> TabLogros()
             3 -> TabModos()
         }
@@ -211,15 +211,16 @@ fun UptimeBanner() {
 }
 
 @Composable
-fun TabNodos(nodes: List<MeshNode>) {
+fun TabNodos(nodes: List<MeshNode>, onConnectToPeer: (String) -> Unit) {
+    val scope = rememberCoroutineScope()
     LazyColumn(contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         item { Text("NODOS ALCANZABLES AHORA", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)) }
-        items(nodes) { node -> NodeCard(node) }
+        items(nodes) { node -> NodeCard(node = node, onConnectToPeer = onConnectToPeer, scope = scope) }
     }
 }
 
 @Composable
-fun NodeCard(node: MeshNode) {
+fun NodeCard(node: MeshNode, onConnectToPeer: (String) -> Unit, scope: kotlinx.coroutines.CoroutineScope) {
     val typeLabel = when (node.connectionType) {
         ConnectionType.BLE -> "BLE directo"
         ConnectionType.WIFI_AWARE -> "Wi-Fi Aware"
@@ -242,6 +243,16 @@ fun NodeCard(node: MeshNode) {
                     style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f))
             }
             SignalBars(strength = node.signalStrength, color = typeColor)
+            IconButton(onClick = {
+                scope.launch {
+                    val ip = BleManager.connectAndReadIp(node.bluetoothDevice!!)
+                    if (ip != null) {
+                        onConnectToPeer(ip)
+                    }
+                }
+            }) {
+                Icon(Icons.Filled.Link, "Conectar", tint = MaterialTheme.colorScheme.primary)
+            }
         }
     }
 }

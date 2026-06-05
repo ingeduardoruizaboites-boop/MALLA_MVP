@@ -24,7 +24,8 @@ object PulsoRepository {
                     hopCount = 1,
                     connectionType = ConnectionType.BLE,
                     signalStrength = -50 + (index % 4) * 10,
-                    latencyMs = 2 + (index % 2) * 5
+                    latencyMs = 2 + (index % 2) * 5,
+                    bluetoothDevice = device
                 )
             }
         }.stateIn(
