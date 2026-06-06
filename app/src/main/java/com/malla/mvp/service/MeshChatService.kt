@@ -18,7 +18,7 @@ class MeshChatService : Service() {
 
     override fun onCreate() {
         super.onCreate()
-        Log.d(TAG, "Servicio mesh creado – delegando control a PulseManager")
+        Log.d(TAG, "[SVC:LIFE] Servicio mesh CREADO – iniciando PulseManager, GATT, MessageBridge")
 
         // Iniciar el orquestador central (maneja BLE, intervalos, decisiones)
         PulseManager.initialize(this)
@@ -31,7 +31,7 @@ class MeshChatService : Service() {
     }
 
     override fun onDestroy() {
-        Log.d(TAG, "Servicio mesh destruido – apagando PulseManager")
+        Log.d(TAG, "[SVC:LIFE] Servicio mesh DESTRUIDO – apagando todos los servicios")
 
         // Apagar el orquestador central
         PulseManager.shutdown()
