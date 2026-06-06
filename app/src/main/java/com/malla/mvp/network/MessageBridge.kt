@@ -9,6 +9,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import java.util.UUID
 import com.malla.mvp.data.repository.PulsoRepository
+import com.malla.mvp.core.engine.LogBuffer
 
 /**
  * Puente entre la red mesh y la base de datos local.
@@ -58,6 +59,7 @@ object MessageBridge {
                     )
                     conversationDao.insertConversation(newConv)
                     Log.d(TAG, "[MB:CONV] Nueva conversación creada para $convId")
+                LogBuffer.add("MB", "Nueva conversación: $convId")
                 } else {
                     conversationDao.updateLastMessage(convId, meshMessage.content.take(30), meshMessage.timestamp)
                 }
@@ -80,6 +82,7 @@ object MessageBridge {
                 com.malla.mvp.data.repository.PulsoRepository.relayedMessagesCount.value++
                 _newMessageCount.value++
                 Log.d(TAG, "[MB:MSG] Mensaje guardado en $convId: ${meshMessage.content.take(30)}...")
+                LogBuffer.add("MB", "Recibido de $convId: ${meshMessage.content.take(50)}")
             }
         }
     }

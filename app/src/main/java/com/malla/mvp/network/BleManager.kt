@@ -1,4 +1,5 @@
 package com.malla.mvp.network
+import com.malla.mvp.core.engine.LogBuffer
 
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
@@ -170,6 +171,7 @@ object BleManager {
                         val bytes = characteristic?.value
                         ipResult = bytes?.toString(Charsets.UTF_8)
                         Log.d(TAG, "[BLE:GATT] IP leída de ${device.address}: $ipResult")
+                LogBuffer.add("GATT", "IP obtenida: ${ipResult}")
                     } else {
                         Log.w(TAG, "[BLE:GATT] Fallo al leer característica de IP: status=$status")
                     }
@@ -195,6 +197,7 @@ object BleManager {
             val device = result.device
             val name = device.name ?: device.address
             Log.d(TAG, "[BLE:MALLA] Nodo MALLA detectado: $name")
+                LogBuffer.add("BLE", "Nodo detectado: ${name}")
             _foundDevices.value = _foundDevices.value + name
             if (!_foundBluetoothDevices.value.contains(device)) {
                 _foundBluetoothDevices.value = _foundBluetoothDevices.value + device

@@ -1,4 +1,5 @@
 package com.malla.mvp.network
+import com.malla.mvp.core.engine.LogBuffer
 
 import android.bluetooth.BluetoothDevice
 import android.util.Log
@@ -77,10 +78,12 @@ object MeshConnector {
 
             if (ip == null) {
                 Log.w(TAG, "[MC:ERR] MC-E001: No se pudo obtener IP de $address")
+            LogBuffer.add("MC", "Error GATT: $address")
                 return
             }
             if (ip.isBlank() || ip == "Desconocida") {
                 Log.w(TAG, "[MC:ERR] MC-E002: IP inválida obtenida de $address: $ip")
+                LogBuffer.add("MC", "IP inválida: '$address' -> $ip")
                 return
             }
 
@@ -89,6 +92,7 @@ object MeshConnector {
             // 2. Verificar si ya está conectado
             if (connectedIps.contains(ip)) {
                 Log.d(TAG, "[MC:TCP] MC-E004: Ya conectado a $ip, ignorando")
+                LogBuffer.add("MC", "Omitido (ya conectado): $ip")
                 return
             }
 
@@ -99,6 +103,7 @@ object MeshConnector {
             // Registrar IP como conectada
             connectedIps.add(ip)
             Log.d(TAG, "[MC:TCP] Conexión iniciada a $ip")
+            LogBuffer.add("MC", "Conexión TCP iniciada a $ip")
 
         } catch (e: Exception) {
             Log.e(TAG, "[MC:ERR] MC-E003: Error procesando dispositivo $address: ${e.message}", e)

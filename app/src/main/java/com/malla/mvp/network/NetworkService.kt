@@ -1,4 +1,5 @@
 package com.malla.mvp.network
+import com.malla.mvp.core.engine.LogBuffer
 
 import com.malla.mvp.crypto.CryptoEngine
 import kotlinx.coroutines.*
@@ -111,6 +112,7 @@ object NetworkService {
                 val peerPublicKey = CryptoEngine.base64ToPublicKey(peerPubKeyBase64)
                 secretKey = CryptoEngine.deriveSharedSecret(localKeyPair.private, peerPublicKey)
                 Log.d(TAG, "[NS:HS] Handshake completado con $clientId")
+            LogBuffer.add("NS", "Handshake ECDH OK: ${clientId}")
                 _connectedClientsCount.value = clients.size
 
                 serverScope.launch {
@@ -142,6 +144,7 @@ object NetworkService {
                         quotedMessageContent = quoteContent
                     )
                     Log.d(TAG, "[NS:MSG] Mensaje recibido de $clientId (tipo=$type, ${encrypted.size} bytes)")
+            LogBuffer.add("NS", "Mensaje recibido: tipo=${type}")
                     _messages.emit(message)
                 }
             } catch (e: Exception) {

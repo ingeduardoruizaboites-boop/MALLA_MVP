@@ -27,6 +27,7 @@ fun SettingsScreen(
     onSchemeSelected: (MallaColorScheme) -> Unit
 ) {
     val context = LocalContext.current
+    var showDiagnostic by remember { mutableStateOf(false) }
 
     LazyColumn(
         modifier = Modifier
@@ -60,7 +61,7 @@ fun SettingsScreen(
                     Switch(checked = serverEnabled, onCheckedChange = { serverEnabled = it })
                 }
                 Text("Intervalo de escaneo: 30s / 5min")
-                TextButton(onClick = { /* Navegar a diagnóstico */ }) {
+                TextButton(onClick = { showDiagnostic = true }) {
                     Text("Diagnóstico de red")
                 }
             }
@@ -162,6 +163,22 @@ fun SettingsScreen(
                 }
             }
         }
+    }
+
+    // Diálogo de diagnóstico en vivo
+    if (showDiagnostic) {
+        AlertDialog(
+            onDismissRequest = { showDiagnostic = false },
+            title = { Text("Diagnóstico en vivo") },
+            text = {
+                DiagnosticScreen()
+            },
+            confirmButton = {
+                TextButton(onClick = { showDiagnostic = false }) {
+                    Text("Cerrar")
+                }
+            }
+        )
     }
 }
 
