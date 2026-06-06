@@ -37,12 +37,13 @@ private val sampleConversations = listOf(
 @Composable
 fun ConversationsScreen(
     onChatClicked: (String, String) -> Unit,
-    onProfileClicked: (String) -> Unit
+    onProfileClicked: (String) -> Unit, onNavigateToQrScanner: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val db = remember { AppDatabase.getInstance(context) }
     val conversationDao = remember { db?.conversationDao() }
     var conversations by remember { mutableStateOf<List<ConversationEntity>>(emptyList()) }
+    val storyDao = remember { db?.storyDao() }
     var searchQuery by remember { mutableStateOf("") }
     var selectedTab by remember { mutableStateOf(0) }
     var showStoryViewer by remember { mutableStateOf(false) }
@@ -214,8 +215,8 @@ fun ConversationsScreen(
                 contentColor = MaterialTheme.colorScheme.onPrimary
             ) { Icon(Icons.Filled.Add, "Nuevo") }
             DropdownMenu(expanded = showFabMenu, onDismissRequest = { showFabMenu = false }) {
-                DropdownMenuItem(text = { Text("Agregar usuario") }, onClick = { showFabMenu = false })
-                DropdownMenuItem(text = { Text("Nueva historia") }, onClick = { showFabMenu = false })
+                DropdownMenuItem(text = { Text("Agregar usuario") }, onClick = { showFabMenu = false; onNavigateToQrScanner() })
+                DropdownMenuItem(text = { Text("Nueva historia") }, onClick = { showFabMenu = false; scope.launch { storyDao?.insertStory(StoryEntity(id = UUID.randomUUID().toString(), userId = "self", imageUri = "#FF00FF", timestamp = System.currentTimeMillis())) } })
                 DropdownMenuItem(text = { Text("Nuevo grupo") }, onClick = {
                     showFabMenu = false
                     // Crear grupo simulado

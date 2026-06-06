@@ -277,6 +277,8 @@ fun MainApp(
     db: AppDatabase?
 ) {
     var selectedTab by remember { mutableStateOf(0) }
+    var showCallScreen by remember { mutableStateOf(false) }
+    var callType by remember { mutableStateOf("voice") }
     var currentContactName by remember { mutableStateOf("Chat") }
     var lastBackPressTime by remember { mutableStateOf(0L) }
     val backContext = LocalContext.current
@@ -292,10 +294,20 @@ fun MainApp(
     }
 
     if (currentConversationId != null) {
+        if (showCallScreen) {
+            CallScreen(
+                contactName = currentContactName,
+                callType = callType,
+                onEndCall = { showCallScreen = false }
+            )
+            return
+        }
         ChatScreen(
             conversationId = currentConversationId,
             contactName = currentContactName,
             onBack = { onConversationChanged(null) },
+            onVoiceCallClick = { callType = "voice"; showCallScreen = true },
+            onVideoCallClick = { callType = "video"; showCallScreen = true },
             isMeshMode = isMeshMode
         )
         return
