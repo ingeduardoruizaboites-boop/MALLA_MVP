@@ -14,6 +14,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -48,12 +49,9 @@ fun PulsoScreen(
     var selectedTab by remember { mutableStateOf(0) }
     val localIp = remember { NetworkService.getLocalIpAddress() }
 
-    // Datos reales de red
     val bleDevices by BleManager.foundDevices.collectAsState()
     val bleBluetoothDevices by BleManager.foundBluetoothDevices.collectAsState()
     val tcpPeers by NetworkService.connectedClientsCount.collectAsState()
-
-    // Para el advertising BLE (no expuesto directamente, usamos un estado básico)
     val isBleAdvertising = remember { BleManager.getAdapter()?.bluetoothLeAdvertiser != null }
 
     Column(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
@@ -78,7 +76,7 @@ fun PulsoScreen(
                             .background(dotColor.copy(alpha = alpha))
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Pulso de la Red", style = MaterialTheme.typography.titleMedium)
+                    Text("PULSO v2", style = MaterialTheme.typography.titleMedium, color = Color.Red)
                     Spacer(modifier = Modifier.weight(1f))
                     Text(
                         "🕸️ Mesh",
@@ -228,7 +226,6 @@ fun TabNodos(bleBluetoothDevices: List<BluetoothDevice>, onConnectToPeer: (Strin
         }
         items(bleBluetoothDevices) { device ->
             val name = device.name ?: device.address
-            val rssi = "N/A" // BleManager no expone RSSI por dispositivo, pendiente
             Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant), shape = RoundedCornerShape(12.dp)) {
                 Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
                     Box(modifier = Modifier.size(40.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)), contentAlignment = Alignment.Center) {
@@ -237,9 +234,9 @@ fun TabNodos(bleBluetoothDevices: List<BluetoothDevice>, onConnectToPeer: (Strin
                     Spacer(modifier = Modifier.width(12.dp))
                     Column(modifier = Modifier.weight(1f)) {
                         Text(name, style = MaterialTheme.typography.bodyLarge)
-                        Text("BLE directo · $rssi", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f))
+                        Text("BLE directo", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f))
                     }
-                    SignalBars(strength = -70, color = MaterialTheme.colorScheme.primary) // Valor por defecto hasta exponer RSSI real
+                    SignalBars(strength = -70, color = MaterialTheme.colorScheme.primary)
                     IconButton(onClick = {
                         scope.launch {
                             val ip = BleManager.connectAndReadIp(device)
@@ -251,44 +248,6 @@ fun TabNodos(bleBluetoothDevices: List<BluetoothDevice>, onConnectToPeer: (Strin
                         Icon(Icons.Filled.Link, "Conectar", tint = MaterialTheme.colorScheme.primary)
                     }
                 }
-            }
-        }
-    }
-}
-
-@Composable
-fun NodeCard(node: MeshNode, onConnectToPeer: (String) -> Unit, scope: kotlinx.coroutines.CoroutineScope) {
-    val typeLabel = when (node.connectionType) {
-        ConnectionType.BLE -> "BLE directo"
-        ConnectionType.WIFI_AWARE -> "Wi-Fi Aware"
-        ConnectionType.RELAY -> "Relay"
-    }
-    val typeColor = when (node.connectionType) {
-        ConnectionType.BLE -> MaterialTheme.colorScheme.primary
-        ConnectionType.WIFI_AWARE -> Color(0xFF378ADD)
-        ConnectionType.RELAY -> Color(0xFF888780)
-    }
-    Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant), shape = RoundedCornerShape(12.dp)) {
-        Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
-            Box(modifier = Modifier.size(40.dp).clip(CircleShape).background(typeColor.copy(alpha = 0.15f)), contentAlignment = Alignment.Center) {
-                Text(node.alias?.take(2)?.uppercase() ?: "?", style = MaterialTheme.typography.titleSmall, color = typeColor)
-            }
-            Spacer(modifier = Modifier.width(12.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(node.alias ?: "Nodo anónimo", style = MaterialTheme.typography.bodyLarge)
-                Text("$typeLabel · ${if (node.hopCount > 1) "${node.hopCount} saltos" else "directo"} · ${node.latencyMs}ms",
-                    style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f))
-            }
-            SignalBars(strength = node.signalStrength, color = typeColor)
-            IconButton(onClick = {
-                scope.launch {
-                    val ip = BleManager.connectAndReadIp(node.bluetoothDevice!!)
-                    if (ip != null) {
-                        onConnectToPeer(ip)
-                    }
-                }
-            }) {
-                Icon(Icons.Filled.Link, "Conectar", tint = MaterialTheme.colorScheme.primary)
             }
         }
     }
@@ -366,6 +325,11 @@ fun TabModos() {
     var compressionActive by remember { mutableStateOf(true) }
     var soloTexto by remember { mutableStateOf(false) }
 
+    // Transportes experimentales (Fase 1.5)
+    var nfcActive by remember { mutableStateOf(false) }
+    var ultrasoundActive by remember { mutableStateOf(false) }
+    var smsBridgeActive by remember { mutableStateOf(false) }
+
     val batteryImpact = if (soloTexto) 0.04f else {
         (if (bleActive) 0.18f else 0f) + (if (wifiAwareActive) 0.28f else 0f) + (if (relayActive) 0.12f else 0f) + (if (compressionActive) 0.04f else 0f)
     }
@@ -378,6 +342,15 @@ fun TabModos() {
         item { ModeToggleRow(Icons.Filled.Wifi, MaterialTheme.colorScheme.primary, "Wi-Fi Direct", "Alcance extendido sin internet", wifiAwareActive && !soloTexto, { if (!soloTexto) wifiAwareActive = it }) }
         item { ModeToggleRow(Icons.Filled.Loop, Color(0xFFEF9F27), "Relay de mensajes", "Reenvío para nodos lejanos", relayActive && !soloTexto, { if (!soloTexto) relayActive = it }) }
         item { ModeToggleRow(Icons.Filled.Compress, Color(0xFF7F77DD), "Compresión", "Reduce peso antes de enviar", compressionActive && !soloTexto, { if (!soloTexto) compressionActive = it }) }
+        
+        item { Text("TRANSPORTES EXPERIMENTALES", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f), modifier = Modifier.padding(top = 8.dp)) }
+        item { ModeToggleRow(Icons.Filled.Nfc, Color(0xFF00BCD4), "NFC", "Handshake seguro físico", nfcActive && !soloTexto, { if (!soloTexto) nfcActive = it }, enabled = false) }
+        item { ModeToggleRow(Icons.Filled.GraphicEq, Color(0xFF9C27B0), "Ultrasonido", "18-22 kHz, 1-10m", ultrasoundActive && !soloTexto, { if (!soloTexto) ultrasoundActive = it }, enabled = false) }
+        item { ModeToggleRow(Icons.Filled.Sms, Color(0xFF4CAF50), "SMS Puente", "~3 SMS/min", smsBridgeActive && !soloTexto, { if (!soloTexto) smsBridgeActive = it }, enabled = false) }
+        
+        item { Text("SENSORES", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f), modifier = Modifier.padding(top = 8.dp)) }
+        item { ModeToggleRow(Icons.Filled.Vibration, Color(0xFFFF9800), "Acelerómetro (Sismógrafo)", "Detección sísmica colaborativa", false, {}, enabled = false) }
+        
         item {
             Card(colors = CardDefaults.cardColors(containerColor = if (soloTexto) Color(0xFF0E1A14) else MaterialTheme.colorScheme.surfaceVariant),
                 border = BorderStroke(1.dp, if (soloTexto) MaterialTheme.colorScheme.primary.copy(alpha = 0.5f) else Color.Transparent)) {
@@ -408,8 +381,8 @@ fun TabModos() {
 }
 
 @Composable
-fun ModeToggleRow(icon: ImageVector, iconColor: Color, title: String, subtitle: String, value: Boolean, onToggle: (Boolean) -> Unit, titleColor: Color = MaterialTheme.colorScheme.onSurface) {
-    Row(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+fun ModeToggleRow(icon: ImageVector, iconColor: Color, title: String, subtitle: String, value: Boolean, onToggle: (Boolean) -> Unit, titleColor: Color = MaterialTheme.colorScheme.onSurface, enabled: Boolean = true) {
+    Row(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp).then(if (!enabled) Modifier.alpha(0.5f) else Modifier), verticalAlignment = Alignment.CenterVertically) {
         Box(modifier = Modifier.size(36.dp).clip(RoundedCornerShape(8.dp)).background(iconColor.copy(alpha = 0.12f)), contentAlignment = Alignment.Center) {
             Icon(icon, null, tint = iconColor, modifier = Modifier.size(18.dp))
         }
@@ -418,6 +391,6 @@ fun ModeToggleRow(icon: ImageVector, iconColor: Color, title: String, subtitle: 
             Text(title, style = MaterialTheme.typography.bodyMedium.copy(fontSize = 13.sp), color = titleColor)
             Text(subtitle, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f))
         }
-        Switch(checked = value, onCheckedChange = onToggle, colors = SwitchDefaults.colors(checkedTrackColor = MaterialTheme.colorScheme.primary))
+        Switch(checked = value, onCheckedChange = onToggle, enabled = enabled, colors = SwitchDefaults.colors(checkedTrackColor = MaterialTheme.colorScheme.primary))
     }
 }

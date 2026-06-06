@@ -60,7 +60,6 @@ import com.malla.mvp.data.entity.PollOptionEntity
 import com.malla.mvp.network.NetworkService
 import com.malla.mvp.ui.settings.AccessibilitySettings
 import com.malla.mvp.ui.settings.BubbleStyle
-import com.malla.mvp.viewmodel.MeshChatViewModel
 import kotlinx.coroutines.*
 import java.io.File
 import java.text.SimpleDateFormat
@@ -70,7 +69,7 @@ import kotlin.random.Random
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class, androidx.compose.ui.ExperimentalComposeUiApi::class)
 @Composable
 fun ChatScreen(
-    viewModel: MeshChatViewModel,
+    conversationId: String,
     contactName: String,
     isMeshMode: Boolean = false,
     onBack: () -> Unit = {},
@@ -78,14 +77,8 @@ fun ChatScreen(
 ) {
     val context = LocalContext.current
     val db = AppDatabase.getInstance(context)
-    val messages by viewModel.messages.collectAsState()
-    val inputText by viewModel.inputText.collectAsState()
-    val isRecording by viewModel.isRecording.collectAsState()
-    val polls by viewModel.polls.collectAsState()
-    val optionsMap by viewModel.optionsMap.collectAsState()
-    val conversationId by viewModel.conversationId.collectAsState()
-
     val listState = rememberLazyListState()
+    var messages by remember { mutableStateOf(emptyList<MessageEntity>()) }
     var text by remember { mutableStateOf("") }
     var isTyping by remember { mutableStateOf(false) }
     var showAttachmentSheet by remember { mutableStateOf(false) }
@@ -105,17 +98,13 @@ fun ChatScreen(
     var pendingMediaUri by remember { mutableStateOf<Uri?>(null) }
     var editorText by remember { mutableStateOf("") }
     var cameraUri by remember { mutableStateOf<Uri?>(null) }
+    var isRecording by remember { mutableStateOf(false) }
+    var polls by remember { mutableStateOf(emptyList<PollEntity>()) }
+    var optionsMap by remember { mutableStateOf(emptyMap<String, List<PollOptionEntity>>()) }
     var pollQuestion by remember { mutableStateOf("") }
     var pollOptions by remember { mutableStateOf(listOf("", "")) }
     var replyTo by remember { mutableStateOf<MessageEntity?>(null) }
     val coroutineScope = rememberCoroutineScope()
-
-    // Sincronizar texto con ViewModel
-    LaunchedEffect(text) { viewModel.updateInputText(text) }
-
-    LaunchedEffect(conversationId) {
-        conversationId?.let { viewModel.loadConversation(it) }
-    }
 
     LaunchedEffect(context, conversationId) {
         val prefs = context.getSharedPreferences("ringtones", Context.MODE_PRIVATE)
@@ -127,12 +116,18 @@ fun ChatScreen(
     ) { success ->
         if (success && cameraUri != null) {
             coroutineScope.launch {
-                viewModel.sendMessage(
-                    text = "📷 Foto",
-                    expireAt = ephemeralDuration?.let { System.currentTimeMillis() + it },
+                val expireAt = if (ephemeralDuration != null) System.currentTimeMillis() + ephemeralDuration!! else null
+                val msg = MessageEntity(
+                    id = UUID.randomUUID().toString(),
+                    conversationId = conversationId,
+                    content = "📷 Foto",
+                    isOwn = true,
+                    expireAt = expireAt,
                     mediaUri = cameraUri.toString(),
                     viewOnce = viewOnce
                 )
+                messages = messages + msg
+                db?.messageDao()?.insertMessage(msg)
                 cameraUri = null
             }
         }
@@ -168,6 +163,36 @@ fun ChatScreen(
         "sim_carlos" -> "últ. vez hoy"
         "sim_oficina" -> "en línea"
         else -> ""
+    }
+
+    LaunchedEffect(db, conversationId) {
+        if (db != null) {
+            val conv = db.conversationDao().getConversationById(conversationId)
+            conversationBgColor = conv?.chatBackgroundColor
+        }
+    }
+
+    LaunchedEffect(db, conversationId) {
+        if (db != null) {
+            db.pollDao().getPollsForGroup(conversationId).collect { pollList ->
+                polls = pollList
+                pollList.forEach { poll ->
+                    db.pollDao().getOptionsForPoll(poll.id).collect { options ->
+                        optionsMap = optionsMap + (poll.id to options)
+                    }
+                }
+            }
+        }
+    }
+
+    LaunchedEffect(db, conversationId) {
+        if (db != null) {
+            db.messageDao().getMessagesForConversation(conversationId).collect { list: List<MessageEntity> ->
+                messages = list
+            }
+        } else {
+            messages = sampleMessages[conversationId] ?: emptyList()
+        }
     }
 
     LaunchedEffect(messages.size) {
@@ -217,7 +242,7 @@ fun ChatScreen(
             recorder.prepare()
             recorder.start()
             mediaRecorder = recorder
-            viewModel.startRecording()
+            isRecording = true
         } catch (e: Exception) {
             Toast.makeText(context, "Error al iniciar grabación: ${e.message}", Toast.LENGTH_SHORT).show()
         }
@@ -228,12 +253,20 @@ fun ChatScreen(
             mediaRecorder?.stop()
             mediaRecorder?.release()
             mediaRecorder = null
-            viewModel.stopRecording()
+            isRecording = false
             if (audioFile != null) {
                 coroutineScope.launch {
-                    viewModel.sendMessage(
-                        text = "🎤 Nota de voz",
+                    val msg = MessageEntity(
+                        id = UUID.randomUUID().toString(),
+                        conversationId = conversationId,
+                        content = "🎤 Nota de voz",
+                        isOwn = true,
                         mediaUri = Uri.fromFile(audioFile).toString()
+                    )
+                    messages = messages + msg
+                    db?.messageDao()?.insertMessage(msg)
+                    NetworkService.sendMessage(
+                        MeshMessage(content = msg.content, senderId = "self", timestamp = System.currentTimeMillis())
                     )
                 }
             }
@@ -309,23 +342,24 @@ fun ChatScreen(
                         }
                     }
                 }
+                val currentAvatar by IdentityManager.avatarBitmap.collectAsState()
                 var showMenu by remember { mutableStateOf(false) }
                 Box {
                     IconButton(onClick = { showMenu = true }) {
-                        Icon(Icons.Default.MoreVert, "Más opciones")
+                        if (currentAvatar != null) { Image(bitmap = currentAvatar!!.asImageBitmap(), contentDescription = "Avatar", modifier = Modifier.size(40.dp).clip(CircleShape).border(2.dp, MaterialTheme.colorScheme.primary, CircleShape), contentScale = ContentScale.Crop) } else { Surface(modifier = Modifier.size(40.dp).clip(CircleShape), color = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)) { Box(contentAlignment = Alignment.Center) { Text(contactName.take(1).uppercase(), style = MaterialTheme.typography.titleMedium) } } }
                     }
                     DropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
-                        DropdownMenuItem(text = { Row(verticalAlignment = Alignment.CenterVertically) { Icon(Icons.Filled.Person, null, modifier = Modifier.size(18.dp)); Spacer(Modifier.width(8.dp)); Text("Ver perfil") } }, onClick = { showMenu = false; onProfileClicked() })
-                        DropdownMenuItem(text = { Row(verticalAlignment = Alignment.CenterVertically) { Icon(Icons.Filled.Search, null, modifier = Modifier.size(18.dp)); Spacer(Modifier.width(8.dp)); Text("Buscar") } }, onClick = { showMenu = false })
-                        DropdownMenuItem(text = { Row(verticalAlignment = Alignment.CenterVertically) { Icon(Icons.Filled.Wallpaper, null, modifier = Modifier.size(18.dp)); Spacer(Modifier.width(8.dp)); Text("Cambiar fondo") } }, onClick = { showMenu = false; showBackgroundDialog = true })
-                        DropdownMenuItem(text = { Row(verticalAlignment = Alignment.CenterVertically) { Icon(Icons.Filled.NotificationsOff, null, modifier = Modifier.size(18.dp)); Spacer(Modifier.width(8.dp)); Text("Silenciar") } }, onClick = { showMenu = false })
-                        DropdownMenuItem(text = { Row(verticalAlignment = Alignment.CenterVertically) { Icon(Icons.Filled.DeleteSweep, null, modifier = Modifier.size(18.dp)); Spacer(Modifier.width(8.dp)); Text("Vaciar chat") } }, onClick = { showMenu = false })
-                        DropdownMenuItem(text = { Row(verticalAlignment = Alignment.CenterVertically) { Icon(Icons.Filled.Share, null, modifier = Modifier.size(18.dp)); Spacer(Modifier.width(8.dp)); Text("Exportar") } }, onClick = { showMenu = false })
-                        DropdownMenuItem(text = { Row(verticalAlignment = Alignment.CenterVertically) { Icon(Icons.Filled.Block, null, modifier = Modifier.size(18.dp)); Spacer(Modifier.width(8.dp)); Text("Bloquear") } }, onClick = { showMenu = false })
-                        DropdownMenuItem(text = { Row(verticalAlignment = Alignment.CenterVertically) { Icon(Icons.Filled.DeleteForever, null, modifier = Modifier.size(18.dp)); Spacer(Modifier.width(8.dp)); Text("Eliminar") } }, onClick = { showMenu = false })
-                        DropdownMenuItem(text = { Row(verticalAlignment = Alignment.CenterVertically) { Icon(Icons.Filled.Poll, null, modifier = Modifier.size(18.dp)); Spacer(Modifier.width(8.dp)); Text("Crear encuesta") } }, onClick = { showMenu = false; showCreatePollDialog = true })
+                        DropdownMenuItem(text = { Text("Ver perfil") }, onClick = { showMenu = false; Toast.makeText(context, "Ver perfil", Toast.LENGTH_SHORT).show() })
+                        DropdownMenuItem(text = { Text("Buscar mensajes") }, onClick = { showMenu = false; Toast.makeText(context, "Buscar mensajes", Toast.LENGTH_SHORT).show() })
+                        DropdownMenuItem(text = { Text("Cambiar fondo") }, onClick = { showMenu = false; showBackgroundDialog = true })
+                        DropdownMenuItem(text = { Text("Silenciar notificaciones") }, onClick = { showMenu = false; Toast.makeText(context, "Silenciar", Toast.LENGTH_SHORT).show() })
+                        DropdownMenuItem(text = { Text("Vaciar chat") }, onClick = { showMenu = false; Toast.makeText(context, "Vaciar chat", Toast.LENGTH_SHORT).show() })
+                        DropdownMenuItem(text = { Text("Exportar chat") }, onClick = { showMenu = false; Toast.makeText(context, "Exportar chat", Toast.LENGTH_SHORT).show() })
+                        DropdownMenuItem(text = { Text("Bloquear") }, onClick = { showMenu = false; Toast.makeText(context, "Bloquear", Toast.LENGTH_SHORT).show() })
+                        DropdownMenuItem(text = { Text("Eliminar conversación") }, onClick = { showMenu = false; Toast.makeText(context, "Eliminar conversación", Toast.LENGTH_SHORT).show() })
+                        DropdownMenuItem(text = { Text("Crear encuesta") }, onClick = { showMenu = false; showCreatePollDialog = true })
                         if (hasCustomRingtone) {
-                            DropdownMenuItem(text = { Row(verticalAlignment = Alignment.CenterVertically) { Icon(Icons.Filled.MusicNote, null, modifier = Modifier.size(18.dp)); Spacer(Modifier.width(8.dp)); Text("Probar tono") } }, onClick = {
+                            DropdownMenuItem(text = { Text("Probar tono") }, onClick = {
                                 showMenu = false
                                 val prefs = context.getSharedPreferences("ringtones", Context.MODE_PRIVATE)
                                 val uriString = prefs.getString(conversationId, null)
@@ -336,9 +370,9 @@ fun ChatScreen(
                                 }
                             })
                         }
-                        DropdownMenuItem(text = { Row(verticalAlignment = Alignment.CenterVertically) { Icon(Icons.Filled.Audiotrack, null, modifier = Modifier.size(18.dp)); Spacer(Modifier.width(8.dp)); Text("Asignar tono") } }, onClick = { showMenu = false; ringtonePickerLauncher.launch("audio/*") })
-                        DropdownMenuItem(text = { Row(verticalAlignment = Alignment.CenterVertically) { Icon(Icons.Filled.Timer, null, modifier = Modifier.size(18.dp)); Spacer(Modifier.width(8.dp)); Text("Mensajes efímeros") } }, onClick = { showMenu = false; showEphemeralMenu = true })
-                        DropdownMenuItem(text = { Row(verticalAlignment = Alignment.CenterVertically) { Icon(Icons.Filled.Fireplace, null, modifier = Modifier.size(18.dp)); Spacer(Modifier.width(8.dp)); Text("Modo fiesta") } }, onClick = { showMenu = false; isFiestaMode = !isFiestaMode })
+                        DropdownMenuItem(text = { Text("Asignar tono") }, onClick = { showMenu = false; ringtonePickerLauncher.launch("audio/*") })
+                        DropdownMenuItem(text = { Text("Mensajes efímeros") }, onClick = { showMenu = false; showEphemeralMenu = true })
+                        DropdownMenuItem(text = { Text("Modo fiesta") }, onClick = { showMenu = false; isFiestaMode = !isFiestaMode })
                     }
                 }
             }
@@ -368,7 +402,15 @@ fun ChatScreen(
                 if (polls.isNotEmpty()) {
                     items(polls, key = { it.id }) { poll ->
                         val options = optionsMap[poll.id] ?: emptyList()
-                        PollCard(poll = poll, options = options, onVote = { optionId -> viewModel.votePoll(optionId, poll.id) })
+                        PollCard(poll = poll, options = options, onVote = { optionId ->
+                            coroutineScope.launch {
+                                db?.pollDao()?.incrementVoteCount(optionId, 1)
+                                val updated = options.map { opt ->
+                                    if (opt.id == optionId) opt.copy(voteCount = opt.voteCount + 1) else opt
+                                }
+                                optionsMap = optionsMap + (poll.id to updated)
+                            }
+                        })
                         Spacer(modifier = Modifier.height(8.dp))
                     }
                 }
@@ -388,7 +430,7 @@ fun ChatScreen(
                         MessageBubble(
                             message = msg,
                             isGrouped = isGrouped,
-                            onDelete = { id -> viewModel.deleteMessage(id) },
+                            onDelete = { id -> coroutineScope.launch { db?.messageDao()?.deleteMessage(id); messages = messages.filter { it.id != id } } },
                             onCopy = { text ->
                                 val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
                                 val clip = ClipData.newPlainText("mensaje", text)
@@ -407,6 +449,7 @@ fun ChatScreen(
 
         // Barra inferior con cita
         Column(modifier = Modifier.fillMaxWidth()) {
+            // Barra de respuesta (si hay mensaje citado)
             if (replyTo != null) {
                 Surface(
                     modifier = Modifier.fillMaxWidth(),
@@ -444,6 +487,7 @@ fun ChatScreen(
                 }
             }
 
+            // Barra de escritura
             Surface(
                 modifier = Modifier.fillMaxWidth(),
                 shadowElevation = 8.dp,
@@ -506,12 +550,27 @@ fun ChatScreen(
                             onClick = {
                                 coroutineScope.launch {
                                     val currentReply = replyTo
-                                    viewModel.sendMessage(
-                                        text = text,
+                                    val expireAt = if (ephemeralDuration != null) System.currentTimeMillis() + ephemeralDuration!! else null
+                                    val msg = MessageEntity(
+                                        id = UUID.randomUUID().toString(),
+                                        conversationId = conversationId,
+                                        content = text,
+                                        isOwn = true,
+                                        expireAt = expireAt,
+                                        viewOnce = viewOnce,
                                         quotedMessageId = currentReply?.id,
-                                        quotedMessageContent = currentReply?.content,
-                                        expireAt = ephemeralDuration?.let { System.currentTimeMillis() + it },
-                                        viewOnce = viewOnce
+                                        quotedMessageContent = currentReply?.content
+                                    )
+                                    messages = messages + msg
+                                    db?.messageDao()?.insertMessage(msg)
+                                    NetworkService.sendMessage(
+                                        MeshMessage(
+                                            content = text,
+                                            senderId = "self",
+                                            timestamp = System.currentTimeMillis(),
+                                            quotedMessageId = currentReply?.id,
+                                            quotedMessageContent = currentReply?.content
+                                        )
                                     )
                                     text = ""
                                     replyTo = null
@@ -526,7 +585,7 @@ fun ChatScreen(
         }
     }
 
-    // Selector multimedia
+    // Selector multimedia (sin cambios, pero se mantiene)
     if (showAttachmentSheet) {
         ModalBottomSheet(
             onDismissRequest = { showAttachmentSheet = false },
@@ -593,7 +652,7 @@ fun ChatScreen(
         }
     }
 
-    // Editor de imagen
+    // Editor de imagen (sin cambios)
     if (showImageEditor && pendingMediaUri != null) {
         AlertDialog(
             onDismissRequest = { showImageEditor = false },
@@ -633,11 +692,20 @@ fun ChatScreen(
             confirmButton = {
                 TextButton(onClick = {
                     coroutineScope.launch {
-                        viewModel.sendMessage(
-                            text = editorText.ifBlank { "📷 Imagen" },
-                            expireAt = ephemeralDuration?.let { System.currentTimeMillis() + it },
+                        val expireAt = if (ephemeralDuration != null) System.currentTimeMillis() + ephemeralDuration!! else null
+                        val msg = MessageEntity(
+                            id = UUID.randomUUID().toString(),
+                            conversationId = conversationId,
+                            content = editorText.ifBlank { "📷 Imagen" },
+                            isOwn = true,
+                            expireAt = expireAt,
                             mediaUri = pendingMediaUri.toString(),
                             viewOnce = viewOnce
+                        )
+                        messages = messages + msg
+                        db?.messageDao()?.insertMessage(msg)
+                        NetworkService.sendMessage(
+                            MeshMessage(content = msg.content, senderId = "self", timestamp = System.currentTimeMillis())
                         )
                         showImageEditor = false
                         pendingMediaUri = null
@@ -648,7 +716,7 @@ fun ChatScreen(
         )
     }
 
-    // Diálogo de fondo
+    // Diálogo de fondo (sin cambios)
     if (showBackgroundDialog) {
         var bgTab by remember { mutableStateOf(0) }
         AlertDialog(
@@ -726,8 +794,8 @@ fun ChatScreen(
                                 4 -> 0xFF3D2B1A.toInt(); 5 -> 0xFFE0D7C6.toInt(); 6 -> 0xFFC6D7E0.toInt(); 7 -> 0xFFD7C6E0.toInt()
                                 8 -> 0xFFE0C6C6.toInt(); 9 -> 0xFFC6E0C6.toInt(); else -> null
                             }
-                            if (colorInt != null && db != null && conversationId != null) {
-                                db.conversationDao()?.updateChatBackgroundColor(conversationId!!, colorInt)
+                            if (colorInt != null) {
+                                db?.conversationDao()?.updateChatBackgroundColor(conversationId, colorInt)
                                 conversationBgColor = colorInt
                             }
                         }
@@ -739,7 +807,7 @@ fun ChatScreen(
         )
     }
 
-    // Diálogo de efímeros
+    // Diálogo de efímeros (sin cambios)
     if (showEphemeralMenu) {
         AlertDialog(
             onDismissRequest = { showEphemeralMenu = false },
@@ -764,7 +832,7 @@ fun ChatScreen(
         )
     }
 
-    // Diálogo de encuesta
+    // Diálogo de encuesta (sin cambios)
     if (showCreatePollDialog) {
         AlertDialog(
             onDismissRequest = { showCreatePollDialog = false },
@@ -789,9 +857,13 @@ fun ChatScreen(
             },
             confirmButton = {
                 TextButton(onClick = {
-                    viewModel.createPoll(pollQuestion, pollOptions.filter { it.isNotBlank() })
-                    showCreatePollDialog = false; pollQuestion = ""; pollOptions = listOf("", "")
-                    Toast.makeText(context, "Encuesta creada", Toast.LENGTH_SHORT).show()
+                    coroutineScope.launch {
+                        val pollId = UUID.randomUUID().toString()
+                        db?.pollDao()?.insertPoll(PollEntity(id = pollId, groupId = conversationId, question = pollQuestion, creatorId = "self"))
+                        pollOptions.forEach { text -> if (text.isNotBlank()) db?.pollDao()?.insertOption(PollOptionEntity(id = UUID.randomUUID().toString(), pollId = pollId, text = text)) }
+                        Toast.makeText(context, "Encuesta creada", Toast.LENGTH_SHORT).show()
+                        showCreatePollDialog = false; pollQuestion = ""; pollOptions = listOf("", "")
+                    }
                 }) { Text("Crear") }
             },
             dismissButton = { TextButton(onClick = { showCreatePollDialog = false }) { Text("Cancelar") } }
@@ -884,6 +956,7 @@ fun MessageBubble(
             }
         ) {
             Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
+                // Mostrar mensaje citado si existe
                 if (!message.quotedMessageContent.isNullOrBlank()) {
                     Surface(
                         modifier = Modifier
