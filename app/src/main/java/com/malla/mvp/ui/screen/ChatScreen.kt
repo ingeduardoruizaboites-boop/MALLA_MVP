@@ -74,7 +74,7 @@ fun ChatScreen(
     contactName: String,
     isMeshMode: Boolean = false,
     onBack: () -> Unit = {},
-    onProfileClicked: () -> Unit = {}
+    onProfileClicked: () -> Unit = {}, onVoiceCallClick: () -> Unit = {}, onVideoCallClick: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val db = AppDatabase.getInstance(context)
@@ -372,6 +372,9 @@ fun ChatScreen(
                             })
                         }
                         DropdownMenuItem(text = { Text("Asignar tono") }, onClick = { showMenu = false; ringtonePickerLauncher.launch("audio/*") })
+                        DropdownMenuItem(text = { Text("Llamada de voz") }, onClick = { showMenu = false; onVoiceCallClick() })
+                        DropdownMenuItem(text = { Text("Videollamada") }, onClick = { showMenu = false; onVideoCallClick() })
+                        DropdownMenuItem(text = { Text("Exportar chat") }, onClick = { showMenu = false; exportChat(context, messages, contactName) })
                         DropdownMenuItem(text = { Text("Mensajes efímeros") }, onClick = { showMenu = false; showEphemeralMenu = true })
                         DropdownMenuItem(text = { Text("Modo fiesta") }, onClick = { showMenu = false; isFiestaMode = !isFiestaMode })
                     }
@@ -540,7 +543,27 @@ fun ChatScreen(
                                 Row(verticalAlignment = Alignment.CenterVertically) {
                                     Icon(Icons.Filled.Stop, "Detener", tint = Color.Red)
                                     Spacer(modifier = Modifier.width(4.dp))
-                                    Text("Grabando...", style = MaterialTheme.typography.labelSmall, color = Color.Red)
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        repeat(4) { i ->
+                                            val infiniteTransition = rememberInfiniteTransition(label = "bar_$i")
+                                            val height by infiniteTransition.animateFloat(
+                                                initialValue = 8f,
+                                                targetValue = 24f,
+                                                animationSpec = infiniteRepeatable(
+                                                    animation = tween(300, easing = LinearEasing),
+                                                    repeatMode = RepeatMode.Reverse
+                                                ),
+                                                label = "bar_height_$i"
+                                            )
+                                            Box(
+                                                modifier = Modifier
+                                                    .width(3.dp)
+                                                    .height(height.dp)
+                                                    .padding(horizontal = 2.dp)
+                                                    .background(Color.Red.copy(alpha = 0.8f), RoundedCornerShape(2.dp))
+                                            )
+                                        }
+                                    }
                                 }
                             } else {
                                 Icon(Icons.Filled.Mic, "Grabar", tint = MaterialTheme.colorScheme.primary)
@@ -1173,6 +1196,27 @@ private fun formatDateHeader(dateKey: String): String {
     }
 }
 
+private fun exportChat(context: android.content.Context, messages: List<com.malla.mvp.data.entity.MessageEntity>, contactName: String) {
+    try {
+        val content = StringBuilder()
+        content.appendLine("Chat con $contactName\n")
+        messages.forEach { msg ->
+            val sender = if (msg.isOwn) "Yo" else contactName
+            content.appendLine("$sender: ${msg.content}")
+        }
+        val file = java.io.File(context.cacheDir, "chat_${contactName}_${System.currentTimeMillis()}.txt")
+        file.writeText(content.toString())
+        val uri = androidx.core.content.FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
+        val shareIntent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+            type = "text/plain"
+            putExtra(android.content.Intent.EXTRA_STREAM, uri)
+            addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        }
+        context.startActivity(android.content.Intent.createChooser(shareIntent, "Exportar chat"))
+    } catch (e: Exception) {
+        android.widget.Toast.makeText(context, "Error al exportar chat", android.widget.Toast.LENGTH_SHORT).show()
+    }
+}
 // Mapa de mensajes de muestra (simulación)
 private val sampleMessages = mapOf(
     "sim_alicia" to (0..20).map {

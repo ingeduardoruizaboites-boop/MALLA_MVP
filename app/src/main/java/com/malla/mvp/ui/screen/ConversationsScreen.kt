@@ -89,7 +89,7 @@ fun ConversationsScreen(
                 value = searchQuery,
                 onValueChange = { searchQuery = it },
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 6.dp).height(40.dp),
-                placeholder = { Text("") },
+                placeholder = { Text("Buscar conversaciones...", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)) },
                 leadingIcon = { Icon(Icons.Filled.Search, contentDescription = "Buscar") },
                 singleLine = true,
                 shape = RoundedCornerShape(16.dp),
