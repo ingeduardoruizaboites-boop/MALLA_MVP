@@ -22,7 +22,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.malla.mvp.data.AppDatabase
@@ -129,15 +131,6 @@ class MainActivity : ComponentActivity() {
                             appState = AppState.Main
                         }
                         AppState.Main -> {
-                            val screenKey = when {
-                                showTutorial -> "tutorial"
-                                showQrScanner -> "qr"
-                                showSettings -> "settings"
-                                selectedContact != null -> "contact"
-                                currentConversationId != null -> "chat"
-                                else -> "main"
-                            }
-                            AnimatedContent(targetState = screenKey, transitionSpec = { (scaleIn(tween(400), initialScale = 0.92f) + fadeIn(tween(400))) togetherWith (scaleOut(tween(400), targetScale = 1.08f) + fadeOut(tween(400))) }, label = "page") {
                             if (showTutorial) {
                                 TutorialOverlay(
                                     onDismiss = {
@@ -179,7 +172,6 @@ class MainActivity : ComponentActivity() {
                                 )
                             }
                         }
-                            }
                     }
                 }
             }
@@ -241,25 +233,46 @@ fun SettingsScreenWrapper(
 
 @Composable
 fun SplashContent(onFinished: () -> Unit) {
-    val scale = remember { Animatable(0f) }
+    val scale = remember { Animatable(0.85f) }
     val alpha = remember { Animatable(0f) }
+    val glowAlpha = remember { Animatable(0f) }
     val subtitleAlpha = remember { Animatable(0f) }
     LaunchedEffect(Unit) {
-        scale.animateTo(1f, animationSpec = tween(800, easing = FastOutSlowInEasing))
-        alpha.animateTo(1f, animationSpec = tween(600))
-        delay(400)
+        scale.animateTo(1f, animationSpec = tween(1000, easing = FastOutSlowInEasing))
+        alpha.animateTo(1f, animationSpec = tween(800))
+        delay(200)
+        glowAlpha.animateTo(1f, animationSpec = tween(600))
+        delay(300)
         subtitleAlpha.animateTo(1f, animationSpec = tween(500))
-        delay(1000)
+        delay(1200)
         onFinished()
     }
     Box(
-        modifier = Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(MaterialTheme.colorScheme.background, MaterialTheme.colorScheme.primary.copy(alpha = 0.05f)))),
+        modifier = Modifier.fillMaxSize().background(Color(0xFF0A1118)),
         contentAlignment = Alignment.Center
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text("M A L L A", style = MaterialTheme.typography.headlineLarge.copy(letterSpacing = 10.sp, fontSize = 36.sp), color = MaterialTheme.colorScheme.primary, modifier = Modifier.scale(scale.value).alpha(alpha.value))
-            Spacer(modifier = Modifier.height(16.dp))
-            Text("Conéctate sin límites", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface.copy(alpha = subtitleAlpha.value), modifier = Modifier.alpha(subtitleAlpha.value))
+            Box(contentAlignment = Alignment.Center) {
+                Text(
+                    text = "M A L L A",
+                    style = MaterialTheme.typography.headlineLarge.copy(letterSpacing = 12.sp, fontSize = 40.sp, fontWeight = FontWeight.Bold),
+                    color = Color(0xFF4CE6FF),
+                    modifier = Modifier.scale(scale.value).alpha(alpha.value)
+                )
+                Text(
+                    text = "M A L L A",
+                    style = MaterialTheme.typography.headlineLarge.copy(letterSpacing = 12.sp, fontSize = 40.sp, fontWeight = FontWeight.Bold),
+                    color = Color(0xFF00A3C4).copy(alpha = glowAlpha.value * 0.6f),
+                    modifier = Modifier.scale(scale.value).alpha(alpha.value).offset(x = 2.dp, y = 2.dp)
+                )
+            }
+            Spacer(modifier = Modifier.height(20.dp))
+            Text(
+                text = "Conéctate sin límites",
+                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Light),
+                color = Color(0xFF8899AA).copy(alpha = subtitleAlpha.value),
+                modifier = Modifier.alpha(subtitleAlpha.value)
+            )
         }
     }
 }
@@ -277,13 +290,10 @@ fun MainApp(
     db: AppDatabase?
 ) {
     var selectedTab by remember { mutableStateOf(0) }
-    var showCallScreen by remember { mutableStateOf(false) }
-    var callType by remember { mutableStateOf("voice") }
     var currentContactName by remember { mutableStateOf("Chat") }
     var lastBackPressTime by remember { mutableStateOf(0L) }
     val backContext = LocalContext.current
 
-    // Confirmación al salir
     BackHandler(enabled = selectedTab == 0) {
         if (lastBackPressTime + 2000 > System.currentTimeMillis()) {
             (backContext as? android.app.Activity)?.finish()
@@ -294,20 +304,10 @@ fun MainApp(
     }
 
     if (currentConversationId != null) {
-        if (showCallScreen) {
-            CallScreen(
-                contactName = currentContactName,
-                callType = callType,
-                onEndCall = { showCallScreen = false }
-            )
-            return
-        }
         ChatScreen(
             conversationId = currentConversationId,
             contactName = currentContactName,
             onBack = { onConversationChanged(null) },
-            onVoiceCallClick = { callType = "voice"; showCallScreen = true },
-            onVideoCallClick = { callType = "video"; showCallScreen = true },
             isMeshMode = isMeshMode
         )
         return
