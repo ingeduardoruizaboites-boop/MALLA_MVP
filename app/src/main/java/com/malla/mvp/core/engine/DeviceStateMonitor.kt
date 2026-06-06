@@ -8,6 +8,7 @@ import android.os.BatteryManager
 import android.util.Log
 import com.malla.mvp.network.BleManager
 import com.malla.mvp.network.ConnectivityMonitor
+import com.malla.mvp.core.engine.MeshSimulator
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import java.io.File
@@ -39,7 +40,7 @@ object DeviceStateMonitor {
                     currentLevel = if (hasInternet) MeshLevel.ONLINE_WIFI else MeshLevel.BLE,
                     availableLevels = availableLevels,
                     nearbyNodes = bleNodes,
-                    hasInternetConnection = hasInternet,
+                    hasInternetConnection = if (MeshSimulator.isSimulated.value) false else hasInternet,
                     deviceLoad = deviceLoad,
                     freeRamMB = ramMB,
                     cpuTemperature = cpuTemp,
