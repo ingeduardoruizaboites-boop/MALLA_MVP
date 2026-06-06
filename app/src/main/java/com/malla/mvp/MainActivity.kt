@@ -24,6 +24,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.malla.mvp.data.AppDatabase
+import com.malla.mvp.identity.IdentityManager
 import com.malla.mvp.data.entity.ConversationEntity
 import com.malla.mvp.network.ConnectivityMonitor
 import com.malla.mvp.network.MeshMessageHandler
@@ -50,6 +51,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         ConnectivityMonitor.start(application)
         DeviceStateMonitor.start(this)
+        IdentityManager.init(this)
         insertSampleStories()
 
         // Inicializar el estado del tema
