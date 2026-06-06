@@ -10,8 +10,10 @@ import android.bluetooth.BluetoothManager
 import android.bluetooth.BluetoothProfile
 import android.bluetooth.le.*
 import android.content.Context
+import android.content.pm.PackageManager
 import android.os.ParcelUuid
 import android.util.Log
+import androidx.core.content.ContextCompat
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -25,14 +27,13 @@ object BleManager {
     private var adapter: BluetoothAdapter? = null
     private var scanner: BluetoothLeScanner? = null
     private var advertiser: BluetoothLeAdvertiser? = null
+    fun getAdapter(): BluetoothAdapter? = adapter
     private var isAdvertising = false
     private var isScanningActive = false
     private var appContext: Context? = null
 
     private val _foundDevices = MutableStateFlow<List<String>>(emptyList())
     val foundDevices: StateFlow<List<String>> = _foundDevices
-
-    // NUEVO: lista de dispositivos Bluetooth encontrados (para MeshConnector)
     private val _foundBluetoothDevices = MutableStateFlow<List<BluetoothDevice>>(emptyList())
     val foundBluetoothDevices: StateFlow<List<BluetoothDevice>> = _foundBluetoothDevices
 
@@ -52,38 +53,56 @@ object BleManager {
 
     fun startAdvertising() {
         if (adapter == null || !adapter!!.isEnabled) {
-            Log.w(TAG, "No se puede iniciar advertising: Bluetooth no disponible")
+            Log.w(TAG, "[BLE:ADV] No se puede iniciar advertising: Bluetooth no disponible")
             return
         }
         if (advertiser == null) {
             advertiser = adapter!!.bluetoothLeAdvertiser
         }
         if (isAdvertising) {
-            Log.d(TAG, "Advertising ya está activo")
+            Log.d(TAG, "[BLE:ADV] Advertising ya está activo")
             return
         }
 
-        val settings = AdvertiseSettings.Builder()
-            .setAdvertiseMode(AdvertiseSettings.ADVERTISE_MODE_LOW_LATENCY)
-            .setTxPowerLevel(AdvertiseSettings.ADVERTISE_TX_POWER_HIGH)
-            .setConnectable(true)
-            .build()
+        // Verificar permiso BLUETOOTH_ADVERTISE en runtime (Android 12+)
+        val context = appContext
+        if (context != null && ContextCompat.checkSelfPermission(context, android.Manifest.permission.BLUETOOTH_ADVERTISE)
+            != PackageManager.PERMISSION_GRANTED) {
+            Log.e(TAG, "[PERM:ERR] BLUETOOTH_ADVERTISE no concedido. No se puede iniciar advertising.")
+            return
+        }
 
-        val data = AdvertiseData.Builder()
-            .setIncludeDeviceName(true)
-            .addServiceUuid(ParcelUuid(serviceUuid))
-            .build()
+        try {
+            val settings = AdvertiseSettings.Builder()
+                .setAdvertiseMode(AdvertiseSettings.ADVERTISE_MODE_LOW_LATENCY)
+                .setTxPowerLevel(AdvertiseSettings.ADVERTISE_TX_POWER_HIGH)
+                .setConnectable(true)
+                .build()
 
-        advertiser?.startAdvertising(settings, data, advertiseCallback)
-        isAdvertising = true
-        Log.d(TAG, "Advertising BLE iniciado con UUID: $serviceUuid")
+            val data = AdvertiseData.Builder()
+                .setIncludeDeviceName(true)
+                .addServiceUuid(ParcelUuid(serviceUuid))
+                .build()
+
+            advertiser?.startAdvertising(settings, data, advertiseCallback)
+            isAdvertising = true
+            Log.d(TAG, "[BLE:ADV] Advertising BLE iniciado con UUID: $serviceUuid")
+        } catch (e: SecurityException) {
+            Log.e(TAG, "[PERM:ERR] SecurityException al iniciar advertising: ${e.message}", e)
+        } catch (e: Exception) {
+            Log.e(TAG, "[BLE:ADV:ERR] Error al iniciar advertising: ${e.message}", e)
+        }
     }
 
     fun stopAdvertising() {
         if (!isAdvertising) return
-        advertiser?.stopAdvertising(advertiseCallback)
-        isAdvertising = false
-        Log.d(TAG, "Advertising BLE detenido")
+        try {
+            advertiser?.stopAdvertising(advertiseCallback)
+            isAdvertising = false
+            Log.d(TAG, "[BLE:ADV] Advertising BLE detenido")
+        } catch (e: Exception) {
+            Log.e(TAG, "[BLE:ADV:ERR] Error al detener advertising: ${e.message}", e)
+        }
     }
 
     fun stop() {
@@ -92,20 +111,14 @@ object BleManager {
         stopAdvertising()
     }
 
-    /**
-     * Se conecta al dispositivo BLE, lee la característica de IP y devuelve la IP.
-     * Suspende hasta que se completa la lectura o falla.
-     * Pausa el escaneo durante la conexión para evitar interferencias.
-     */
     suspend fun connectAndReadIp(device: BluetoothDevice): String? =
         suspendCancellableCoroutine { continuation ->
             val context = appContext ?: run {
-                Log.e(TAG, "[GATT] Contexto no inicializado")
+                Log.e(TAG, "[BLE:GATT] Contexto no inicializado")
                 continuation.resume(null)
                 return@suspendCancellableCoroutine
             }
 
-            // Pausar escaneo si está activo
             val wasScanning = isScanningActive
             if (wasScanning) {
                 scanner?.stopScan(scanCallback)
@@ -121,7 +134,7 @@ object BleManager {
                         gatt?.discoverServices()
                     } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
                         if (ipResult == null && !continuation.isCompleted) {
-                            Log.w(TAG, "[GATT] Desconectado sin obtener IP de ${device.address}")
+                            Log.w(TAG, "[BLE:GATT] Desconectado sin obtener IP de ${device.address}")
                             continuation.resume(null)
                         }
                         gatt?.close()
@@ -138,11 +151,11 @@ object BleManager {
                         if (characteristic != null) {
                             gatt?.readCharacteristic(characteristic)
                         } else {
-                            Log.w(TAG, "[GATT] Característica de IP no encontrada en ${gatt?.device?.address}")
+                            Log.w(TAG, "[BLE:GATT] Característica de IP no encontrada en ${gatt?.device?.address}")
                             gatt?.disconnect()
                         }
                     } else {
-                        Log.w(TAG, "[GATT] Descubrimiento de servicios fallido: $status")
+                        Log.w(TAG, "[BLE:GATT] Descubrimiento de servicios fallido: $status")
                         gatt?.disconnect()
                     }
                 }
@@ -155,9 +168,9 @@ object BleManager {
                     if (status == BluetoothGatt.GATT_SUCCESS && characteristic?.uuid == ipCharacteristicUuid) {
                         val bytes = characteristic?.value
                         ipResult = bytes?.toString(Charsets.UTF_8)
-                        Log.d(TAG, "[GATT] IP leída de ${device.address}: $ipResult")
+                        Log.d(TAG, "[BLE:GATT] IP leída de ${device.address}: $ipResult")
                     } else {
-                        Log.w(TAG, "[GATT] Fallo al leer característica de IP: status=$status")
+                        Log.w(TAG, "[BLE:GATT] Fallo al leer característica de IP: status=$status")
                     }
                     gatt?.disconnect()
                     if (ipResult != null && !continuation.isCompleted) {
@@ -170,7 +183,7 @@ object BleManager {
 
             gatt = device.connectGatt(context, false, callback)
             if (gatt == null) {
-                Log.e(TAG, "[GATT] No se pudo conectar a ${device.address}")
+                Log.e(TAG, "[BLE:GATT] No se pudo conectar a ${device.address}")
                 if (wasScanning && appContext != null) start(appContext!!)
                 continuation.resume(null)
             }
@@ -180,9 +193,8 @@ object BleManager {
         override fun onScanResult(callbackType: Int, result: ScanResult) {
             val device = result.device
             val name = device.name ?: device.address
-            Log.d(TAG, "Dispositivo BLE encontrado: $name")
+            Log.d(TAG, "[BLE:SCAN] Dispositivo BLE encontrado: $name")
             _foundDevices.value = _foundDevices.value + name
-            // Agregar dispositivo a la lista si no está ya
             if (!_foundBluetoothDevices.value.contains(device)) {
                 _foundBluetoothDevices.value = _foundBluetoothDevices.value + device
             }
@@ -191,7 +203,7 @@ object BleManager {
 
     private val advertiseCallback = object : AdvertiseCallback() {
         override fun onStartSuccess(settingsInEffect: AdvertiseSettings) {
-            Log.d(TAG, "Advertising iniciado con éxito")
+            Log.d(TAG, "[BLE:ADV] Advertising iniciado con éxito")
         }
 
         override fun onStartFailure(errorCode: Int) {
@@ -204,7 +216,7 @@ object BleManager {
                 AdvertiseCallback.ADVERTISE_FAILED_FEATURE_UNSUPPORTED -> "Característica no soportada"
                 else -> "Error desconocido: $errorCode"
             }
-            Log.e(TAG, "Fallo al iniciar advertising: $errorMsg")
+            Log.e(TAG, "[BLE:ADV:ERR] Fallo al iniciar advertising: $errorMsg")
         }
     }
 }

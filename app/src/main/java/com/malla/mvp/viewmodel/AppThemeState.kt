@@ -8,37 +8,29 @@ import com.malla.mvp.ui.theme.MallaColorScheme
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 
-/**
- * Estado reactivo del tema de la app.
- * Combina la preferencia del usuario con el estado de conectividad
- * para forzar el tema OLED en modo mesh (máxima eficiencia).
- */
 class AppThemeState private constructor(private val prefs: SharedPreferences?) {
 
     companion object {
+        private const val TAG = "AppThemeState"
         private const val KEY_SCHEME_NAME = "scheme_name"
 
         fun create(context: Context): AppThemeState {
             val prefs = try {
                 context.getSharedPreferences("app_theme", Context.MODE_PRIVATE)
             } catch (e: Exception) {
-                Log.e("AppThemeState", "Error accediendo a SharedPreferences", e)
+                Log.e(TAG, "[THEME:ERR] Error accediendo a SharedPreferences", e)
                 null
             }
             return AppThemeState(prefs)
         }
 
         fun createFallback(): AppThemeState = AppThemeState(null)
-
-        /** Lista de todos los temas disponibles para el selector */
         val availableSchemes = MallaColorScheme.ALL
     }
 
-    // Tema seleccionado por el usuario (persistido)
     private val _userSelectedScheme = MutableStateFlow(loadScheme())
     val userSelectedScheme: StateFlow<MallaColorScheme> = _userSelectedScheme
 
-    // Tema efectivo combinando preferencia + conectividad
     private val _effectiveScheme = MutableStateFlow(MallaColorScheme.MALLA_DARK)
     val currentTheme: StateFlow<MallaColorScheme> = _effectiveScheme
 
@@ -49,28 +41,44 @@ class AppThemeState private constructor(private val prefs: SharedPreferences?) {
             combine(_userSelectedScheme, ConnectivityMonitor.isOnline) { userScheme, isOnline ->
                 if (isOnline) userScheme else MallaColorScheme.OLED_PURE
             }.collect { scheme ->
-                _effectiveScheme.value = scheme
+                try {
+                    _effectiveScheme.value = scheme
+                    Log.d(TAG, "[THEME] Tema cambiado a: ${scheme.name}")
+                } catch (e: Exception) {
+                    Log.e(TAG, "[THEME:ERR] Error al aplicar tema ${scheme.name}", e)
+                    _effectiveScheme.value = MallaColorScheme.MALLA_DARK // Fallback seguro
+                }
             }
         }
     }
 
-    /** Cambiar tema seleccionado por el usuario */
     fun selectScheme(scheme: MallaColorScheme) {
-        _userSelectedScheme.value = scheme
-        saveScheme(scheme)
+        try {
+            Log.d(TAG, "[THEME] Usuario seleccionó tema: ${scheme.name}")
+            _userSelectedScheme.value = scheme
+            saveScheme(scheme)
+        } catch (e: Exception) {
+            Log.e(TAG, "[THEME:ERR] Error al seleccionar tema ${scheme.name}", e)
+        }
     }
 
     private fun loadScheme(): MallaColorScheme {
-        val name = prefs?.getString(KEY_SCHEME_NAME, MallaColorScheme.MALLA_DARK.name)
-            ?: MallaColorScheme.MALLA_DARK.name
-        return MallaColorScheme.ALL.find { it.name == name } ?: MallaColorScheme.MALLA_DARK
+        return try {
+            val name = prefs?.getString(KEY_SCHEME_NAME, MallaColorScheme.MALLA_DARK.name)
+                ?: MallaColorScheme.MALLA_DARK.name
+            MallaColorScheme.ALL.find { it.name == name } ?: MallaColorScheme.MALLA_DARK
+        } catch (e: Exception) {
+            Log.e(TAG, "[THEME:ERR] Error cargando tema, usando default", e)
+            MallaColorScheme.MALLA_DARK
+        }
     }
 
     private fun saveScheme(scheme: MallaColorScheme) {
         try {
             prefs?.edit()?.putString(KEY_SCHEME_NAME, scheme.name)?.apply()
+            Log.d(TAG, "[THEME] Tema guardado: ${scheme.name}")
         } catch (e: Exception) {
-            Log.e("AppThemeState", "Error guardando tema", e)
+            Log.e(TAG, "[THEME:ERR] Error guardando tema ${scheme.name}", e)
         }
     }
 }

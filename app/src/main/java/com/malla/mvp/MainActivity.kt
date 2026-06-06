@@ -27,9 +27,11 @@ import com.malla.mvp.data.AppDatabase
 import com.malla.mvp.data.entity.ConversationEntity
 import com.malla.mvp.network.ConnectivityMonitor
 import com.malla.mvp.network.MeshMessageHandler
+import com.malla.mvp.core.engine.DeviceStateMonitor
 import com.malla.mvp.network.NetworkService
 import com.malla.mvp.service.MeshChatService
 import com.malla.mvp.ui.components.MainTopBar
+import com.malla.mvp.ui.components.ConnectivityStatusBar
 import com.malla.mvp.ui.components.TutorialOverlay
 import com.malla.mvp.ui.screen.*
 import com.malla.mvp.ui.settings.AccessibilitySettings
@@ -47,6 +49,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         ConnectivityMonitor.start(application)
+        DeviceStateMonitor.start(this)
         insertSampleStories()
 
         // Inicializar el estado del tema
@@ -276,6 +279,8 @@ fun MainApp(
             }
         }
     ) { padding ->
+        ConnectivityStatusBar()
+        Spacer(modifier = Modifier.height(1.dp))
         Box(modifier = Modifier.padding(padding)) {
             when (selectedTab) {
                 0 -> ConversationsScreen(
