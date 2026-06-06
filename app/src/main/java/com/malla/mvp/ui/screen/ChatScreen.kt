@@ -315,17 +315,17 @@ fun ChatScreen(
                         Icon(Icons.Default.MoreVert, "Más opciones")
                     }
                     DropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
-                        DropdownMenuItem(text = { Text("Ver perfil") }, onClick = { showMenu = false; Toast.makeText(context, "Ver perfil", Toast.LENGTH_SHORT).show() })
-                        DropdownMenuItem(text = { Text("Buscar mensajes") }, onClick = { showMenu = false; Toast.makeText(context, "Buscar mensajes", Toast.LENGTH_SHORT).show() })
-                        DropdownMenuItem(text = { Text("Cambiar fondo") }, onClick = { showMenu = false; showBackgroundDialog = true })
-                        DropdownMenuItem(text = { Text("Silenciar notificaciones") }, onClick = { showMenu = false; Toast.makeText(context, "Silenciar", Toast.LENGTH_SHORT).show() })
-                        DropdownMenuItem(text = { Text("Vaciar chat") }, onClick = { showMenu = false; Toast.makeText(context, "Vaciar chat", Toast.LENGTH_SHORT).show() })
-                        DropdownMenuItem(text = { Text("Exportar chat") }, onClick = { showMenu = false; Toast.makeText(context, "Exportar chat", Toast.LENGTH_SHORT).show() })
-                        DropdownMenuItem(text = { Text("Bloquear") }, onClick = { showMenu = false; Toast.makeText(context, "Bloquear", Toast.LENGTH_SHORT).show() })
-                        DropdownMenuItem(text = { Text("Eliminar conversación") }, onClick = { showMenu = false; Toast.makeText(context, "Eliminar conversación", Toast.LENGTH_SHORT).show() })
-                        DropdownMenuItem(text = { Text("Crear encuesta") }, onClick = { showMenu = false; showCreatePollDialog = true })
+                        DropdownMenuItem(text = { Row(verticalAlignment = Alignment.CenterVertically) { Icon(Icons.Filled.Person, null, modifier = Modifier.size(18.dp)); Spacer(Modifier.width(8.dp)); Text("Ver perfil") } }, onClick = { showMenu = false; onProfileClicked() })
+                        DropdownMenuItem(text = { Row(verticalAlignment = Alignment.CenterVertically) { Icon(Icons.Filled.Search, null, modifier = Modifier.size(18.dp)); Spacer(Modifier.width(8.dp)); Text("Buscar") } }, onClick = { showMenu = false })
+                        DropdownMenuItem(text = { Row(verticalAlignment = Alignment.CenterVertically) { Icon(Icons.Filled.Wallpaper, null, modifier = Modifier.size(18.dp)); Spacer(Modifier.width(8.dp)); Text("Cambiar fondo") } }, onClick = { showMenu = false; showBackgroundDialog = true })
+                        DropdownMenuItem(text = { Row(verticalAlignment = Alignment.CenterVertically) { Icon(Icons.Filled.NotificationsOff, null, modifier = Modifier.size(18.dp)); Spacer(Modifier.width(8.dp)); Text("Silenciar") } }, onClick = { showMenu = false })
+                        DropdownMenuItem(text = { Row(verticalAlignment = Alignment.CenterVertically) { Icon(Icons.Filled.DeleteSweep, null, modifier = Modifier.size(18.dp)); Spacer(Modifier.width(8.dp)); Text("Vaciar chat") } }, onClick = { showMenu = false })
+                        DropdownMenuItem(text = { Row(verticalAlignment = Alignment.CenterVertically) { Icon(Icons.Filled.Share, null, modifier = Modifier.size(18.dp)); Spacer(Modifier.width(8.dp)); Text("Exportar") } }, onClick = { showMenu = false })
+                        DropdownMenuItem(text = { Row(verticalAlignment = Alignment.CenterVertically) { Icon(Icons.Filled.Block, null, modifier = Modifier.size(18.dp)); Spacer(Modifier.width(8.dp)); Text("Bloquear") } }, onClick = { showMenu = false })
+                        DropdownMenuItem(text = { Row(verticalAlignment = Alignment.CenterVertically) { Icon(Icons.Filled.DeleteForever, null, modifier = Modifier.size(18.dp)); Spacer(Modifier.width(8.dp)); Text("Eliminar") } }, onClick = { showMenu = false })
+                        DropdownMenuItem(text = { Row(verticalAlignment = Alignment.CenterVertically) { Icon(Icons.Filled.Poll, null, modifier = Modifier.size(18.dp)); Spacer(Modifier.width(8.dp)); Text("Crear encuesta") } }, onClick = { showMenu = false; showCreatePollDialog = true })
                         if (hasCustomRingtone) {
-                            DropdownMenuItem(text = { Text("Probar tono") }, onClick = {
+                            DropdownMenuItem(text = { Row(verticalAlignment = Alignment.CenterVertically) { Icon(Icons.Filled.MusicNote, null, modifier = Modifier.size(18.dp)); Spacer(Modifier.width(8.dp)); Text("Probar tono") } }, onClick = {
                                 showMenu = false
                                 val prefs = context.getSharedPreferences("ringtones", Context.MODE_PRIVATE)
                                 val uriString = prefs.getString(conversationId, null)
@@ -336,9 +336,9 @@ fun ChatScreen(
                                 }
                             })
                         }
-                        DropdownMenuItem(text = { Text("Asignar tono") }, onClick = { showMenu = false; ringtonePickerLauncher.launch("audio/*") })
-                        DropdownMenuItem(text = { Text("Mensajes efímeros") }, onClick = { showMenu = false; showEphemeralMenu = true })
-                        DropdownMenuItem(text = { Text("Modo fiesta") }, onClick = { showMenu = false; isFiestaMode = !isFiestaMode })
+                        DropdownMenuItem(text = { Row(verticalAlignment = Alignment.CenterVertically) { Icon(Icons.Filled.Audiotrack, null, modifier = Modifier.size(18.dp)); Spacer(Modifier.width(8.dp)); Text("Asignar tono") } }, onClick = { showMenu = false; ringtonePickerLauncher.launch("audio/*") })
+                        DropdownMenuItem(text = { Row(verticalAlignment = Alignment.CenterVertically) { Icon(Icons.Filled.Timer, null, modifier = Modifier.size(18.dp)); Spacer(Modifier.width(8.dp)); Text("Mensajes efímeros") } }, onClick = { showMenu = false; showEphemeralMenu = true })
+                        DropdownMenuItem(text = { Row(verticalAlignment = Alignment.CenterVertically) { Icon(Icons.Filled.Fireplace, null, modifier = Modifier.size(18.dp)); Spacer(Modifier.width(8.dp)); Text("Modo fiesta") } }, onClick = { showMenu = false; isFiestaMode = !isFiestaMode })
                     }
                 }
             }
