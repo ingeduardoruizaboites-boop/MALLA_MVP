@@ -23,12 +23,13 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.malla.mvp.data.AppDatabase
-import com.malla.mvp.identity.IdentityManager
 import com.malla.mvp.data.entity.ConversationEntity
 import com.malla.mvp.network.ConnectivityMonitor
 import com.malla.mvp.network.MeshMessageHandler
 import com.malla.mvp.core.engine.DeviceStateMonitor
+import com.malla.mvp.identity.IdentityManager
 import com.malla.mvp.network.NetworkService
 import com.malla.mvp.service.MeshChatService
 import com.malla.mvp.ui.components.MainTopBar
@@ -39,6 +40,7 @@ import com.malla.mvp.ui.settings.AccessibilitySettings
 import com.malla.mvp.ui.theme.MallaColorScheme
 import com.malla.mvp.ui.theme.MallaTheme
 import com.malla.mvp.viewmodel.AppThemeState
+import com.malla.mvp.viewmodel.MeshChatViewModel
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -54,7 +56,6 @@ class MainActivity : ComponentActivity() {
         IdentityManager.init(this)
         insertSampleStories()
 
-        // Inicializar el estado del tema
         val appThemeState = AppThemeState.create(this)
 
         val prefs = try {
@@ -64,7 +65,6 @@ class MainActivity : ComponentActivity() {
             prefs?.getBoolean("first_launch", true) ?: true
         } catch (e: Exception) { true }
 
-        // Obtener instancia de la base de datos
         val database = AppDatabase.getInstance(application)
 
         setContent {
@@ -76,7 +76,6 @@ class MainActivity : ComponentActivity() {
             var showTutorial by remember { mutableStateOf(false) } 
             val context = LocalContext.current
 
-            // Tema efectivo (cambia automáticamente a OLED en modo mesh)
             val effectiveScheme by appThemeState.currentTheme.collectAsState()
 
             val isOnline by ConnectivityMonitor.isOnline.collectAsState()
@@ -158,8 +157,7 @@ class MainActivity : ComponentActivity() {
                                 onNavigateToQrScanner = { showQrScanner = true },
                                 onConnectToPeer = { ip ->
                                     connectToPeerAndCreateConversation(ip) { convId -> currentConversationId = convId }
-                                },
-                                db = database
+                                }
                             )
                         }
                     }
@@ -255,15 +253,18 @@ fun MainApp(
     onSettingsClick: () -> Unit,
     onProfileClicked: (String) -> Unit,
     onNavigateToQrScanner: () -> Unit,
-    onConnectToPeer: (String) -> Unit,
-    db: AppDatabase?
+    onConnectToPeer: (String) -> Unit
 ) {
     var selectedTab by remember { mutableStateOf(0) }
     var currentContactName by remember { mutableStateOf("Chat") }
 
     if (currentConversationId != null) {
+        val chatViewModel: MeshChatViewModel = viewModel()
+        LaunchedEffect(currentConversationId) {
+            chatViewModel.loadConversation(currentConversationId)
+        }
         ChatScreen(
-            conversationId = currentConversationId,
+            viewModel = chatViewModel,
             contactName = currentContactName,
             onBack = { onConversationChanged(null) },
             isMeshMode = isMeshMode
