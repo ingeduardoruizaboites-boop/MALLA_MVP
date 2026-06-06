@@ -1,0 +1,29 @@
+# Gradle
+.gradle/
+app/build/
+build/
+
+# Archivos de backup
+*.bak
+
+# Archivos basura generados accidentalmente
+8f
+A
+Compilation
+FontFamily.Monospace
+FontFamily.SansSerif
+Get
+Run
+SwipeState.RIGHT
+Task
+totalDistance
+{
+temp_repo/
+
+# IDE
+.idea/
+*.iml
+
+# Sistema
+.DS_Store
+Thumbs.db
