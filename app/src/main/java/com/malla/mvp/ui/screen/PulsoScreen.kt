@@ -215,6 +215,15 @@ fun TabNodos(nodes: List<MeshNode>, onConnectToPeer: (String) -> Unit) {
     val scope = rememberCoroutineScope()
     LazyColumn(contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         item { Text("NODOS ALCANZABLES AHORA", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)) }
+        item {
+            val ctx = androidx.compose.ui.platform.LocalContext.current
+            Button(onClick = {
+                com.malla.mvp.network.BleManager.start(ctx)
+                android.util.Log.d("PulsoScreen", "[PULSO:SCAN] Escaneo forzado por usuario")
+            }) {
+                Text("Forzar escaneo ahora")
+            }
+        }
         items(nodes) { node -> NodeCard(node = node, onConnectToPeer = onConnectToPeer, scope = scope) }
     }
 }
