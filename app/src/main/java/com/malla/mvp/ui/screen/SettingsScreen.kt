@@ -1,11 +1,10 @@
 package com.malla.mvp.ui.screen
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -16,10 +15,13 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.malla.mvp.ui.components.ThemeSelectorCard
 import com.malla.mvp.ui.settings.AccessibilitySettings
 import com.malla.mvp.ui.theme.MallaColorScheme
+import com.malla.mvp.identity.IdentityManager
 
 @Composable
 fun SettingsScreen(
@@ -30,46 +32,70 @@ fun SettingsScreen(
     var showDiagnostic by remember { mutableStateOf(false) }
 
     LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(horizontal = 16.dp),
-        contentPadding = PaddingValues(vertical = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+        modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background),
+        contentPadding = PaddingValues(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
+        // Encabezado
         item {
             Text(
                 text = "Ajustes",
-                style = MaterialTheme.typography.headlineSmall,
+                style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
+                color = MaterialTheme.colorScheme.onBackground,
                 modifier = Modifier.padding(bottom = 8.dp)
             )
         }
 
-        // Perfil
+        // Sección Perfil
         item {
-            SettingsCard(title = "Perfil", icon = Icons.Filled.Person) {
-                Text("Nombre: Usuario Malla")
-                Text("Estado: Conectado")
+            SettingsSection(title = "Perfil") {
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Surface(
+                        modifier = Modifier.size(48.dp).clip(CircleShape),
+                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Text("👤", fontSize = 24.sp)
+                        }
+                    }
+                    Spacer(modifier = Modifier.width(16.dp))
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = IdentityManager.getUserName(context),
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            text = IdentityManager.getUserStatus(context),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                        )
+                    }
+                    IconButton(onClick = { /* TODO: Editar perfil */ }) {
+                        Icon(Icons.Filled.Edit, "Editar", tint = MaterialTheme.colorScheme.primary)
+                    }
+                }
             }
         }
 
-        // Red Mesh
+        // Sección Red Mesh
         item {
-            SettingsCard(title = "Red Mesh", icon = Icons.Filled.Wifi) {
-                var serverEnabled by remember { mutableStateOf(true) }
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text("Servidor TCP", modifier = Modifier.weight(1f))
-                    Switch(checked = serverEnabled, onCheckedChange = { serverEnabled = it })
+            SettingsSection(title = "Red Mesh") {
+                SettingsItem(title = "Diagnóstico de red", icon = Icons.Filled.BugReport) {
+                    showDiagnostic = true
                 }
-                Text("Intervalo de escaneo: 30s / 5min")
-                TextButton(onClick = { showDiagnostic = true }) {
-                    Text("Diagnóstico de red")
+                SettingsItem(title = "Servidor TCP", subtitle = "Intervalo: 30s / 5min", icon = Icons.Filled.Dns) {
+                    // TODO: Toggle servidor
                 }
             }
         }
 
-        // Chats
+        // Sección Chats
         item {
-            SettingsCard(title = "Chats", icon = Icons.Filled.Chat) {
+            SettingsSection(title = "Chats") {
                 val bubbleColors = listOf(
                     null to "Tema",
                     Color(0xFF00E5FF) to "Cyan",
@@ -78,52 +104,54 @@ fun SettingsScreen(
                     Color(0xFF9575CD) to "Morado",
                     Color(0xFF78909C) to "Gris"
                 )
-                Text("Color de burbujas propias", style = MaterialTheme.typography.labelMedium)
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    bubbleColors.forEach { (color, _) ->
-                        val isSelected = AccessibilitySettings.ownBubbleColor.value == color
-                        Box(
-                            modifier = Modifier
-                                .size(32.dp)
-                                .clip(CircleShape)
-                                .background(color ?: MaterialTheme.colorScheme.primaryContainer)
-                                .then(if (isSelected) Modifier.border(2.dp, MaterialTheme.colorScheme.onSurface, CircleShape) else Modifier)
-                                .clickable { AccessibilitySettings.ownBubbleColor.value = color; AccessibilitySettings.save(context) }
-                        )
+                Column(modifier = Modifier.padding(8.dp)) {
+                    Text("Color de burbujas propias", style = MaterialTheme.typography.labelMedium)
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        bubbleColors.forEach { (color, _) ->
+                            val isSelected = AccessibilitySettings.ownBubbleColor.value == color
+                            Box(
+                                modifier = Modifier
+                                    .size(36.dp)
+                                    .clip(CircleShape)
+                                    .background(color ?: MaterialTheme.colorScheme.primaryContainer)
+                                    .then(if (isSelected) Modifier.border(2.dp, MaterialTheme.colorScheme.onSurface, CircleShape) else Modifier)
+                                    .clickable { AccessibilitySettings.ownBubbleColor.value = color; AccessibilitySettings.save(context) }
+                            )
+                        }
                     }
-                }
-                Spacer(modifier = Modifier.height(8.dp))
-                Text("Color de burbujas del contacto", style = MaterialTheme.typography.labelMedium)
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    bubbleColors.forEach { (color, _) ->
-                        val isSelected = AccessibilitySettings.otherBubbleColor.value == color
-                        Box(
-                            modifier = Modifier
-                                .size(32.dp)
-                                .clip(CircleShape)
-                                .background(color ?: MaterialTheme.colorScheme.secondaryContainer)
-                                .then(if (isSelected) Modifier.border(2.dp, MaterialTheme.colorScheme.onSurface, CircleShape) else Modifier)
-                                .clickable { AccessibilitySettings.otherBubbleColor.value = color; AccessibilitySettings.save(context) }
-                        )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Text("Color de burbujas del contacto", style = MaterialTheme.typography.labelMedium)
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        bubbleColors.forEach { (color, _) ->
+                            val isSelected = AccessibilitySettings.otherBubbleColor.value == color
+                            Box(
+                                modifier = Modifier
+                                    .size(36.dp)
+                                    .clip(CircleShape)
+                                    .background(color ?: MaterialTheme.colorScheme.secondaryContainer)
+                                    .then(if (isSelected) Modifier.border(2.dp, MaterialTheme.colorScheme.onSurface, CircleShape) else Modifier)
+                                    .clickable { AccessibilitySettings.otherBubbleColor.value = color; AccessibilitySettings.save(context) }
+                            )
+                        }
                     }
                 }
             }
         }
 
-        // Notificaciones
+        // Sección Notificaciones
         item {
-            SettingsCard(title = "Notificaciones", icon = Icons.Filled.Notifications) {
-                var notifEnabled by remember { mutableStateOf(true) }
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text("Notificaciones", modifier = Modifier.weight(1f))
-                    Switch(checked = notifEnabled, onCheckedChange = { notifEnabled = it })
+            SettingsSection(title = "Notificaciones") {
+                SettingsItem(title = "Activar notificaciones", icon = Icons.Filled.Notifications) {
+                    // TODO: Toggle
                 }
             }
         }
 
-        // Tema
+        // Sección Tema
         item {
-            SettingsCard(title = "Tema", icon = Icons.Filled.Palette) {
+            SettingsSection(title = "Tema") {
                 ThemeSelectorCard(
                     currentScheme = currentScheme,
                     onSchemeSelected = onSchemeSelected
@@ -131,84 +159,82 @@ fun SettingsScreen(
             }
         }
 
-        // Datos y almacenamiento
+        // Sección Datos y privacidad
         item {
-            SettingsCard(title = "Datos y almacenamiento", icon = Icons.Filled.Storage) {
-                Text("Uso de almacenamiento")
-                TextButton(onClick = { /* Limpiar chats */ }) {
-                    Text("Limpiar todas las conversaciones")
-                }
+            SettingsSection(title = "Datos y privacidad") {
+                SettingsItem(title = "Cifrado E2E activo", subtitle = "Todas las comunicaciones están protegidas", icon = Icons.Filled.Lock) {}
+                SettingsItem(title = "Limpiar todas las conversaciones", icon = Icons.Filled.DeleteSweep) {}
             }
         }
 
-        // Seguridad
+        // Sección Ayuda
         item {
-            SettingsCard(title = "Seguridad", icon = Icons.Filled.Lock) {
-                Text("Cifrado E2E activo")
-                Text("Clave pública: ...")
-            }
-        }
-
-        // Ayuda
-        item {
-            SettingsCard(title = "Ayuda", icon = Icons.Filled.Info) {
-                TextButton(onClick = { /* Acerca de */ }) {
-                    Text("Acerca de MALLA")
-                }
-                TextButton(onClick = { /* Tutorial */ }) {
-                    Text("Tutorial de uso")
-                }
-                TextButton(onClick = { /* Términos */ }) {
-                    Text("Términos y privacidad")
-                }
+            SettingsSection(title = "Ayuda") {
+                SettingsItem(title = "Acerca de MALLA", icon = Icons.Filled.Info) {}
+                SettingsItem(title = "Tutorial de uso", icon = Icons.Filled.School) {}
+                SettingsItem(title = "Términos y privacidad", icon = Icons.Filled.Description) {}
             }
         }
     }
 
-    // Diálogo de diagnóstico en vivo
     if (showDiagnostic) {
         AlertDialog(
             onDismissRequest = { showDiagnostic = false },
             title = { Text("Diagnóstico en vivo") },
-            text = {
-                DiagnosticScreen()
-            },
+            text = { DiagnosticScreen() },
             confirmButton = {
-                TextButton(onClick = { showDiagnostic = false }) {
-                    Text("Cerrar")
-                }
+                TextButton(onClick = { showDiagnostic = false }) { Text("Cerrar") }
             }
         )
     }
 }
 
 @Composable
-fun SettingsCard(
+fun SettingsSection(
     title: String,
-    icon: ImageVector,
     content: @Composable ColumnScope.() -> Unit
 ) {
-    var expanded by remember { mutableStateOf(false) }
+    Card(
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.1f))
+    ) {
+        Column(modifier = Modifier.padding(12.dp)) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+            content()
+        }
+    }
+}
 
-    Card(modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Icon(icon, null, tint = MaterialTheme.colorScheme.primary)
-                Spacer(modifier = Modifier.width(12.dp))
-                Text(title, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
-                IconButton(onClick = { expanded = !expanded }) {
-                    Icon(
-                        if (expanded) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
-                        contentDescription = null
-                    )
+@Composable
+fun SettingsItem(
+    title: String,
+    subtitle: String? = null,
+    icon: ImageVector,
+    onClick: () -> Unit
+) {
+    Surface(
+        modifier = Modifier.fillMaxWidth().clickable { onClick() },
+        color = Color.Transparent
+    ) {
+        Row(
+            modifier = Modifier.padding(vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(icon, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
+            Spacer(modifier = Modifier.width(12.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(title, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface)
+                if (subtitle != null) {
+                    Text(subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
                 }
             }
-            if (expanded) {
-                content()
-            }
+            Icon(Icons.Filled.ChevronRight, null, tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f), modifier = Modifier.size(20.dp))
         }
     }
 }
