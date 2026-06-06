@@ -17,6 +17,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.malla.mvp.core.engine.DeviceState
 import com.malla.mvp.core.engine.DeviceStateMonitor
+import com.malla.mvp.core.engine.EmergencyMode
 import com.malla.mvp.core.engine.MeshLevel
 
 @Composable
@@ -25,6 +26,7 @@ fun ConnectivityStatusBar() {
     val level = deviceState.currentLevel
     val bgColor = backgroundColorForLevel(level)
     val isMeshMode = !deviceState.hasInternetConnection
+    val isEmergency by EmergencyMode.isActive.collectAsState()
 
     // Animación de pulso solo en modo mesh (indica escaneo activo)
     val infiniteTransition = rememberInfiniteTransition(label = "meshPulse")
@@ -43,7 +45,7 @@ fun ConnectivityStatusBar() {
             .fillMaxWidth()
             .height(32.dp)
             .clickable { /* TODO: abrir BottomSheet */ },
-        color = bgColor.copy(alpha = 0.9f),
+        color = if (isEmergency) Color(0xFFB71C1C).copy(alpha = 0.9f) else bgColor.copy(alpha = 0.9f),
         shape = RoundedCornerShape(0.dp)
     ) {
         Row(
@@ -55,9 +57,8 @@ fun ConnectivityStatusBar() {
         ) {
             // Icono y texto principal
             Row(verticalAlignment = Alignment.CenterVertically) {
-                // Ícono con animación de pulso en mesh
                 Text(
-                    text = iconForLevel(level),
+                    text = if (isEmergency) "🚨" else iconForLevel(level),
                     fontSize = 16.sp,
                     modifier = if (isMeshMode) Modifier.scale(pulseScale) else Modifier
                 )
@@ -65,16 +66,22 @@ fun ConnectivityStatusBar() {
                 Column {
                     Crossfade(targetState = level, label = "text") { lvl ->
                         Text(
-                            text = statusTextForLevel(lvl, deviceState),
+                            text = if (isEmergency) "EMERGENCIA ACTIVA" else statusTextForLevel(lvl, deviceState),
                             color = Color.White,
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Medium
                         )
                     }
-                    // Texto adicional en modo mesh
-                    if (isMeshMode) {
+                    if (isMeshMode && !isEmergency) {
                         Text(
                             text = "Escaneando...",
+                            color = Color.White.copy(alpha = 0.6f),
+                            fontSize = 9.sp
+                        )
+                    }
+                    if (isEmergency) {
+                        Text(
+                            text = "Todos los radios activos",
                             color = Color.White.copy(alpha = 0.6f),
                             fontSize = 9.sp
                         )
@@ -82,8 +89,23 @@ fun ConnectivityStatusBar() {
                 }
             }
 
-            // Indicadores derecha
+            // Indicadores derecha + botón emergencia
             Row(verticalAlignment = Alignment.CenterVertically) {
+                // Botón de emergencia (solo visible en mesh y si no está ya activo)
+                if (isMeshMode && !isEmergency) {
+                    TextButton(
+                        onClick = {
+                            EmergencyMode.activate()
+                            android.util.Log.d("ConnectivityStatusBar", "[EMERGENCY] Activado por usuario")
+                        },
+                        contentPadding = PaddingValues(horizontal = 4.dp, vertical = 0.dp),
+                        modifier = Modifier.height(28.dp)
+                    ) {
+                        Text("⚠️ EMERGENCIA", fontSize = 9.sp, color = Color(0xFFFFD700))
+                    }
+                    Spacer(modifier = Modifier.width(8.dp))
+                }
+
                 val batteryColor = when {
                     deviceState.batteryLevel > 50 -> Color(0xFF4CAF50)
                     deviceState.batteryLevel > 20 -> Color(0xFFFFC107)

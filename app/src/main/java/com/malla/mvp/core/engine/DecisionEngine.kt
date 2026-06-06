@@ -6,7 +6,22 @@ object DecisionEngine {
     private const val TAG = "DecisionEngine"
 
     fun decide(state: DeviceState): CommunicationDecision {
-        // Regla 0: Emergencia (prioridad absoluta)
+        // Verificar modo emergencia forzado por usuario (Regla 0 ampliada)
+        if (EmergencyMode.isActive.value) {
+            val best = bestAvailable(state)
+            return CommunicationDecision(
+                primaryTransport = best,
+                secondaryTransport = secondBestAvailable(state, best),
+                scanIntervalSeconds = 5,
+                maxPayloadBytes = 512,
+                ttlHops = 24,
+                useCompression = true,
+                activateBloomFilter = true,
+                reasoning = "Modo emergencia forzado por usuario - todos los radios activos"
+            )
+        }
+
+        // Regla 0: Emergencia por prioridad de mensaje
         if (state.highestPriority == MessagePriority.EMERGENCY) {
             val best = bestAvailable(state)
             val second = secondBestAvailable(state, best)
@@ -114,9 +129,7 @@ object DecisionEngine {
             )
         }
 
-        // Regla 7: Carga pesada de CPU/RAM (se aplica sobre la decisión existente)
-        // Ya que todas las reglas anteriores tienen early return, solo se aplica
-        // si no se cumplió ninguna otra condición de batería (lo cual no debería ocurrir)
+        // Regla 7: Carga pesada de CPU/RAM
         if (state.deviceLoad == DeviceLoad.HEAVY || state.deviceLoad == DeviceLoad.CRITICAL) {
             return CommunicationDecision(
                 primaryTransport = MeshLevel.BLE,
