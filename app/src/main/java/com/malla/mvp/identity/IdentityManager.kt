@@ -15,6 +15,8 @@ import java.security.KeyStore
 import java.security.PrivateKey
 import java.security.PublicKey
 import java.security.spec.ECGenParameterSpec
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 
 object IdentityManager {
     private const val TAG = "IdentityManager"
@@ -28,6 +30,10 @@ object IdentityManager {
 
     @Volatile private var cachedPublicKeyBase64: String? = null
 
+    // Avatar reactivo
+    private val _avatarBitmap = MutableStateFlow<Bitmap?>(null)
+    val avatarBitmap: StateFlow<Bitmap?> = _avatarBitmap
+
     fun init(context: Context) {
         try {
             val ks = KeyStore.getInstance("AndroidKeyStore").apply { load(null) }
@@ -38,6 +44,9 @@ object IdentityManager {
                 Log.d(TAG, "[IDENTITY] Keypair existente cargado del Keystore")
             }
             getPublicKeyBase64()
+            // Cargar avatar guardado al inicio
+            val bitmap = loadAvatar(context)
+            if (bitmap != null) _avatarBitmap.value = bitmap
         } catch (e: Exception) {
             Log.e(TAG, "[IDENTITY:ERR] Error inicializando identidad: ${e.message}", e)
         }
@@ -109,6 +118,7 @@ object IdentityManager {
             val bitmap = BitmapFactory.decodeStream(inputStream)
             val file = File(context.filesDir, AVATAR_FILE)
             FileOutputStream(file).use { out -> bitmap.compress(Bitmap.CompressFormat.JPEG, 90, out) }
+            _avatarBitmap.value = bitmap  // Notificar cambio reactivo
             bitmap
         } catch (e: Exception) {
             null

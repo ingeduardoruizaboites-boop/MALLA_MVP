@@ -47,6 +47,9 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.foundation.gestures.detectTapGestures
 import coil.compose.AsyncImage
+import com.malla.mvp.identity.IdentityManager
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.foundation.Image
 import com.malla.mvp.R
 import com.malla.mvp.data.AppDatabase
 import com.malla.mvp.data.entity.ConversationEntity

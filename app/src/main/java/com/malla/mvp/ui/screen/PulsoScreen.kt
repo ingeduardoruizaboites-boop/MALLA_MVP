@@ -20,7 +20,6 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.malla.mvp.data.repository.PulsoRepository
 import com.malla.mvp.network.BleManager
 import com.malla.mvp.network.NetworkService
 import kotlinx.coroutines.launch
@@ -49,10 +48,13 @@ fun PulsoScreen(
     var selectedTab by remember { mutableStateOf(0) }
     val localIp = remember { NetworkService.getLocalIpAddress() }
 
-    val isOnline by PulsoRepository.isOnline.collectAsState()
-    val meshNodes by PulsoRepository.meshNodes.collectAsState()
-    val connectedPeers by PulsoRepository.connectedPeersCount.collectAsState()
-    val relayedMessages by PulsoRepository.relayedMessagesCount.collectAsState()
+    // Datos reales de red
+    val bleDevices by BleManager.foundDevices.collectAsState()
+    val bleBluetoothDevices by BleManager.foundBluetoothDevices.collectAsState()
+    val tcpPeers by NetworkService.connectedClientsCount.collectAsState()
+
+    // Para el advertising BLE (no expuesto directamente, usamos un estado básico)
+    val isBleAdvertising = remember { BleManager.getAdapter()?.bluetoothLeAdvertiser != null }
 
     Column(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         Surface(
@@ -65,7 +67,7 @@ fun PulsoScreen(
                     modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    val dotColor = if (isOnline) MaterialTheme.colorScheme.primary else Color(0xFFFFD700)
+                    val dotColor = MaterialTheme.colorScheme.primary
                     val infiniteTransition = rememberInfiniteTransition(label = "dot")
                     val alpha by infiniteTransition.animateFloat(
                         initialValue = 1f, targetValue = 0.2f,
@@ -79,9 +81,9 @@ fun PulsoScreen(
                     Text("Pulso de la Red", style = MaterialTheme.typography.titleMedium)
                     Spacer(modifier = Modifier.weight(1f))
                     Text(
-                        if (isOnline) "📶 Normal" else "🕸️ Mesh",
+                        "🕸️ Mesh",
                         style = MaterialTheme.typography.labelSmall,
-                        color = if (isOnline) MaterialTheme.colorScheme.primary else Color(0xFFFFD700)
+                        color = Color(0xFFFFD700)
                     )
                     Text(" · IP: $localIp", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
                 }
@@ -95,8 +97,8 @@ fun PulsoScreen(
         }
 
         when (selectedTab) {
-            0 -> TabPulso(meshNodes, connectedPeers, relayedMessages, isOnline)
-            1 -> TabNodos(meshNodes, onConnectToPeer)
+            0 -> TabPulso(bleDevices, bleBluetoothDevices, tcpPeers, isBleAdvertising)
+            1 -> TabNodos(bleBluetoothDevices, onConnectToPeer)
             2 -> TabLogros()
             3 -> TabModos()
         }
@@ -105,10 +107,10 @@ fun PulsoScreen(
 
 @Composable
 fun TabPulso(
-    nodes: List<MeshNode>,
-    connectedPeers: Int,
-    relayedMessages: Int,
-    isOnline: Boolean
+    bleDevices: List<String>,
+    bleBluetoothDevices: List<BluetoothDevice>,
+    tcpPeers: Int,
+    isBleAdvertising: Boolean
 ) {
     LazyColumn(
         contentPadding = PaddingValues(16.dp),
@@ -116,13 +118,13 @@ fun TabPulso(
     ) {
         item {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                StatCard(value = "${nodes.size}", label = "Nodos BLE", delta = "+${nodes.size} visibles", deltaPositive = true, modifier = Modifier.weight(1f))
-                StatCard(value = "$connectedPeers", label = "Conectados", delta = "TCP activos", deltaPositive = null, modifier = Modifier.weight(1f))
-                StatCard(value = "$relayedMessages", label = "Msgs relay", delta = "desde inicio", deltaPositive = true, modifier = Modifier.weight(1f))
+                StatCard(value = "${bleDevices.size}", label = "Nodos BLE", delta = "+${bleDevices.size} visibles", deltaPositive = true, modifier = Modifier.weight(1f))
+                StatCard(value = "$tcpPeers", label = "Conectados", delta = "TCP activos", deltaPositive = null, modifier = Modifier.weight(1f))
+                StatCard(value = if (isBleAdvertising) "ON" else "OFF", label = "Anuncio BLE", delta = "Presencia activa", deltaPositive = isBleAdvertising, modifier = Modifier.weight(1f))
             }
         }
         item {
-            GlobeCard(totalUsers = nodes.size + connectedPeers)
+            GlobeCard(totalUsers = bleBluetoothDevices.size + tcpPeers)
         }
         item {
             Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
@@ -211,7 +213,7 @@ fun UptimeBanner() {
 }
 
 @Composable
-fun TabNodos(nodes: List<MeshNode>, onConnectToPeer: (String) -> Unit) {
+fun TabNodos(bleBluetoothDevices: List<BluetoothDevice>, onConnectToPeer: (String) -> Unit) {
     val scope = rememberCoroutineScope()
     LazyColumn(contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         item { Text("NODOS ALCANZABLES AHORA", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)) }
@@ -224,7 +226,33 @@ fun TabNodos(nodes: List<MeshNode>, onConnectToPeer: (String) -> Unit) {
                 Text("Forzar escaneo ahora")
             }
         }
-        items(nodes) { node -> NodeCard(node = node, onConnectToPeer = onConnectToPeer, scope = scope) }
+        items(bleBluetoothDevices) { device ->
+            val name = device.name ?: device.address
+            val rssi = "N/A" // BleManager no expone RSSI por dispositivo, pendiente
+            Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant), shape = RoundedCornerShape(12.dp)) {
+                Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Box(modifier = Modifier.size(40.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)), contentAlignment = Alignment.Center) {
+                        Text(name.take(2).uppercase(), style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
+                    }
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(name, style = MaterialTheme.typography.bodyLarge)
+                        Text("BLE directo · $rssi", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f))
+                    }
+                    SignalBars(strength = -70, color = MaterialTheme.colorScheme.primary) // Valor por defecto hasta exponer RSSI real
+                    IconButton(onClick = {
+                        scope.launch {
+                            val ip = BleManager.connectAndReadIp(device)
+                            if (ip != null) {
+                                onConnectToPeer(ip)
+                            }
+                        }
+                    }) {
+                        Icon(Icons.Filled.Link, "Conectar", tint = MaterialTheme.colorScheme.primary)
+                    }
+                }
+            }
+        }
     }
 }
 
