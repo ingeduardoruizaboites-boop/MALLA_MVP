@@ -8,6 +8,7 @@ import com.malla.mvp.data.entity.MessageEntity
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import java.util.UUID
+import com.malla.mvp.data.repository.PulsoRepository
 
 /**
  * Puente entre la red mesh y la base de datos local.
@@ -76,6 +77,7 @@ object MessageBridge {
                     viewOnce = false
                 )
                 messageDao.insertMessage(msg)
+                com.malla.mvp.data.repository.PulsoRepository.relayedMessagesCount.value++
                 _newMessageCount.value++
                 Log.d(TAG, "[MB:MSG] Mensaje guardado en $convId: ${meshMessage.content.take(30)}...")
             }
