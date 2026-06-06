@@ -47,7 +47,8 @@ object BleManager {
         val scanSettings = ScanSettings.Builder()
             .setScanMode(ScanSettings.SCAN_MODE_LOW_POWER)
             .build()
-        scanner?.startScan(null, scanSettings, scanCallback)
+        val scanFilter = ScanFilter.Builder().setServiceUuid(ParcelUuid(serviceUuid)).build()
+        scanner?.startScan(listOf(scanFilter), scanSettings, scanCallback)
         isScanningActive = true
     }
 
@@ -193,7 +194,7 @@ object BleManager {
         override fun onScanResult(callbackType: Int, result: ScanResult) {
             val device = result.device
             val name = device.name ?: device.address
-            Log.d(TAG, "[BLE:SCAN] Dispositivo BLE encontrado: $name")
+            Log.d(TAG, "[BLE:MALLA] Nodo MALLA detectado: $name")
             _foundDevices.value = _foundDevices.value + name
             if (!_foundBluetoothDevices.value.contains(device)) {
                 _foundBluetoothDevices.value = _foundBluetoothDevices.value + device
