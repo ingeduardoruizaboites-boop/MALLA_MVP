@@ -60,6 +60,7 @@ import com.malla.mvp.data.entity.PollOptionEntity
 import com.malla.mvp.network.NetworkService
 import com.malla.mvp.ui.settings.AccessibilitySettings
 import com.malla.mvp.ui.settings.BubbleStyle
+import com.malla.mvp.ui.components.BubbleShapes
 import kotlinx.coroutines.*
 import java.io.File
 import java.text.SimpleDateFormat
@@ -893,13 +894,12 @@ fun MessageBubble(
     val currentStyle = AccessibilitySettings.bubbleStyle.value
     val shape = when (currentStyle) {
         BubbleStyle.MODERN -> if (isGrouped) {
-            if (message.isOwn) RoundedCornerShape(topStart = 16.dp, bottomStart = 16.dp, bottomEnd = 4.dp)
-            else RoundedCornerShape(topEnd = 16.dp, bottomEnd = 16.dp, bottomStart = 4.dp)
-        } else RoundedCornerShape(16.dp)
-        BubbleStyle.ROUNDED -> RoundedCornerShape(24.dp)
-        BubbleStyle.COMIC -> RoundedCornerShape(topStart = 20.dp, topEnd = 8.dp, bottomStart = 8.dp, bottomEnd = 20.dp)
-        BubbleStyle.PIXEL -> RoundedCornerShape(0)
-        BubbleStyle.COLA -> RoundedCornerShape(16.dp)
+            if (message.isOwn) BubbleShapes.ModernOwn else BubbleShapes.ModernOther
+        } else BubbleShapes.ModernDefault
+        BubbleStyle.ROUNDED -> BubbleShapes.Rounded
+        BubbleStyle.COMIC -> if (message.isOwn) BubbleShapes.ComicOwn else BubbleShapes.ComicOther
+        BubbleStyle.PIXEL -> BubbleShapes.Pixel
+        BubbleStyle.COLA -> if (message.isOwn) BubbleShapes.ColaOwn else BubbleShapes.ColaOther
     }
 
     var showReactionPicker by remember { mutableStateOf(false) }

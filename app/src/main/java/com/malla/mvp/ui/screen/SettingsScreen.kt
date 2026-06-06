@@ -20,6 +20,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.malla.mvp.ui.components.ThemeSelectorCard
 import com.malla.mvp.ui.settings.AccessibilitySettings
+import com.malla.mvp.ui.settings.BubbleStyle
 import com.malla.mvp.ui.theme.MallaColorScheme
 import com.malla.mvp.identity.IdentityManager
 
@@ -133,6 +134,23 @@ fun SettingsScreen(
                                     .background(color ?: MaterialTheme.colorScheme.secondaryContainer)
                                     .then(if (isSelected) Modifier.border(2.dp, MaterialTheme.colorScheme.onSurface, CircleShape) else Modifier)
                                     .clickable { AccessibilitySettings.otherBubbleColor.value = color; AccessibilitySettings.save(context) }
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text("Estilo de burbujas", style = MaterialTheme.typography.labelMedium)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Row(horizontalArrangement = Arrangement.spacedBy(4.dp), modifier = Modifier.fillMaxWidth()) {
+                        BubbleStyle.values().forEach { style ->
+                            val isSelected = AccessibilitySettings.bubbleStyle.value == style
+                            FilterChip(
+                                selected = isSelected,
+                                onClick = { AccessibilitySettings.bubbleStyle.value = style; AccessibilitySettings.save(context) },
+                                label = { Text(style.label, style = MaterialTheme.typography.labelSmall) },
+                                colors = FilterChipDefaults.filterChipColors(
+                                    selectedContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f),
+                                    selectedLabelColor = MaterialTheme.colorScheme.primary
+                                )
                             )
                         }
                     }
