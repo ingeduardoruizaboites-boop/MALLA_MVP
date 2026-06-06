@@ -5,6 +5,7 @@ import java.security.spec.ECGenParameterSpec
 import java.security.spec.X509EncodedKeySpec
 import javax.crypto.*
 import javax.crypto.spec.*
+import java.security.MessageDigest
 import android.util.Base64
 
 object CryptoEngine {
@@ -30,7 +31,10 @@ object CryptoEngine {
         ka.init(privateKey)
         ka.doPhase(publicKey, true)
         val sharedSecret = ka.generateSecret()
-        return SecretKeySpec(sharedSecret.copyOf(16), "AES")
+        // Derivar clave AES-256 usando SHA-256 (Corrección 1 de la guía V3.0)
+        val digest = MessageDigest.getInstance("SHA-256")
+        val keyBytes = digest.digest(sharedSecret)  // 32 bytes para AES-256
+        return SecretKeySpec(keyBytes, "AES")
     }
 
     fun encrypt(message: String, secretKey: SecretKey): ByteArray {
