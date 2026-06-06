@@ -198,7 +198,7 @@ object BleManager {
             val name = device.name ?: device.address
             Log.d(TAG, "[BLE:MALLA] Nodo MALLA detectado: $name")
                 LogBuffer.add("BLE", "Nodo detectado: ${name}")
-            _foundDevices.value = _foundDevices.value + name
+            if (!_foundDevices.value.contains(name)) { _foundDevices.value = _foundDevices.value + name }
             if (!_foundBluetoothDevices.value.contains(device)) {
                 _foundBluetoothDevices.value = _foundBluetoothDevices.value + device
             }
