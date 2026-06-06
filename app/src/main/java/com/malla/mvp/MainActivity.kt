@@ -129,6 +129,15 @@ class MainActivity : ComponentActivity() {
                             appState = AppState.Main
                         }
                         AppState.Main -> {
+                            val screenKey = when {
+                                showTutorial -> "tutorial"
+                                showQrScanner -> "qr"
+                                showSettings -> "settings"
+                                selectedContact != null -> "contact"
+                                currentConversationId != null -> "chat"
+                                else -> "main"
+                            }
+                            AnimatedContent(targetState = screenKey, transitionSpec = { (scaleIn(tween(400), initialScale = 0.92f) + fadeIn(tween(400))) togetherWith (scaleOut(tween(400), targetScale = 1.08f) + fadeOut(tween(400))) }, label = "page") {
                             if (showTutorial) {
                                 TutorialOverlay(
                                     onDismiss = {
@@ -170,6 +179,7 @@ class MainActivity : ComponentActivity() {
                                 )
                             }
                         }
+                            }
                     }
                 }
             }
