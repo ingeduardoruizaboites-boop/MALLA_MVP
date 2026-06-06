@@ -9,106 +9,103 @@ import android.media.MediaRecorder
 import android.media.RingtoneManager
 import android.net.Uri
 import android.os.Build
-import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
+import android.os.VibrationEffect
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.*
-import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.InlineTextContent
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.foundation.gestures.detectTapGestures
 import coil.compose.AsyncImage
 import com.malla.mvp.R
 import com.malla.mvp.data.AppDatabase
+import com.malla.mvp.data.entity.ConversationEntity
 import com.malla.mvp.data.entity.MessageEntity
+import com.malla.mvp.network.MeshMessage
 import com.malla.mvp.data.entity.PollEntity
 import com.malla.mvp.data.entity.PollOptionEntity
-import com.malla.mvp.network.MeshMessage
 import com.malla.mvp.network.NetworkService
 import com.malla.mvp.ui.settings.AccessibilitySettings
 import com.malla.mvp.ui.settings.BubbleStyle
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.random.Random
 
-private val sampleMessages = mapOf(
-    "sim_alicia" to listOf(
-        MessageEntity(id = "m1", conversationId = "sim_alicia", content = "¡Hola!", isOwn = false, status = 2, timestamp = System.currentTimeMillis() - 120000),
-        MessageEntity(id = "m2", conversationId = "sim_alicia", content = "¿Todo bien?", isOwn = true, status = 2, timestamp = System.currentTimeMillis() - 60000)
-    ),
-    "sim_carlos" to listOf(
-        MessageEntity(id = "m3", conversationId = "sim_carlos", content = "Conéctate a la mesh", isOwn = false, status = 2, timestamp = System.currentTimeMillis() - 7200000)
-    ),
-    "sim_oficina" to listOf(
-        MessageEntity(id = "m4", conversationId = "sim_oficina", content = "Reunión a las 10", isOwn = true, status = 1, timestamp = System.currentTimeMillis() - 86400000)
-    )
-)
-
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class, androidx.compose.ui.ExperimentalComposeUiApi::class)
 @Composable
-fun ChatScreen(conversationId: String, contactName: String = "Chat", onBack: () -> Unit, isMeshMode: Boolean = false, isGroup: Boolean = false, db: AppDatabase? = null) {
+fun ChatScreen(
+    conversationId: String,
+    contactName: String,
+    isMeshMode: Boolean = false,
+    onBack: () -> Unit = {},
+    onProfileClicked: () -> Unit = {}
+) {
     val context = LocalContext.current
-    val db = remember { AppDatabase.getInstance(context) }
-    var messages by remember { mutableStateOf<List<MessageEntity>>(emptyList()) }
-    var polls by remember { mutableStateOf<List<PollEntity>>(emptyList()) }
-    var optionsMap by remember { mutableStateOf<Map<String, List<PollOptionEntity>>>(emptyMap()) }
+    val db = AppDatabase.getInstance(context)
+    val listState = rememberLazyListState()
+    var messages by remember { mutableStateOf(emptyList<MessageEntity>()) }
     var text by remember { mutableStateOf("") }
     var isTyping by remember { mutableStateOf(false) }
-    var isRecording by remember { mutableStateOf(false) }
-    var isFiestaMode by remember { mutableStateOf(false) }
-    var showCreatePollDialog by remember { mutableStateOf(false) }
-    var pollQuestion by remember { mutableStateOf("") }
-    var pollOptions by remember { mutableStateOf(listOf("", "")) }
+    var showAttachmentSheet by remember { mutableStateOf(false) }
+    var showBackgroundDialog by remember { mutableStateOf(false) }
     var showEphemeralMenu by remember { mutableStateOf(false) }
+    var showCreatePollDialog by remember { mutableStateOf(false) }
     var ephemeralDuration by remember { mutableStateOf<Long?>(null) }
     var viewOnce by remember { mutableStateOf(false) }
-    var chatBackground by remember { mutableStateOf(0) }
+    var isFiestaMode by remember { mutableStateOf(false) }
+    var chatBackground by remember { mutableStateOf(-1) }
     var gradientType by remember { mutableStateOf(0) }
-    var conversationBgColor by remember { mutableStateOf<Int?>(null) }
-    var showBackgroundDialog by remember { mutableStateOf(false) }
     var backgroundImageUri by remember { mutableStateOf<Uri?>(null) }
-    var showAttachmentSheet by remember { mutableStateOf(false) }
-    var pendingMediaUri by remember { mutableStateOf<Uri?>(null) }
+    var conversationBgColor by remember { mutableStateOf<Int?>(null) }
+    var shakeOffset by remember { mutableStateOf(Animatable(0f)) }
+    var hasCustomRingtone by remember { mutableStateOf(false) }
     var showImageEditor by remember { mutableStateOf(false) }
+    var pendingMediaUri by remember { mutableStateOf<Uri?>(null) }
     var editorText by remember { mutableStateOf("") }
     var cameraUri by remember { mutableStateOf<Uri?>(null) }
-    val listState = rememberLazyListState()
+    var isRecording by remember { mutableStateOf(false) }
+    var polls by remember { mutableStateOf(emptyList<PollEntity>()) }
+    var optionsMap by remember { mutableStateOf(emptyMap<String, List<PollOptionEntity>>()) }
+    var pollQuestion by remember { mutableStateOf("") }
+    var pollOptions by remember { mutableStateOf(listOf("", "")) }
+    var replyTo by remember { mutableStateOf<MessageEntity?>(null) }
     val coroutineScope = rememberCoroutineScope()
-    val shakeOffset = remember { Animatable(0f) }
 
-    val hasCustomRingtone by remember {
+    LaunchedEffect(context, conversationId) {
         val prefs = context.getSharedPreferences("ringtones", Context.MODE_PRIVATE)
-        mutableStateOf(prefs.getString(conversationId, null) != null)
+        hasCustomRingtone = prefs.getString(conversationId, null) != null
     }
 
     val cameraLauncher = rememberLauncherForActivityResult(
@@ -438,101 +435,153 @@ fun ChatScreen(conversationId: String, contactName: String = "Chat", onBack: () 
                             },
                             onForward = { msgToForward ->
                                 Toast.makeText(context, "Reenviar (próximamente)", Toast.LENGTH_SHORT).show()
-                            }
+                            },
+                            onReply = { msgToReply -> replyTo = msgToReply }
                         )
                     }
                 }
             }
         }
 
-        // Barra inferior
-        Surface(
-            modifier = Modifier.fillMaxWidth(),
-            shadowElevation = 8.dp,
-            color = MaterialTheme.colorScheme.surface
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(8.dp),
-                verticalAlignment = Alignment.CenterVertically
+        // Barra inferior con cita
+        Column(modifier = Modifier.fillMaxWidth()) {
+            // Barra de respuesta (si hay mensaje citado)
+            if (replyTo != null) {
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    color = MaterialTheme.colorScheme.surfaceVariant,
+                    shadowElevation = 1.dp
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            Icons.Filled.Reply,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "Respondiendo a ${if (replyTo!!.isOwn) "ti" else contactName}",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                            Text(
+                                text = replyTo!!.content.take(100),
+                                style = MaterialTheme.typography.bodySmall,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+                        IconButton(onClick = { replyTo = null }, modifier = Modifier.size(24.dp)) {
+                            Icon(Icons.Filled.Close, contentDescription = "Cancelar respuesta", tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                    }
+                }
+            }
+
+            // Barra de escritura
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shadowElevation = 8.dp,
+                color = MaterialTheme.colorScheme.surface
             ) {
-                if (!isMeshMode) {
-                    IconButton(onClick = { vibrateOnly() }) {
-                        Icon(Icons.Filled.Vibration, "Zumbido", tint = MaterialTheme.colorScheme.primary)
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    if (!isMeshMode) {
+                        IconButton(onClick = { vibrateOnly() }) {
+                            Icon(Icons.Filled.Vibration, "Zumbido", tint = MaterialTheme.colorScheme.primary)
+                        }
                     }
-                }
-                OutlinedTextField(
-                    value = text,
-                    onValueChange = { text = it },
-                    modifier = Modifier.weight(1f),
-                    placeholder = { Text("Mensaje") },
-                    maxLines = 1,
-                    shape = RoundedCornerShape(24.dp),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = MaterialTheme.colorScheme.primary,
-                        unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
+                    OutlinedTextField(
+                        value = text,
+                        onValueChange = { text = it },
+                        modifier = Modifier.weight(1f),
+                        placeholder = { Text("Mensaje") },
+                        maxLines = 1,
+                        shape = RoundedCornerShape(24.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = MaterialTheme.colorScheme.primary,
+                            unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
+                        )
                     )
-                )
-                if (!isMeshMode) {
-                    IconButton(onClick = { showAttachmentSheet = true }) {
-                        Icon(Icons.Filled.AttachFile, "Adjuntar", tint = MaterialTheme.colorScheme.primary)
-                    }
-                }
-                if (text.isBlank()) {
-                    Box(
-                        modifier = Modifier
-                            .size(48.dp)
-                            .pointerInput(Unit) {
-                                detectTapGestures(
-                                    onLongPress = {
-                                        if (!isRecording) startRecording()
-                                    },
-                                    onTap = {
-                                        if (isRecording) stopRecording()
-                                    }
-                                )
-                            },
-                        contentAlignment = Alignment.Center
-                    ) {
-                        if (isRecording) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(Icons.Filled.Stop, "Detener", tint = Color.Red)
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Text("Grabando...", style = MaterialTheme.typography.labelSmall, color = Color.Red)
-                            }
-                        } else {
-                            Icon(Icons.Filled.Mic, "Grabar", tint = MaterialTheme.colorScheme.primary)
+                    if (!isMeshMode) {
+                        IconButton(onClick = { showAttachmentSheet = true }) {
+                            Icon(Icons.Filled.AttachFile, "Adjuntar", tint = MaterialTheme.colorScheme.primary)
                         }
                     }
-                } else {
-                    IconButton(
-                        onClick = {
-                            coroutineScope.launch {
-                                val expireAt = if (ephemeralDuration != null) System.currentTimeMillis() + ephemeralDuration!! else null
-                                val msg = MessageEntity(
-                                    id = UUID.randomUUID().toString(),
-                                    conversationId = conversationId,
-                                    content = text,
-                                    isOwn = true,
-                                    expireAt = expireAt,
-                                    viewOnce = viewOnce
-                                )
-                                messages = messages + msg
-                                db?.messageDao()?.insertMessage(msg)
-                                NetworkService.sendMessage(
-                                    MeshMessage(content = text, senderId = "self", timestamp = System.currentTimeMillis())
-                                )
-                                text = ""
+                    if (text.isBlank()) {
+                        Box(
+                            modifier = Modifier
+                                .size(48.dp)
+                                .pointerInput(Unit) {
+                                    detectTapGestures(
+                                        onLongPress = {
+                                            if (!isRecording) startRecording()
+                                        },
+                                        onTap = {
+                                            if (isRecording) stopRecording()
+                                        }
+                                    )
+                                },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            if (isRecording) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(Icons.Filled.Stop, "Detener", tint = Color.Red)
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text("Grabando...", style = MaterialTheme.typography.labelSmall, color = Color.Red)
+                                }
+                            } else {
+                                Icon(Icons.Filled.Mic, "Grabar", tint = MaterialTheme.colorScheme.primary)
                             }
                         }
-                    ) {
-                        Icon(Icons.Filled.Send, "Enviar", tint = MaterialTheme.colorScheme.primary)
+                    } else {
+                        IconButton(
+                            onClick = {
+                                coroutineScope.launch {
+                                    val currentReply = replyTo
+                                    val expireAt = if (ephemeralDuration != null) System.currentTimeMillis() + ephemeralDuration!! else null
+                                    val msg = MessageEntity(
+                                        id = UUID.randomUUID().toString(),
+                                        conversationId = conversationId,
+                                        content = text,
+                                        isOwn = true,
+                                        expireAt = expireAt,
+                                        viewOnce = viewOnce,
+                                        quotedMessageId = currentReply?.id,
+                                        quotedMessageContent = currentReply?.content
+                                    )
+                                    messages = messages + msg
+                                    db?.messageDao()?.insertMessage(msg)
+                                    NetworkService.sendMessage(
+                                        MeshMessage(
+                                            content = text,
+                                            senderId = "self",
+                                            timestamp = System.currentTimeMillis(),
+                                            quotedMessageId = currentReply?.id,
+                                            quotedMessageContent = currentReply?.content
+                                        )
+                                    )
+                                    text = ""
+                                    replyTo = null
+                                }
+                            }
+                        ) {
+                            Icon(Icons.Filled.Send, "Enviar", tint = MaterialTheme.colorScheme.primary)
+                        }
                     }
                 }
             }
         }
     }
 
-    // Selector multimedia
+    // Selector multimedia (sin cambios, pero se mantiene)
     if (showAttachmentSheet) {
         ModalBottomSheet(
             onDismissRequest = { showAttachmentSheet = false },
@@ -599,7 +648,7 @@ fun ChatScreen(conversationId: String, contactName: String = "Chat", onBack: () 
         }
     }
 
-    // Editor de imagen
+    // Editor de imagen (sin cambios)
     if (showImageEditor && pendingMediaUri != null) {
         AlertDialog(
             onDismissRequest = { showImageEditor = false },
@@ -663,7 +712,7 @@ fun ChatScreen(conversationId: String, contactName: String = "Chat", onBack: () 
         )
     }
 
-    // Diálogo de fondo (con gradientes)
+    // Diálogo de fondo (sin cambios)
     if (showBackgroundDialog) {
         var bgTab by remember { mutableStateOf(0) }
         AlertDialog(
@@ -746,7 +795,6 @@ fun ChatScreen(conversationId: String, contactName: String = "Chat", onBack: () 
                                 conversationBgColor = colorInt
                             }
                         }
-                        // Los gradientes no se guardan en BD aún (pendiente)
                     }
                     showBackgroundDialog = false
                 }) { Text("Guardar") }
@@ -755,7 +803,7 @@ fun ChatScreen(conversationId: String, contactName: String = "Chat", onBack: () 
         )
     }
 
-    // Diálogo de efímeros
+    // Diálogo de efímeros (sin cambios)
     if (showEphemeralMenu) {
         AlertDialog(
             onDismissRequest = { showEphemeralMenu = false },
@@ -780,7 +828,7 @@ fun ChatScreen(conversationId: String, contactName: String = "Chat", onBack: () 
         )
     }
 
-    // Diálogo de encuesta
+    // Diálogo de encuesta (sin cambios)
     if (showCreatePollDialog) {
         AlertDialog(
             onDismissRequest = { showCreatePollDialog = false },
@@ -825,7 +873,8 @@ fun MessageBubble(
     isGrouped: Boolean,
     onDelete: (String) -> Unit = {},
     onCopy: (String) -> Unit = {},
-    onForward: (MessageEntity) -> Unit = {}
+    onForward: (MessageEntity) -> Unit = {},
+    onReply: (MessageEntity) -> Unit = {}
 ) {
     val context = LocalContext.current
     val ownBubble = AccessibilitySettings.ownBubbleColor.value
@@ -846,7 +895,7 @@ fun MessageBubble(
         BubbleStyle.ROUNDED -> RoundedCornerShape(24.dp)
         BubbleStyle.COMIC -> RoundedCornerShape(topStart = 20.dp, topEnd = 8.dp, bottomStart = 8.dp, bottomEnd = 20.dp)
         BubbleStyle.PIXEL -> RoundedCornerShape(0)
-        BubbleStyle.COLA -> RoundedCornerShape(16.dp) // pendiente de implementar cola real
+        BubbleStyle.COLA -> RoundedCornerShape(16.dp)
     }
 
     var showReactionPicker by remember { mutableStateOf(false) }
@@ -903,6 +952,29 @@ fun MessageBubble(
             }
         ) {
             Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
+                // Mostrar mensaje citado si existe
+                if (!message.quotedMessageContent.isNullOrBlank()) {
+                    Surface(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 4.dp),
+                        shape = RoundedCornerShape(4.dp),
+                        color = if (message.isOwn)
+                            MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
+                        else
+                            MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                    ) {
+                        Text(
+                            text = message.quotedMessageContent!!,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = textColor.copy(alpha = 0.8f),
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.padding(4.dp)
+                        )
+                    }
+                }
+
                 if (message.mediaUri != null) {
                     if (message.viewOnce && !message.isOwn) {
                         var revealed by remember { mutableStateOf(false) }
@@ -1000,6 +1072,10 @@ fun MessageBubble(
             expanded = showMessageMenu,
             onDismissRequest = { showMessageMenu = false }
         ) {
+            DropdownMenuItem(text = { Text("Responder") }, onClick = {
+                showMessageMenu = false
+                onReply(message)
+            })
             DropdownMenuItem(text = { Text("Copiar") }, onClick = {
                 showMessageMenu = false
                 onCopy(message.content)
@@ -1092,3 +1168,25 @@ private fun formatDateHeader(dateKey: String): String {
         else -> SimpleDateFormat("dd/MM/yy", Locale.getDefault()).format(Date(cal.timeInMillis))
     }
 }
+
+// Mapa de mensajes de muestra (simulación)
+private val sampleMessages = mapOf(
+    "sim_alicia" to (0..20).map {
+        MessageEntity(
+            id = "sim_alicia_$it",
+            conversationId = "sim_alicia",
+            content = listOf("Hola", "¿Cómo estás?", "Bien, gracias", "¡Nos vemos!")[it % 4],
+            timestamp = System.currentTimeMillis() - it * 60000,
+            isOwn = it % 2 == 0
+        )
+    },
+    "sim_carlos" to (0..15).map {
+        MessageEntity(
+            id = "sim_carlos_$it",
+            conversationId = "sim_carlos",
+            content = listOf("Buenos días", "¿Qué tal?", "Genial")[it % 3],
+            timestamp = System.currentTimeMillis() - it * 120000,
+            isOwn = it % 3 == 0
+        )
+    }
+)

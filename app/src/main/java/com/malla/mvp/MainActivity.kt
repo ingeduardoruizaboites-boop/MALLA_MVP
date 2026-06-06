@@ -262,7 +262,6 @@ fun MainApp(
     if (currentConversationId != null) {
         ChatScreen(
             conversationId = currentConversationId,
-            db = db,
             contactName = currentContactName,
             onBack = { onConversationChanged(null) },
             isMeshMode = isMeshMode
