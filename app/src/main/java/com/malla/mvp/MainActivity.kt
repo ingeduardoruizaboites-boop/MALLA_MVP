@@ -5,7 +5,9 @@ import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
+import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -24,8 +26,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.malla.mvp.data.AppDatabase
-import com.malla.mvp.identity.IdentityManager
 import com.malla.mvp.data.entity.ConversationEntity
+import com.malla.mvp.identity.IdentityManager
 import com.malla.mvp.network.ConnectivityMonitor
 import com.malla.mvp.network.MeshMessageHandler
 import com.malla.mvp.core.engine.DeviceStateMonitor
@@ -54,7 +56,6 @@ class MainActivity : ComponentActivity() {
         IdentityManager.init(this)
         insertSampleStories()
 
-        // Inicializar el estado del tema
         val appThemeState = AppThemeState.create(this)
 
         val prefs = try {
@@ -64,7 +65,6 @@ class MainActivity : ComponentActivity() {
             prefs?.getBoolean("first_launch", true) ?: true
         } catch (e: Exception) { true }
 
-        // Obtener instancia de la base de datos
         val database = AppDatabase.getInstance(application)
 
         setContent {
@@ -73,10 +73,9 @@ class MainActivity : ComponentActivity() {
             var currentConversationId by remember { mutableStateOf<String?>(null) }
             var selectedContact by remember { mutableStateOf<String?>(null) }
             var showSettings by remember { mutableStateOf(false) }
-            var showTutorial by remember { mutableStateOf(false) } 
+            var showTutorial by remember { mutableStateOf(false) }
             val context = LocalContext.current
 
-            // Tema efectivo (cambia automáticamente a OLED en modo mesh)
             val effectiveScheme by appThemeState.currentTheme.collectAsState()
 
             val isOnline by ConnectivityMonitor.isOnline.collectAsState()
@@ -111,56 +110,65 @@ class MainActivity : ComponentActivity() {
             }
 
             MallaTheme(colorScheme = effectiveScheme, fontScale = AccessibilitySettings.fontScale.floatValue) {
-                when (appState) {
-                    AppState.Splash -> SplashContent {
-                        if (isFirstLaunch) {
-                            try { prefs?.edit()?.putBoolean("first_launch", false)?.apply() } catch (_: Exception) {}
-                            appState = AppState.Onboarding
-                        } else appState = AppState.Main
-                    }
-                    AppState.Onboarding -> OnboardingScreen {
-                        appState = AppState.Main
-                    }
-                    AppState.Main -> {
-                        if (showTutorial) {
-                            TutorialOverlay(
-                                onDismiss = {
-                                    showTutorial = false
-                                    try {
-                                        getSharedPreferences("tutorial", Context.MODE_PRIVATE)
-                                            ?.edit()?.putBoolean("shown", true)?.apply()
-                                    } catch (_: Exception) {}
-                                }
-                            )
-                        } else if (showQrScanner) {
-                            QrScanScreen(
-                                onQrScanned = { ip ->
-                                    showQrScanner = false
-                                    connectToPeerAndCreateConversation(ip) { convId -> currentConversationId = convId }
-                                },
-                                onBack = { showQrScanner = false }
-                            )
-                        } else if (showSettings) {
-                            SettingsScreenWrapper(
-                                currentScheme = effectiveScheme,
-                                onSchemeSelected = { scheme -> appThemeState.selectScheme(scheme) },
-                                onBack = { showSettings = false }
-                            )
-                        } else if (selectedContact != null) {
-                            ContactProfileScreen(contactName = selectedContact!!, onBack = { selectedContact = null })
-                        } else {
-                            MainApp(
-                                isMeshMode = !isOnline,
-                                currentConversationId = currentConversationId,
-                                onConversationChanged = { convId -> currentConversationId = convId },
-                                onSettingsClick = { showSettings = true },
-                                onProfileClicked = { contactName -> selectedContact = contactName },
-                                onNavigateToQrScanner = { showQrScanner = true },
-                                onConnectToPeer = { ip ->
-                                    connectToPeerAndCreateConversation(ip) { convId -> currentConversationId = convId }
-                                },
-                                db = database
-                            )
+                AnimatedContent(
+                    targetState = appState,
+                    transitionSpec = {
+                        (scaleIn(tween(400), initialScale = 0.92f) + fadeIn(tween(400)))
+                            .togetherWith(scaleOut(tween(400), targetScale = 1.08f) + fadeOut(tween(400)))
+                    },
+                    label = "app_state_transition"
+                ) { state ->
+                    when (state) {
+                        AppState.Splash -> SplashContent {
+                            if (isFirstLaunch) {
+                                try { prefs?.edit()?.putBoolean("first_launch", false)?.apply() } catch (_: Exception) {}
+                                appState = AppState.Onboarding
+                            } else appState = AppState.Main
+                        }
+                        AppState.Onboarding -> OnboardingScreen {
+                            appState = AppState.Main
+                        }
+                        AppState.Main -> {
+                            if (showTutorial) {
+                                TutorialOverlay(
+                                    onDismiss = {
+                                        showTutorial = false
+                                        try {
+                                            getSharedPreferences("tutorial", Context.MODE_PRIVATE)
+                                                ?.edit()?.putBoolean("shown", true)?.apply()
+                                        } catch (_: Exception) {}
+                                    }
+                                )
+                            } else if (showQrScanner) {
+                                QrScanScreen(
+                                    onQrScanned = { ip ->
+                                        showQrScanner = false
+                                        connectToPeerAndCreateConversation(ip) { convId -> currentConversationId = convId }
+                                    },
+                                    onBack = { showQrScanner = false }
+                                )
+                            } else if (showSettings) {
+                                SettingsScreenWrapper(
+                                    currentScheme = effectiveScheme,
+                                    onSchemeSelected = { scheme -> appThemeState.selectScheme(scheme) },
+                                    onBack = { showSettings = false }
+                                )
+                            } else if (selectedContact != null) {
+                                ContactProfileScreen(contactName = selectedContact!!, onBack = { selectedContact = null })
+                            } else {
+                                MainApp(
+                                    isMeshMode = !isOnline,
+                                    currentConversationId = currentConversationId,
+                                    onConversationChanged = { convId -> currentConversationId = convId },
+                                    onSettingsClick = { showSettings = true },
+                                    onProfileClicked = { contactName -> selectedContact = contactName },
+                                    onNavigateToQrScanner = { showQrScanner = true },
+                                    onConnectToPeer = { ip ->
+                                        connectToPeerAndCreateConversation(ip) { convId -> currentConversationId = convId }
+                                    },
+                                    db = database
+                                )
+                            }
                         }
                     }
                 }
@@ -260,6 +268,18 @@ fun MainApp(
 ) {
     var selectedTab by remember { mutableStateOf(0) }
     var currentContactName by remember { mutableStateOf("Chat") }
+    var lastBackPressTime by remember { mutableStateOf(0L) }
+    val backContext = LocalContext.current
+
+    // Confirmación al salir
+    BackHandler(enabled = selectedTab == 0) {
+        if (lastBackPressTime + 2000 > System.currentTimeMillis()) {
+            (backContext as? android.app.Activity)?.finish()
+        } else {
+            Toast.makeText(backContext, "Presiona de nuevo para salir", Toast.LENGTH_SHORT).show()
+        }
+        lastBackPressTime = System.currentTimeMillis()
+    }
 
     if (currentConversationId != null) {
         ChatScreen(

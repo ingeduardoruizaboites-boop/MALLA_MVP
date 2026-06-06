@@ -4,6 +4,7 @@ import android.Manifest
 import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -27,249 +28,151 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
+import kotlinx.coroutines.delay
 
 @Composable
-fun OnboardingScreen(
-    onPermissionsGranted: () -> Unit
-) {
+fun OnboardingScreen(onPermissionsGranted: () -> Unit) {
     val context = LocalContext.current
     val permissionsToRequest = arrayOf(
         Manifest.permission.CAMERA,
-        Manifest.permission.READ_EXTERNAL_STORAGE,
         Manifest.permission.ACCESS_FINE_LOCATION
     )
 
     var allGranted by remember {
-        mutableStateOf(
-            permissionsToRequest.all {
-                ContextCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED
-            }
-        )
+        mutableStateOf(permissionsToRequest.all {
+            ContextCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED
+        })
     }
 
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestMultiplePermissions()
-    ) { results ->
-        allGranted = results.values.all { it }
-    }
+    ) { results -> allGranted = results.values.all { it } }
 
-    // Animaciones
-    val scale = remember { Animatable(0.8f) }
-    val fadeIn = remember { Animatable(0f) }
+    var currentStep by remember { mutableIntStateOf(0) }
+    val totalSteps = 3
+
+    // Animación de entrada
+    val slideOffset = remember { Animatable(50f) }
+    val fadeAlpha = remember { Animatable(0f) }
 
     LaunchedEffect(Unit) {
-        scale.animateTo(1f, animationSpec = tween(600, easing = FastOutSlowInEasing))
-        fadeIn.animateTo(1f, animationSpec = tween(800))
+        slideOffset.animateTo(0f, animationSpec = tween(600, easing = FastOutSlowInEasing))
+        fadeAlpha.animateTo(1f, animationSpec = tween(800))
     }
 
     Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(
-                Brush.verticalGradient(
-                    colors = listOf(
-                        Color(0xFF0A1B2A), // petróleo
-                        Color(0xFF112233), // ligeramente más claro
-                        Color(0xFF0A1B2A)
-                    )
-                )
+        modifier = Modifier.fillMaxSize().background(
+            Brush.verticalGradient(
+                colors = listOf(Color(0xFF0A1B2A), Color(0xFF112233), Color(0xFF0A1B2A))
             )
+        )
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(32.dp)
-                .alpha(fadeIn.value),
+            modifier = Modifier.fillMaxSize().padding(32.dp).alpha(fadeAlpha.value),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            // Logo con escala animada
-            Text(
-                text = "M A L L A",
-                style = MaterialTheme.typography.headlineMedium.copy(
-                    letterSpacing = 8.sp,
-                    fontSize = 32.sp,
-                    fontWeight = FontWeight.Bold
-                ),
-                color = Color(0xFF00FFFF), // cian neón
-                modifier = Modifier.scale(scale.value)
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Text(
-                text = "Bienvenido a la red mesh",
-                style = MaterialTheme.typography.titleMedium,
-                color = Color(0xFFE0E0E0),
-                textAlign = TextAlign.Center
-            )
-
-            Spacer(modifier = Modifier.height(32.dp))
-
-            // Descripción
-            Text(
-                text = "Para una experiencia completa, MALLA necesita acceder a:",
-                style = MaterialTheme.typography.bodyLarge,
-                color = Color(0xFFB0BEC5),
-                textAlign = TextAlign.Center
-            )
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            // Lista de permisos con iconos y descripciones
-            PermissionItem(
-                icon = Icons.Filled.CameraAlt,
-                title = "Cámara",
-                description = "Para escanear códigos QR y agregar dispositivos cercanos",
-                granted = ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED
-            )
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            PermissionItem(
-                icon = Icons.Filled.Storage,
-                title = "Almacenamiento",
-                description = "Para guardar y compartir archivos multimedia en la red mesh",
-                granted = ContextCompat.checkSelfPermission(context, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED
-            )
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            PermissionItem(
-                icon = Icons.Filled.LocationOn,
-                title = "Ubicación",
-                description = "Para descubrir dispositivos cercanos mediante Bluetooth y WiFi Direct",
-                granted = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
-            )
-
-            Spacer(modifier = Modifier.height(32.dp))
-
-            // Botón de acción
-            if (allGranted) {
-                Button(
-                    onClick = onPermissionsGranted,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(56.dp),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF00FFFF),
-                        contentColor = Color(0xFF0A1B2A)
-                    )
-                ) {
-                    Text(
-                        text = "COMENZAR",
-                        style = MaterialTheme.typography.titleMedium.copy(
-                            fontWeight = FontWeight.Bold,
-                            letterSpacing = 2.sp
-                        )
-                    )
+            // Indicador de paso
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(bottom = 24.dp)) {
+                repeat(totalSteps) { step ->
+                    Box(
+                        modifier = Modifier.size(if (step == currentStep) 10.dp else 8.dp).clip(CircleShape)
+                            .background(if (step == currentStep) Color(0xFF00FFFF) else Color.White.copy(alpha = 0.3f)))
                 }
-            } else {
-                Button(
-                    onClick = {
-                        launcher.launch(permissionsToRequest)
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(56.dp),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF00FFFF),
-                        contentColor = Color(0xFF0A1B2A)
-                    )
-                ) {
-                    Icon(
-                        Icons.Filled.Lock,
-                        contentDescription = null,
-                        modifier = Modifier.size(20.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = "CONCEDER PERMISOS",
-                        style = MaterialTheme.typography.titleMedium.copy(
-                            fontWeight = FontWeight.Bold,
-                            letterSpacing = 2.sp
-                        )
-                    )
-                }
+            }
 
-                Spacer(modifier = Modifier.height(12.dp))
-
-                TextButton(onClick = onPermissionsGranted) {
-                    Text(
-                        text = "Omitir y continuar",
-                        color = Color(0xFF757575)
+            // Contenido animado por paso
+            AnimatedContent(targetState = currentStep, transitionSpec = {
+                (slideInVertically(tween(500)) { -it } + fadeIn(tween(500))).togetherWith(slideOutVertically(tween(500)) { it } + fadeOut(tween(500)))
+            }, label = "step") { step ->
+                when (step) {
+                    0 -> StepContent(
+                        icon = Icons.Filled.WifiTethering,
+                        title = "Sin Internet, Sin Problemas",
+                        description = "MALLA crea redes locales usando Bluetooth y WiFi Direct para mantenerte comunicado donde otros fallan."
+                    )
+                    1 -> StepContent(
+                        icon = Icons.Filled.Security,
+                        title = "Privacidad Total",
+                        description = "Cifrado de extremo a extremo. Sin servidores, sin cuentas, sin rastreo. Tus conversaciones te pertenecen."
+                    )
+                    2 -> StepContent(
+                        icon = Icons.Filled.Bolt,
+                        title = "Listo para la Acción",
+                        description = "Concede los permisos necesarios y únete a la red más resistente de LATAM."
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(48.dp))
 
-            Text(
-                text = "Puedes gestionar estos permisos en cualquier momento desde Ajustes del sistema.",
-                style = MaterialTheme.typography.bodySmall,
-                color = Color(0xFF757575),
-                textAlign = TextAlign.Center
-            )
+            // Botones inferiores
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                if (currentStep > 0) {
+                    TextButton(onClick = { currentStep-- }) {
+                        Text("← Anterior", color = Color(0xFF8899AA))
+                    }
+                } else {
+                    Spacer(modifier = Modifier.width(1.dp))
+                }
+
+                if (currentStep < totalSteps - 1) {
+                    Button(
+                        onClick = { currentStep++ },
+                        shape = RoundedCornerShape(16.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00FFFF), contentColor = Color(0xFF0A1B2A))
+                    ) {
+                        Text("Siguiente →", fontWeight = FontWeight.Bold)
+                    }
+                } else {
+                    // Último paso: solicitar permisos o continuar
+                    if (allGranted) {
+                        Button(
+                            onClick = onPermissionsGranted,
+                            shape = RoundedCornerShape(16.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00FFFF), contentColor = Color(0xFF0A1B2A))
+                        ) {
+                            Text("COMENZAR", fontWeight = FontWeight.Bold)
+                        }
+                    } else {
+                        Button(
+                            onClick = { launcher.launch(permissionsToRequest) },
+                            shape = RoundedCornerShape(16.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00FFFF), contentColor = Color(0xFF0A1B2A))
+                        ) {
+                            Icon(Icons.Filled.Lock, null, modifier = Modifier.size(18.dp))
+                            Spacer(Modifier.width(8.dp))
+                            Text("CONCEDER PERMISOS", fontWeight = FontWeight.Bold)
+                        }
+                    }
+                }
+            }
         }
     }
 }
 
 @Composable
-private fun PermissionItem(
-    icon: ImageVector,
-    title: String,
-    description: String,
-    granted: Boolean
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 4.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Box(
-            modifier = Modifier
-                .size(48.dp)
-                .clip(CircleShape)
-                .background(if (granted) Color(0xFF00FFFF).copy(alpha = 0.2f) else Color(0xFFFF1744).copy(alpha = 0.2f)),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = if (granted) Color(0xFF00FFFF) else Color(0xFFFF1744),
-                modifier = Modifier.size(24.dp)
-            )
-        }
-
-        Spacer(modifier = Modifier.width(16.dp))
-
-        Column(modifier = Modifier.weight(1f)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.titleSmall.copy(
-                        fontWeight = FontWeight.SemiBold
-                    ),
-                    color = Color(0xFFE0E0E0)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                if (granted) {
-                    Icon(
-                        Icons.Filled.CheckCircle,
-                        contentDescription = null,
-                        tint = Color(0xFF00FFFF),
-                        modifier = Modifier.size(16.dp)
-                    )
-                }
-            }
-            Text(
-                text = description,
-                style = MaterialTheme.typography.bodySmall,
-                color = Color(0xFF90A4AE)
-            )
-        }
+private fun StepContent(icon: ImageVector, title: String, description: String) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = Color(0xFF00FFFF),
+            modifier = Modifier.size(72.dp)
+        )
+        Spacer(modifier = Modifier.height(24.dp))
+        Text(
+            text = title,
+            style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
+            color = Color.White,
+            textAlign = TextAlign.Center
+        )
+        Spacer(modifier = Modifier.height(12.dp))
+        Text(
+            text = description,
+            style = MaterialTheme.typography.bodyLarge,
+            color = Color(0xFFB0BEC5),
+            textAlign = TextAlign.Center
+        )
     }
 }
