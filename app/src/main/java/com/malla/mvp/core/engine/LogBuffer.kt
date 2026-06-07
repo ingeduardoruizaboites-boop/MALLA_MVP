@@ -9,6 +9,6 @@ object LogBuffer {
 
     fun add(tag: String, message: String) {
         val entry = "[${System.currentTimeMillis() % 100000}] $tag: $message"
-        _logs.value = (_logs.value + entry).takeLast(50)
+        _logs.value = (_logs.value + entry).takeLast(200)
     }
 }

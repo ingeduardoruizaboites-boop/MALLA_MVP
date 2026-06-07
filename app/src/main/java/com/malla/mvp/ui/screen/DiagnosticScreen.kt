@@ -3,6 +3,7 @@ package com.malla.mvp.ui.screen
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -17,15 +18,23 @@ import com.malla.mvp.network.ConnectivityMonitor
 fun DiagnosticScreen() {
     val logs by LogBuffer.logs.collectAsState()
     val isOnline by ConnectivityMonitor.isOnline.collectAsState()
+    val listState = rememberLazyListState()
+
+    LaunchedEffect(logs.size) {
+        if (logs.isNotEmpty()) listState.animateScrollToItem(logs.size - 1)
+    }
 
     LazyColumn(
+        state = listState,
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(8.dp)
     ) {
         item {
             Card(
                 modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
-                colors = CardDefaults.cardColors(containerColor = if (isOnline) MaterialTheme.colorScheme.primaryContainer else Color(0xFFFFD700).copy(alpha = 0.2f))
+                colors = CardDefaults.cardColors(
+                    containerColor = if (isOnline) MaterialTheme.colorScheme.primaryContainer else Color(0xFFFFD700).copy(alpha = 0.2f)
+                )
             ) {
                 Text(
                     text = if (isOnline) "🌐 ONLINE (mesh inactivo)" else "🕸️ MESH ACTIVO",
