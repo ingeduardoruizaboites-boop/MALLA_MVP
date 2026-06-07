@@ -1,6 +1,7 @@
 package com.malla.mvp.ui.components
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -11,6 +12,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
@@ -52,9 +54,7 @@ fun MainTopBar(
                         )
                     } else {
                         Surface(
-                            modifier = Modifier
-                                .size(36.dp)
-                                .clip(CircleShape),
+                            modifier = Modifier.size(36.dp).clip(CircleShape),
                             color = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
                         ) {
                             Box(contentAlignment = Alignment.Center) {
@@ -87,7 +87,7 @@ fun MainTopBar(
                     Divider()
                     DropdownMenuItem(
                         text = { Row(verticalAlignment = Alignment.CenterVertically) { Icon(Icons.Filled.Info, null, modifier = Modifier.size(18.dp)); Spacer(Modifier.width(8.dp)); Text("Acerca de") } },
-                        onClick = { showMenu = false /* TODO: Acerca de */ }
+                        onClick = { showMenu = false }
                     )
                 }
             }
@@ -101,10 +101,19 @@ fun MainTopBar(
             )
         },
         colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = MaterialTheme.colorScheme.surface,
+            containerColor = Color.Transparent,
             titleContentColor = MaterialTheme.colorScheme.onSurface,
             actionIconContentColor = MaterialTheme.colorScheme.onSurface,
             navigationIconContentColor = MaterialTheme.colorScheme.onSurface
+        ),
+        modifier = Modifier.background(
+            Brush.horizontalGradient(
+                listOf(
+                    MaterialTheme.colorScheme.surface,
+                    MaterialTheme.colorScheme.surface.copy(alpha = 0.95f),
+                    MaterialTheme.colorScheme.surface
+                )
+            )
         )
     )
 }

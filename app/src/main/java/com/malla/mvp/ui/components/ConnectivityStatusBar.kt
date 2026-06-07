@@ -6,11 +6,14 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -28,7 +31,6 @@ fun ConnectivityStatusBar() {
     val isMeshMode = !deviceState.hasInternetConnection
     val isEmergency by EmergencyMode.isActive.collectAsState()
 
-    // Animación de pulso solo en modo mesh (indica escaneo activo)
     val infiniteTransition = rememberInfiniteTransition(label = "meshPulse")
     val pulseScale by infiniteTransition.animateFloat(
         initialValue = 0.85f,
@@ -41,26 +43,21 @@ fun ConnectivityStatusBar() {
     )
 
     Surface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(32.dp)
-            .clickable { /* TODO: abrir BottomSheet */ },
+        modifier = Modifier.fillMaxWidth().height(32.dp).clickable { },
         color = if (isEmergency) Color(0xFFB71C1C).copy(alpha = 0.9f) else bgColor.copy(alpha = 0.9f),
         shape = RoundedCornerShape(0.dp)
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 12.dp),
+            modifier = Modifier.fillMaxSize().padding(horizontal = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            // Icono y texto principal
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    text = if (isEmergency) "🚨" else iconForLevel(level),
-                    fontSize = 16.sp,
-                    modifier = if (isMeshMode) Modifier.scale(pulseScale) else Modifier
+                Icon(
+                    imageVector = iconForLevel(level),
+                    contentDescription = null,
+                    tint = Color.White,
+                    modifier = Modifier.size(16.dp).then(if (isMeshMode) Modifier.scale(pulseScale) else Modifier)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Column {
@@ -89,15 +86,10 @@ fun ConnectivityStatusBar() {
                 }
             }
 
-            // Indicadores derecha + botón emergencia
             Row(verticalAlignment = Alignment.CenterVertically) {
-                // Botón de emergencia (solo visible en mesh y si no está ya activo)
                 if (isMeshMode && !isEmergency) {
                     TextButton(
-                        onClick = {
-                            EmergencyMode.activate()
-                            android.util.Log.d("ConnectivityStatusBar", "[EMERGENCY] Activado por usuario")
-                        },
+                        onClick = { EmergencyMode.activate() },
                         contentPadding = PaddingValues(horizontal = 4.dp, vertical = 0.dp),
                         modifier = Modifier.height(28.dp)
                     ) {
@@ -111,17 +103,11 @@ fun ConnectivityStatusBar() {
                     deviceState.batteryLevel > 20 -> Color(0xFFFFC107)
                     else -> Color(0xFFFF5252)
                 }
-                Text(
-                    text = "🔋${deviceState.batteryLevel}%",
-                    color = batteryColor,
-                    fontSize = 11.sp
-                )
+                Icon(Icons.Filled.BatteryFull, null, tint = batteryColor, modifier = Modifier.size(14.dp))
+                Text(text = "${deviceState.batteryLevel}%", color = batteryColor, fontSize = 11.sp)
                 Spacer(modifier = Modifier.width(12.dp))
-                Text(
-                    text = "🟢${deviceState.nearbyNodes}",
-                    color = Color.White,
-                    fontSize = 11.sp
-                )
+                Icon(Icons.Filled.Circle, null, tint = Color(0xFF4CAF50), modifier = Modifier.size(8.dp))
+                Text(text = "${deviceState.nearbyNodes}", color = Color.White, fontSize = 11.sp)
             }
         }
     }
@@ -139,20 +125,19 @@ fun backgroundColorForLevel(level: MeshLevel): Color {
     }
 }
 
-fun iconForLevel(level: MeshLevel): String {
-    return when (level) {
-        MeshLevel.ONLINE_WIFI -> "📶"
-        MeshLevel.ONLINE_MOBILE -> "📱"
-        MeshLevel.WIFI_DIRECT -> "🔗"
-        MeshLevel.BLE -> "🔵"
-        MeshLevel.BLUETOOTH_CLASSIC -> "🔷"
-        MeshLevel.NFC -> "📲"
-        MeshLevel.ULTRASOUND -> "🔊"
-        MeshLevel.SMS_BRIDGE -> "💬"
-        MeshLevel.FLASH_LIGHT -> "💡"
-        MeshLevel.QR_CODE -> "◼️"
-        MeshLevel.NO_SIGNAL -> "⚫"
-    }
+fun iconForLevel(level: MeshLevel) = when (level) {
+    MeshLevel.ONLINE_WIFI -> Icons.Filled.Wifi
+    MeshLevel.ONLINE_MOBILE -> Icons.Filled.SignalCellularAlt
+    MeshLevel.WIFI_DIRECT -> Icons.Filled.Link
+    MeshLevel.BLE -> Icons.Filled.Bluetooth
+    MeshLevel.BLUETOOTH_CLASSIC -> Icons.Filled.BluetoothConnected
+    MeshLevel.NFC -> Icons.Filled.Nfc
+    MeshLevel.ULTRASOUND -> Icons.Filled.GraphicEq
+    MeshLevel.SMS_BRIDGE -> Icons.Filled.Sms
+    MeshLevel.FLASH_LIGHT -> Icons.Filled.FlashlightOn
+    MeshLevel.QR_CODE -> Icons.Filled.QrCode
+    MeshLevel.NO_SIGNAL -> Icons.Filled.SignalWifiStatusbarConnectedNoInternet4
+    else -> Icons.Filled.SignalWifiStatusbarConnectedNoInternet4
 }
 
 fun statusTextForLevel(level: MeshLevel, state: DeviceState): String {
