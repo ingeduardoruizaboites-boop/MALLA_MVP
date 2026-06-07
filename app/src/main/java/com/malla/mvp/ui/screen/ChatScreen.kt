@@ -64,6 +64,8 @@ import com.malla.mvp.ui.components.BubbleShapes
 import kotlinx.coroutines.*
 import java.io.File
 import java.text.SimpleDateFormat
+import org.json.JSONObject
+import org.json.JSONArray
 import java.util.*
 import kotlin.random.Random
 
@@ -1198,28 +1200,38 @@ private fun formatDateHeader(dateKey: String): String {
     }
 }
 
+// Mapa de mensajes de muestra (simulación)
 private fun exportChat(context: android.content.Context, messages: List<com.malla.mvp.data.entity.MessageEntity>, contactName: String) {
     try {
-        val content = StringBuilder()
-        content.appendLine("Chat con $contactName\n")
+        val sdf = java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.getDefault())
+        val json = org.json.JSONObject()
+        json.put("chat_name", contactName)
+        json.put("exported_at", sdf.format(java.util.Date()))
+        json.put("message_count", messages.size)
+        val arr = org.json.JSONArray()
         messages.forEach { msg ->
-            val sender = if (msg.isOwn) "Yo" else contactName
-            content.appendLine("$sender: ${msg.content}")
+            val obj = org.json.JSONObject()
+            obj.put("sender", if (msg.isOwn) "Yo" else contactName)
+            obj.put("content", msg.content)
+            obj.put("timestamp", sdf.format(java.util.Date(msg.timestamp)))
+            obj.put("is_own", msg.isOwn)
+            obj.put("status", msg.status)
+            arr.put(obj)
         }
-        val file = java.io.File(context.cacheDir, "chat_${contactName}_${System.currentTimeMillis()}.txt")
-        file.writeText(content.toString())
+        json.put("messages", arr)
+        val file = java.io.File(context.cacheDir, "chat_${contactName}_${System.currentTimeMillis()}.json")
+        file.writeText(json.toString(2))
         val uri = androidx.core.content.FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
         val shareIntent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
-            type = "text/plain"
+            type = "application/json"
             putExtra(android.content.Intent.EXTRA_STREAM, uri)
             addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
-        context.startActivity(android.content.Intent.createChooser(shareIntent, "Exportar chat"))
+        context.startActivity(android.content.Intent.createChooser(shareIntent, "Exportar chat JSON"))
     } catch (e: Exception) {
         android.widget.Toast.makeText(context, "Error al exportar chat", android.widget.Toast.LENGTH_SHORT).show()
     }
 }
-// Mapa de mensajes de muestra (simulación)
 private val sampleMessages = mapOf(
     "sim_alicia" to (0..20).map {
         MessageEntity(
