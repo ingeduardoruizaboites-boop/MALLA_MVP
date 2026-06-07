@@ -212,6 +212,7 @@ fun UptimeBanner() {
 
 @Composable
 fun TabNodos(bleBluetoothDevices: List<BluetoothDevice>, onConnectToPeer: (String) -> Unit) {
+    val ctx = androidx.compose.ui.platform.LocalContext.current
     val scope = rememberCoroutineScope()
     LazyColumn(contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         item { Text("NODOS ALCANZABLES AHORA", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)) }
@@ -222,6 +223,18 @@ fun TabNodos(bleBluetoothDevices: List<BluetoothDevice>, onConnectToPeer: (Strin
                 android.util.Log.d("PulsoScreen", "[PULSO:SCAN] Escaneo forzado por usuario")
             }) {
                 Text("Forzar escaneo ahora")
+                Button(onClick = {
+                    com.malla.mvp.core.engine.LogBuffer.add("PULSO", "Forzando modo mesh manual")
+                    val intent = android.content.Intent(ctx, com.malla.mvp.service.MeshChatService::class.java)
+                    ctx.startService(intent)
+                    com.malla.mvp.network.NetworkService.startServer()
+                    com.malla.mvp.network.MeshMessageHandler.start(ctx)
+                    com.malla.mvp.network.BleManager.start(ctx)
+                    com.malla.mvp.network.BleManager.startAdvertising()
+                    android.widget.Toast.makeText(ctx, "Modo mesh forzado", android.widget.Toast.LENGTH_SHORT).show()
+                }, modifier = Modifier.fillMaxWidth().padding(top = 8.dp)) {
+                    Text("Forzar modo mesh")
+                }
             }
         }
         items(bleBluetoothDevices) { device ->

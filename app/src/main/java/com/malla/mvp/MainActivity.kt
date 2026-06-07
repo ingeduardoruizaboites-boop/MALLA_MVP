@@ -33,6 +33,7 @@ import com.malla.mvp.identity.IdentityManager
 import com.malla.mvp.network.ConnectivityMonitor
 import com.malla.mvp.network.MeshMessageHandler
 import com.malla.mvp.core.engine.DeviceStateMonitor
+import com.malla.mvp.core.engine.LogBuffer
 import com.malla.mvp.network.NetworkService
 import com.malla.mvp.service.MeshChatService
 import com.malla.mvp.ui.components.MainTopBar
@@ -85,8 +86,11 @@ class MainActivity : ComponentActivity() {
                 try {
                     if (!isOnline) {
                         context.startService(Intent(context, MeshChatService::class.java))
+                        LogBuffer.add("MAIN", "Iniciando servicio mesh")
                         NetworkService.startServer()
+                        LogBuffer.add("MAIN", "NetworkService iniciado")
                         MeshMessageHandler.start(application)
+                        LogBuffer.add("MAIN", "MeshMessageHandler iniciado")
                     } else {
                         context.stopService(Intent(context, MeshChatService::class.java))
                         NetworkService.stopServer()
