@@ -131,7 +131,7 @@ class MainActivity : ComponentActivity() {
                                 appState = AppState.Onboarding
                             } else appState = AppState.Main
                         }
-                        AppState.Onboarding -> OnboardingScreen {
+                        AppState.Onboarding -> IdentityOnboardingScreen {
                             appState = AppState.Main
                         }
                         AppState.Main -> {

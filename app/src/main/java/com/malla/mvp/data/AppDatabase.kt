@@ -9,15 +9,27 @@ import com.malla.mvp.data.dao.ConversationDao
 import com.malla.mvp.data.dao.MessageDao
 import com.malla.mvp.data.dao.StoryDao
 import com.malla.mvp.data.dao.PollDao
+import com.malla.mvp.data.dao.IdentityDao
+import com.malla.mvp.data.dao.ContactDao
 import com.malla.mvp.data.entity.ConversationEntity
 import com.malla.mvp.data.entity.MessageEntity
 import com.malla.mvp.data.entity.StoryEntity
 import com.malla.mvp.data.entity.PollEntity
 import com.malla.mvp.data.entity.PollOptionEntity
+import com.malla.mvp.data.entity.UserIdentityEntity
+import com.malla.mvp.data.entity.ContactEntity
 
 @Database(
-    entities = [ConversationEntity::class, MessageEntity::class, StoryEntity::class, PollEntity::class, PollOptionEntity::class],
-    version = 8,
+    entities = [
+        ConversationEntity::class,
+        MessageEntity::class,
+        StoryEntity::class,
+        PollEntity::class,
+        PollOptionEntity::class,
+        UserIdentityEntity::class,
+        ContactEntity::class
+    ],
+    version = 9,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -25,6 +37,8 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun messageDao(): MessageDao
     abstract fun storyDao(): StoryDao
     abstract fun pollDao(): PollDao
+    abstract fun identityDao(): IdentityDao
+    abstract fun contactDao(): ContactDao
 
     companion object {
         @Volatile
