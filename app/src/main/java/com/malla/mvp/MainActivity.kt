@@ -320,7 +320,7 @@ fun MainApp(
         topBar = { MainTopBar(onSettingsClick = onSettingsClick, isOnline = !isMeshMode) },
         bottomBar = {
             NavigationBar(modifier = Modifier.height(56.dp)) {
-                NavigationBarItem(selected = selectedTab == 0, onClick = { selectedTab = 0 }, icon = { Icon(Icons.AutoMirrored.Filled.Chat, "Chats") }, label = { Text("Chats") })
+                NavigationBarItem(selected = selectedTab == 0, onClick = { selectedTab = 0 }, icon = { BadgedBox(badge = { val unreadCount by com.malla.mvp.network.MessageBridge.newMessageCount.collectAsState(); if (unreadCount > 0) Badge { Text("$unreadCount") } }) { Icon(Icons.AutoMirrored.Filled.Chat, "Chats") } }, label = { Text("Chats") })
                 NavigationBarItem(selected = selectedTab == 1, onClick = { selectedTab = 1 }, icon = { Icon(Icons.Filled.WifiTethering, "Pulso") }, label = { Text("Pulso") })
                 NavigationBarItem(selected = selectedTab == 2, onClick = { selectedTab = 2 }, icon = { Icon(Icons.Filled.Person, "Perfil") }, label = { Text("Perfil") })
             }

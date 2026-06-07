@@ -8,6 +8,7 @@ import com.malla.mvp.data.entity.MessageEntity
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import java.util.UUID
+import android.util.Base64
 import com.malla.mvp.data.repository.PulsoRepository
 import com.malla.mvp.core.engine.LogBuffer
 import com.malla.mvp.notification.NotificationHelper

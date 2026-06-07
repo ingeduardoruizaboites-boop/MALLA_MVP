@@ -37,7 +37,7 @@ object NotificationHelper {
             .setContentTitle("Mensaje de $senderId")
             .setContentText(message)
             .setAutoCancel(true)
-            .setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION))
+            .setSound(android.net.Uri.parse("android.resource://" + context.packageName + "/" + com.malla.mvp.R.raw.zumbido))
             .setVibrate(longArrayOf(0, 300, 200, 300))
             .setContentIntent(pendingIntent)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
