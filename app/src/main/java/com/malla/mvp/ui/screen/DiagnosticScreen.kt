@@ -1,5 +1,6 @@
 package com.malla.mvp.ui.screen
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -15,10 +16,12 @@ import com.malla.mvp.core.engine.LogBuffer
 import com.malla.mvp.network.ConnectivityMonitor
 
 @Composable
-fun DiagnosticScreen() {
+fun DiagnosticScreen(onBack: () -> Unit = {}) {
     val logs by LogBuffer.logs.collectAsState()
     val isOnline by ConnectivityMonitor.isOnline.collectAsState()
     val listState = rememberLazyListState()
+
+    BackHandler { onBack() }
 
     LaunchedEffect(logs.size) {
         if (logs.isNotEmpty()) listState.animateScrollToItem(logs.size - 1)

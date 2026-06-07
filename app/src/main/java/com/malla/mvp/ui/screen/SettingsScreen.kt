@@ -26,11 +26,13 @@ import com.malla.mvp.identity.IdentityManager
 
 @Composable
 fun SettingsScreen(
+    onShowTutorial: () -> Unit = {},
     currentScheme: MallaColorScheme,
     onSchemeSelected: (MallaColorScheme) -> Unit
 ) {
     val context = LocalContext.current
     var showDiagnostic by remember { mutableStateOf(false) }
+    var showAbout by remember { mutableStateOf(false) }
 
     LazyColumn(
         modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background),
@@ -188,13 +190,29 @@ fun SettingsScreen(
         // Sección Ayuda
         item {
             SettingsSection(title = "Ayuda") {
-                SettingsItem(title = "Acerca de MALLA", icon = Icons.Filled.Info) {}
-                SettingsItem(title = "Tutorial de uso", icon = Icons.Filled.School) {}
+                SettingsItem(title = "Acerca de MALLA", icon = Icons.Filled.Info) { showAbout = true }
+                SettingsItem(title = "Tutorial de uso", icon = Icons.Filled.School) { onShowTutorial() }
                 SettingsItem(title = "Términos y privacidad", icon = Icons.Filled.Description) {}
             }
         }
     }
 
+    if (showAbout) {
+        AlertDialog(
+            onDismissRequest = { showAbout = false },
+            title = { Text("Acerca de MALLA") },
+            text = {
+                Column {
+                    Text("Versión: 0.1.0")
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text("MALLA es una app de mensajería descentralizada que funciona sin internet usando Bluetooth y Wi-Fi Direct.")
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text("Cifrado E2E · Sin servidores · Código abierto")
+                }
+            },
+            confirmButton = { TextButton(onClick = { showAbout = false }) { Text("Cerrar") } }
+        )
+    }
     if (showDiagnostic) {
         AlertDialog(
             onDismissRequest = { showDiagnostic = false },

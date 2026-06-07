@@ -24,8 +24,6 @@ import com.malla.mvp.identity.IdentityManager
 @Composable
 fun MainTopBar(
     onSettingsClick: () -> Unit,
-    onProfileClick: () -> Unit = {},
-    onDiagnosticClick: () -> Unit = {},
     isOnline: Boolean
 ) {
     val currentAvatar by IdentityManager.avatarBitmap.collectAsState()
@@ -54,7 +52,9 @@ fun MainTopBar(
                         )
                     } else {
                         Surface(
-                            modifier = Modifier.size(36.dp).clip(CircleShape),
+                            modifier = Modifier
+                                .size(36.dp)
+                                .clip(CircleShape),
                             color = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
                         ) {
                             Box(contentAlignment = Alignment.Center) {
@@ -75,19 +75,6 @@ fun MainTopBar(
                     DropdownMenuItem(
                         text = { Row(verticalAlignment = Alignment.CenterVertically) { Icon(Icons.Filled.Settings, null, modifier = Modifier.size(18.dp)); Spacer(Modifier.width(8.dp)); Text("Ajustes") } },
                         onClick = { showMenu = false; onSettingsClick() }
-                    )
-                    DropdownMenuItem(
-                        text = { Row(verticalAlignment = Alignment.CenterVertically) { Icon(Icons.Filled.Person, null, modifier = Modifier.size(18.dp)); Spacer(Modifier.width(8.dp)); Text("Perfil") } },
-                        onClick = { showMenu = false; onProfileClick() }
-                    )
-                    DropdownMenuItem(
-                        text = { Row(verticalAlignment = Alignment.CenterVertically) { Icon(Icons.Filled.BugReport, null, modifier = Modifier.size(18.dp)); Spacer(Modifier.width(8.dp)); Text("Diagnóstico") } },
-                        onClick = { showMenu = false; onDiagnosticClick() }
-                    )
-                    Divider()
-                    DropdownMenuItem(
-                        text = { Row(verticalAlignment = Alignment.CenterVertically) { Icon(Icons.Filled.Info, null, modifier = Modifier.size(18.dp)); Spacer(Modifier.width(8.dp)); Text("Acerca de") } },
-                        onClick = { showMenu = false }
                     )
                 }
             }

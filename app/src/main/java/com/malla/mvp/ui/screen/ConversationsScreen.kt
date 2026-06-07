@@ -48,6 +48,8 @@ fun ConversationsScreen(
     var currentStoryUri by remember { mutableStateOf("") }
     var customTabs by remember { mutableStateOf(listOf<String>()) }
     var showFabMenu by remember { mutableStateOf(false) }
+    var showAddContactDialog by remember { mutableStateOf(false) }
+    var showIpDialog by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
 
     LaunchedEffect(conversationDao) {
@@ -231,7 +233,7 @@ fun ConversationsScreen(
                 contentColor = MaterialTheme.colorScheme.onPrimary
             ) { Icon(Icons.Filled.Add, "Nuevo") }
             DropdownMenu(expanded = showFabMenu, onDismissRequest = { showFabMenu = false }) {
-                DropdownMenuItem(text = { Row(verticalAlignment = Alignment.CenterVertically) { Icon(Icons.Filled.PersonAdd, null, modifier = Modifier.size(18.dp)); Spacer(Modifier.width(8.dp)); Text("Agregar usuario") } }, onClick = { showFabMenu = false; onNavigateToQrScanner() })
+                DropdownMenuItem(text = { Row(verticalAlignment = Alignment.CenterVertically) { Icon(Icons.Filled.PersonAdd, null, modifier = Modifier.size(18.dp)); Spacer(Modifier.width(8.dp)); Text("Agregar usuario") } }, onClick = { showFabMenu = false; showAddContactDialog = true })
                 DropdownMenuItem(text = { Row(verticalAlignment = Alignment.CenterVertically) { Icon(Icons.Filled.AddCircle, null, modifier = Modifier.size(18.dp)); Spacer(Modifier.width(8.dp)); Text("Nueva historia") } }, onClick = { showFabMenu = false; scope.launch { storyDao?.insertStory(StoryEntity(id = UUID.randomUUID().toString(), userId = "self", imageUri = "#FF00FF", timestamp = System.currentTimeMillis())) } })
                 DropdownMenuItem(text = { Row(verticalAlignment = Alignment.CenterVertically) { Icon(Icons.Filled.Group, null, modifier = Modifier.size(18.dp)); Spacer(Modifier.width(8.dp)); Text("Nuevo grupo") } }, onClick = {
                     showFabMenu = false

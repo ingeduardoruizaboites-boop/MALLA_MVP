@@ -77,171 +77,177 @@
 36    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
 36-->/workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:22:5-87
 36-->/workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:22:22-84
-37
-38    <permission
-38-->[androidx.core:core:1.12.0] /home/codespace/.gradle/caches/transforms-3/01be542a8a7642ecba403b94caa2bdf6/transformed/core-1.12.0/AndroidManifest.xml:22:5-24:47
-39        android:name="com.malla.mvp.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
-39-->[androidx.core:core:1.12.0] /home/codespace/.gradle/caches/transforms-3/01be542a8a7642ecba403b94caa2bdf6/transformed/core-1.12.0/AndroidManifest.xml:23:9-81
-40        android:protectionLevel="signature" />
-40-->[androidx.core:core:1.12.0] /home/codespace/.gradle/caches/transforms-3/01be542a8a7642ecba403b94caa2bdf6/transformed/core-1.12.0/AndroidManifest.xml:24:9-44
-41
-42    <uses-permission android:name="com.malla.mvp.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION" />
-42-->[androidx.core:core:1.12.0] /home/codespace/.gradle/caches/transforms-3/01be542a8a7642ecba403b94caa2bdf6/transformed/core-1.12.0/AndroidManifest.xml:26:5-97
-42-->[androidx.core:core:1.12.0] /home/codespace/.gradle/caches/transforms-3/01be542a8a7642ecba403b94caa2bdf6/transformed/core-1.12.0/AndroidManifest.xml:26:22-94
+37    <uses-permission android:name="android.permission.USE_BIOMETRIC" /> <!-- suppress DeprecatedClassUsageInspection -->
+37-->[androidx.biometric:biometric:1.1.0] /home/codespace/.gradle/caches/transforms-3/0486e2d268e1062600e63052a419a6f1/transformed/biometric-1.1.0/AndroidManifest.xml:24:5-72
+37-->[androidx.biometric:biometric:1.1.0] /home/codespace/.gradle/caches/transforms-3/0486e2d268e1062600e63052a419a6f1/transformed/biometric-1.1.0/AndroidManifest.xml:24:22-69
+38    <uses-permission android:name="android.permission.USE_FINGERPRINT" />
+38-->[androidx.biometric:biometric:1.1.0] /home/codespace/.gradle/caches/transforms-3/0486e2d268e1062600e63052a419a6f1/transformed/biometric-1.1.0/AndroidManifest.xml:27:5-74
+38-->[androidx.biometric:biometric:1.1.0] /home/codespace/.gradle/caches/transforms-3/0486e2d268e1062600e63052a419a6f1/transformed/biometric-1.1.0/AndroidManifest.xml:27:22-71
+39
+40    <permission
+40-->[androidx.core:core:1.12.0] /home/codespace/.gradle/caches/transforms-3/01be542a8a7642ecba403b94caa2bdf6/transformed/core-1.12.0/AndroidManifest.xml:22:5-24:47
+41        android:name="com.malla.mvp.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
+41-->[androidx.core:core:1.12.0] /home/codespace/.gradle/caches/transforms-3/01be542a8a7642ecba403b94caa2bdf6/transformed/core-1.12.0/AndroidManifest.xml:23:9-81
+42        android:protectionLevel="signature" />
+42-->[androidx.core:core:1.12.0] /home/codespace/.gradle/caches/transforms-3/01be542a8a7642ecba403b94caa2bdf6/transformed/core-1.12.0/AndroidManifest.xml:24:9-44
 43
-44    <application
-44-->/workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:23:5-53:19
-45        android:allowBackup="true"
-45-->/workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:24:9-35
-46        android:appComponentFactory="androidx.core.app.CoreComponentFactory"
-46-->[androidx.core:core:1.12.0] /home/codespace/.gradle/caches/transforms-3/01be542a8a7642ecba403b94caa2bdf6/transformed/core-1.12.0/AndroidManifest.xml:28:18-86
-47        android:debuggable="true"
-48        android:extractNativeLibs="false"
-49        android:icon="@mipmap/ic_launcher"
-49-->/workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:25:9-43
-50        android:label="@string/app_name"
-50-->/workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:27:9-41
-51        android:roundIcon="@mipmap/ic_launcher"
-51-->/workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:26:9-48
-52        android:supportsRtl="true"
-52-->/workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:28:9-35
-53        android:theme="@style/Theme.MALLAMVP" >
-53-->/workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:29:9-46
-54        <activity
-54-->/workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:30:9-39:20
-55            android:name="com.malla.mvp.MainActivity"
-55-->/workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:31:13-41
-56            android:exported="true"
-56-->/workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:32:13-36
-57            android:theme="@style/Theme.MALLAMVP"
-57-->/workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:34:13-50
-58            android:windowSoftInputMode="adjustResize" >
-58-->/workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:33:13-55
-59            <intent-filter>
-59-->/workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:35:13-38:29
-60                <action android:name="android.intent.action.MAIN" />
-60-->/workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:36:17-69
-60-->/workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:36:25-66
-61
-62                <category android:name="android.intent.category.LAUNCHER" />
-62-->/workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:37:17-77
-62-->/workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:37:27-74
-63            </intent-filter>
-64        </activity>
-65
-66        <service
-66-->/workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:40:9-43:40
-67            android:name="com.malla.mvp.service.MeshChatService"
-67-->/workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:41:13-52
-68            android:exported="false"
-68-->/workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:43:13-37
-69            android:foregroundServiceType="dataSync" />
-69-->/workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:42:13-53
-70
-71        <provider
-72            android:name="androidx.core.content.FileProvider"
-72-->/workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:45:13-62
-73            android:authorities="com.malla.mvp.fileprovider"
-73-->/workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:46:13-64
-74            android:exported="false"
-74-->/workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:47:13-37
-75            android:grantUriPermissions="true" >
-75-->/workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:48:13-47
-76            <meta-data
-76-->/workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:49:13-51:54
-77                android:name="android.support.FILE_PROVIDER_PATHS"
-77-->/workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:50:17-67
-78                android:resource="@xml/file_paths" />
-78-->/workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:51:17-51
-79        </provider>
-80
-81        <activity
-81-->[androidx.compose.ui:ui-tooling-android:1.6.1] /home/codespace/.gradle/caches/transforms-3/115e372b6b942b8ddd4fa4d11b75899a/transformed/ui-tooling-release/AndroidManifest.xml:23:9-25:39
-82            android:name="androidx.compose.ui.tooling.PreviewActivity"
-82-->[androidx.compose.ui:ui-tooling-android:1.6.1] /home/codespace/.gradle/caches/transforms-3/115e372b6b942b8ddd4fa4d11b75899a/transformed/ui-tooling-release/AndroidManifest.xml:24:13-71
-83            android:exported="true" />
-83-->[androidx.compose.ui:ui-tooling-android:1.6.1] /home/codespace/.gradle/caches/transforms-3/115e372b6b942b8ddd4fa4d11b75899a/transformed/ui-tooling-release/AndroidManifest.xml:25:13-36
-84        <activity
-84-->[androidx.compose.ui:ui-test-manifest:1.6.1] /home/codespace/.gradle/caches/transforms-3/59e231d7ea8189a1873ee39594648a68/transformed/ui-test-manifest-1.6.1/AndroidManifest.xml:23:9-25:39
-85            android:name="androidx.activity.ComponentActivity"
-85-->[androidx.compose.ui:ui-test-manifest:1.6.1] /home/codespace/.gradle/caches/transforms-3/59e231d7ea8189a1873ee39594648a68/transformed/ui-test-manifest-1.6.1/AndroidManifest.xml:24:13-63
-86            android:exported="true" />
-86-->[androidx.compose.ui:ui-test-manifest:1.6.1] /home/codespace/.gradle/caches/transforms-3/59e231d7ea8189a1873ee39594648a68/transformed/ui-test-manifest-1.6.1/AndroidManifest.xml:25:13-36
-87
-88        <provider
-88-->[androidx.emoji2:emoji2:1.3.0] /home/codespace/.gradle/caches/transforms-3/5f56bf3def91dedb6a80130f2ae309db/transformed/emoji2-1.3.0/AndroidManifest.xml:24:9-32:20
-89            android:name="androidx.startup.InitializationProvider"
-89-->[androidx.emoji2:emoji2:1.3.0] /home/codespace/.gradle/caches/transforms-3/5f56bf3def91dedb6a80130f2ae309db/transformed/emoji2-1.3.0/AndroidManifest.xml:25:13-67
-90            android:authorities="com.malla.mvp.androidx-startup"
-90-->[androidx.emoji2:emoji2:1.3.0] /home/codespace/.gradle/caches/transforms-3/5f56bf3def91dedb6a80130f2ae309db/transformed/emoji2-1.3.0/AndroidManifest.xml:26:13-68
-91            android:exported="false" >
-91-->[androidx.emoji2:emoji2:1.3.0] /home/codespace/.gradle/caches/transforms-3/5f56bf3def91dedb6a80130f2ae309db/transformed/emoji2-1.3.0/AndroidManifest.xml:27:13-37
-92            <meta-data
-92-->[androidx.emoji2:emoji2:1.3.0] /home/codespace/.gradle/caches/transforms-3/5f56bf3def91dedb6a80130f2ae309db/transformed/emoji2-1.3.0/AndroidManifest.xml:29:13-31:52
-93                android:name="androidx.emoji2.text.EmojiCompatInitializer"
-93-->[androidx.emoji2:emoji2:1.3.0] /home/codespace/.gradle/caches/transforms-3/5f56bf3def91dedb6a80130f2ae309db/transformed/emoji2-1.3.0/AndroidManifest.xml:30:17-75
-94                android:value="androidx.startup" />
-94-->[androidx.emoji2:emoji2:1.3.0] /home/codespace/.gradle/caches/transforms-3/5f56bf3def91dedb6a80130f2ae309db/transformed/emoji2-1.3.0/AndroidManifest.xml:31:17-49
-95            <meta-data
-95-->[androidx.lifecycle:lifecycle-process:2.7.0] /home/codespace/.gradle/caches/transforms-3/6cd941b5728d35bc713ca3d34665a608/transformed/lifecycle-process-2.7.0/AndroidManifest.xml:29:13-31:52
-96                android:name="androidx.lifecycle.ProcessLifecycleInitializer"
-96-->[androidx.lifecycle:lifecycle-process:2.7.0] /home/codespace/.gradle/caches/transforms-3/6cd941b5728d35bc713ca3d34665a608/transformed/lifecycle-process-2.7.0/AndroidManifest.xml:30:17-78
-97                android:value="androidx.startup" />
-97-->[androidx.lifecycle:lifecycle-process:2.7.0] /home/codespace/.gradle/caches/transforms-3/6cd941b5728d35bc713ca3d34665a608/transformed/lifecycle-process-2.7.0/AndroidManifest.xml:31:17-49
-98            <meta-data
-98-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/codespace/.gradle/caches/transforms-3/06969f8046f43eda714780ada6fe13cf/transformed/profileinstaller-1.3.1/AndroidManifest.xml:29:13-31:52
-99                android:name="androidx.profileinstaller.ProfileInstallerInitializer"
-99-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/codespace/.gradle/caches/transforms-3/06969f8046f43eda714780ada6fe13cf/transformed/profileinstaller-1.3.1/AndroidManifest.xml:30:17-85
-100                android:value="androidx.startup" />
-100-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/codespace/.gradle/caches/transforms-3/06969f8046f43eda714780ada6fe13cf/transformed/profileinstaller-1.3.1/AndroidManifest.xml:31:17-49
-101        </provider>
-102
-103        <service
-103-->[androidx.room:room-runtime:2.6.1] /home/codespace/.gradle/caches/transforms-3/001d992114bee161356b4690d627c5c0/transformed/room-runtime-2.6.1/AndroidManifest.xml:24:9-28:63
-104            android:name="androidx.room.MultiInstanceInvalidationService"
-104-->[androidx.room:room-runtime:2.6.1] /home/codespace/.gradle/caches/transforms-3/001d992114bee161356b4690d627c5c0/transformed/room-runtime-2.6.1/AndroidManifest.xml:25:13-74
-105            android:directBootAware="true"
-105-->[androidx.room:room-runtime:2.6.1] /home/codespace/.gradle/caches/transforms-3/001d992114bee161356b4690d627c5c0/transformed/room-runtime-2.6.1/AndroidManifest.xml:26:13-43
-106            android:exported="false" />
-106-->[androidx.room:room-runtime:2.6.1] /home/codespace/.gradle/caches/transforms-3/001d992114bee161356b4690d627c5c0/transformed/room-runtime-2.6.1/AndroidManifest.xml:27:13-37
-107
-108        <receiver
-108-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/codespace/.gradle/caches/transforms-3/06969f8046f43eda714780ada6fe13cf/transformed/profileinstaller-1.3.1/AndroidManifest.xml:34:9-52:20
-109            android:name="androidx.profileinstaller.ProfileInstallReceiver"
-109-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/codespace/.gradle/caches/transforms-3/06969f8046f43eda714780ada6fe13cf/transformed/profileinstaller-1.3.1/AndroidManifest.xml:35:13-76
-110            android:directBootAware="false"
-110-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/codespace/.gradle/caches/transforms-3/06969f8046f43eda714780ada6fe13cf/transformed/profileinstaller-1.3.1/AndroidManifest.xml:36:13-44
-111            android:enabled="true"
-111-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/codespace/.gradle/caches/transforms-3/06969f8046f43eda714780ada6fe13cf/transformed/profileinstaller-1.3.1/AndroidManifest.xml:37:13-35
-112            android:exported="true"
-112-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/codespace/.gradle/caches/transforms-3/06969f8046f43eda714780ada6fe13cf/transformed/profileinstaller-1.3.1/AndroidManifest.xml:38:13-36
-113            android:permission="android.permission.DUMP" >
-113-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/codespace/.gradle/caches/transforms-3/06969f8046f43eda714780ada6fe13cf/transformed/profileinstaller-1.3.1/AndroidManifest.xml:39:13-57
-114            <intent-filter>
-114-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/codespace/.gradle/caches/transforms-3/06969f8046f43eda714780ada6fe13cf/transformed/profileinstaller-1.3.1/AndroidManifest.xml:40:13-42:29
-115                <action android:name="androidx.profileinstaller.action.INSTALL_PROFILE" />
-115-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/codespace/.gradle/caches/transforms-3/06969f8046f43eda714780ada6fe13cf/transformed/profileinstaller-1.3.1/AndroidManifest.xml:41:17-91
-115-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/codespace/.gradle/caches/transforms-3/06969f8046f43eda714780ada6fe13cf/transformed/profileinstaller-1.3.1/AndroidManifest.xml:41:25-88
-116            </intent-filter>
-117            <intent-filter>
-117-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/codespace/.gradle/caches/transforms-3/06969f8046f43eda714780ada6fe13cf/transformed/profileinstaller-1.3.1/AndroidManifest.xml:43:13-45:29
-118                <action android:name="androidx.profileinstaller.action.SKIP_FILE" />
-118-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/codespace/.gradle/caches/transforms-3/06969f8046f43eda714780ada6fe13cf/transformed/profileinstaller-1.3.1/AndroidManifest.xml:44:17-85
-118-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/codespace/.gradle/caches/transforms-3/06969f8046f43eda714780ada6fe13cf/transformed/profileinstaller-1.3.1/AndroidManifest.xml:44:25-82
-119            </intent-filter>
-120            <intent-filter>
-120-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/codespace/.gradle/caches/transforms-3/06969f8046f43eda714780ada6fe13cf/transformed/profileinstaller-1.3.1/AndroidManifest.xml:46:13-48:29
-121                <action android:name="androidx.profileinstaller.action.SAVE_PROFILE" />
-121-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/codespace/.gradle/caches/transforms-3/06969f8046f43eda714780ada6fe13cf/transformed/profileinstaller-1.3.1/AndroidManifest.xml:47:17-88
-121-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/codespace/.gradle/caches/transforms-3/06969f8046f43eda714780ada6fe13cf/transformed/profileinstaller-1.3.1/AndroidManifest.xml:47:25-85
-122            </intent-filter>
-123            <intent-filter>
-123-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/codespace/.gradle/caches/transforms-3/06969f8046f43eda714780ada6fe13cf/transformed/profileinstaller-1.3.1/AndroidManifest.xml:49:13-51:29
-124                <action android:name="androidx.profileinstaller.action.BENCHMARK_OPERATION" />
-124-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/codespace/.gradle/caches/transforms-3/06969f8046f43eda714780ada6fe13cf/transformed/profileinstaller-1.3.1/AndroidManifest.xml:50:17-95
-124-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/codespace/.gradle/caches/transforms-3/06969f8046f43eda714780ada6fe13cf/transformed/profileinstaller-1.3.1/AndroidManifest.xml:50:25-92
-125            </intent-filter>
-126        </receiver>
-127    </application>
-128
-129</manifest>
+44    <uses-permission android:name="com.malla.mvp.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION" />
+44-->[androidx.core:core:1.12.0] /home/codespace/.gradle/caches/transforms-3/01be542a8a7642ecba403b94caa2bdf6/transformed/core-1.12.0/AndroidManifest.xml:26:5-97
+44-->[androidx.core:core:1.12.0] /home/codespace/.gradle/caches/transforms-3/01be542a8a7642ecba403b94caa2bdf6/transformed/core-1.12.0/AndroidManifest.xml:26:22-94
+45
+46    <application
+46-->/workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:23:5-53:19
+47        android:allowBackup="true"
+47-->/workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:24:9-35
+48        android:appComponentFactory="androidx.core.app.CoreComponentFactory"
+48-->[androidx.core:core:1.12.0] /home/codespace/.gradle/caches/transforms-3/01be542a8a7642ecba403b94caa2bdf6/transformed/core-1.12.0/AndroidManifest.xml:28:18-86
+49        android:debuggable="true"
+50        android:extractNativeLibs="false"
+51        android:icon="@mipmap/ic_launcher"
+51-->/workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:25:9-43
+52        android:label="@string/app_name"
+52-->/workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:27:9-41
+53        android:roundIcon="@mipmap/ic_launcher"
+53-->/workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:26:9-48
+54        android:supportsRtl="true"
+54-->/workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:28:9-35
+55        android:theme="@style/Theme.MALLAMVP" >
+55-->/workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:29:9-46
+56        <activity
+56-->/workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:30:9-39:20
+57            android:name="com.malla.mvp.MainActivity"
+57-->/workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:31:13-41
+58            android:exported="true"
+58-->/workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:32:13-36
+59            android:theme="@style/Theme.MALLAMVP"
+59-->/workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:34:13-50
+60            android:windowSoftInputMode="adjustResize" >
+60-->/workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:33:13-55
+61            <intent-filter>
+61-->/workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:35:13-38:29
+62                <action android:name="android.intent.action.MAIN" />
+62-->/workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:36:17-69
+62-->/workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:36:25-66
+63
+64                <category android:name="android.intent.category.LAUNCHER" />
+64-->/workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:37:17-77
+64-->/workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:37:27-74
+65            </intent-filter>
+66        </activity>
+67
+68        <service
+68-->/workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:40:9-43:40
+69            android:name="com.malla.mvp.service.MeshChatService"
+69-->/workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:41:13-52
+70            android:exported="false"
+70-->/workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:43:13-37
+71            android:foregroundServiceType="dataSync" />
+71-->/workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:42:13-53
+72
+73        <provider
+74            android:name="androidx.core.content.FileProvider"
+74-->/workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:45:13-62
+75            android:authorities="com.malla.mvp.fileprovider"
+75-->/workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:46:13-64
+76            android:exported="false"
+76-->/workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:47:13-37
+77            android:grantUriPermissions="true" >
+77-->/workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:48:13-47
+78            <meta-data
+78-->/workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:49:13-51:54
+79                android:name="android.support.FILE_PROVIDER_PATHS"
+79-->/workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:50:17-67
+80                android:resource="@xml/file_paths" />
+80-->/workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:51:17-51
+81        </provider>
+82
+83        <activity
+83-->[androidx.compose.ui:ui-tooling-android:1.6.1] /home/codespace/.gradle/caches/transforms-3/115e372b6b942b8ddd4fa4d11b75899a/transformed/ui-tooling-release/AndroidManifest.xml:23:9-25:39
+84            android:name="androidx.compose.ui.tooling.PreviewActivity"
+84-->[androidx.compose.ui:ui-tooling-android:1.6.1] /home/codespace/.gradle/caches/transforms-3/115e372b6b942b8ddd4fa4d11b75899a/transformed/ui-tooling-release/AndroidManifest.xml:24:13-71
+85            android:exported="true" />
+85-->[androidx.compose.ui:ui-tooling-android:1.6.1] /home/codespace/.gradle/caches/transforms-3/115e372b6b942b8ddd4fa4d11b75899a/transformed/ui-tooling-release/AndroidManifest.xml:25:13-36
+86        <activity
+86-->[androidx.compose.ui:ui-test-manifest:1.6.1] /home/codespace/.gradle/caches/transforms-3/59e231d7ea8189a1873ee39594648a68/transformed/ui-test-manifest-1.6.1/AndroidManifest.xml:23:9-25:39
+87            android:name="androidx.activity.ComponentActivity"
+87-->[androidx.compose.ui:ui-test-manifest:1.6.1] /home/codespace/.gradle/caches/transforms-3/59e231d7ea8189a1873ee39594648a68/transformed/ui-test-manifest-1.6.1/AndroidManifest.xml:24:13-63
+88            android:exported="true" />
+88-->[androidx.compose.ui:ui-test-manifest:1.6.1] /home/codespace/.gradle/caches/transforms-3/59e231d7ea8189a1873ee39594648a68/transformed/ui-test-manifest-1.6.1/AndroidManifest.xml:25:13-36
+89
+90        <provider
+90-->[androidx.emoji2:emoji2:1.3.0] /home/codespace/.gradle/caches/transforms-3/5f56bf3def91dedb6a80130f2ae309db/transformed/emoji2-1.3.0/AndroidManifest.xml:24:9-32:20
+91            android:name="androidx.startup.InitializationProvider"
+91-->[androidx.emoji2:emoji2:1.3.0] /home/codespace/.gradle/caches/transforms-3/5f56bf3def91dedb6a80130f2ae309db/transformed/emoji2-1.3.0/AndroidManifest.xml:25:13-67
+92            android:authorities="com.malla.mvp.androidx-startup"
+92-->[androidx.emoji2:emoji2:1.3.0] /home/codespace/.gradle/caches/transforms-3/5f56bf3def91dedb6a80130f2ae309db/transformed/emoji2-1.3.0/AndroidManifest.xml:26:13-68
+93            android:exported="false" >
+93-->[androidx.emoji2:emoji2:1.3.0] /home/codespace/.gradle/caches/transforms-3/5f56bf3def91dedb6a80130f2ae309db/transformed/emoji2-1.3.0/AndroidManifest.xml:27:13-37
+94            <meta-data
+94-->[androidx.emoji2:emoji2:1.3.0] /home/codespace/.gradle/caches/transforms-3/5f56bf3def91dedb6a80130f2ae309db/transformed/emoji2-1.3.0/AndroidManifest.xml:29:13-31:52
+95                android:name="androidx.emoji2.text.EmojiCompatInitializer"
+95-->[androidx.emoji2:emoji2:1.3.0] /home/codespace/.gradle/caches/transforms-3/5f56bf3def91dedb6a80130f2ae309db/transformed/emoji2-1.3.0/AndroidManifest.xml:30:17-75
+96                android:value="androidx.startup" />
+96-->[androidx.emoji2:emoji2:1.3.0] /home/codespace/.gradle/caches/transforms-3/5f56bf3def91dedb6a80130f2ae309db/transformed/emoji2-1.3.0/AndroidManifest.xml:31:17-49
+97            <meta-data
+97-->[androidx.lifecycle:lifecycle-process:2.7.0] /home/codespace/.gradle/caches/transforms-3/6cd941b5728d35bc713ca3d34665a608/transformed/lifecycle-process-2.7.0/AndroidManifest.xml:29:13-31:52
+98                android:name="androidx.lifecycle.ProcessLifecycleInitializer"
+98-->[androidx.lifecycle:lifecycle-process:2.7.0] /home/codespace/.gradle/caches/transforms-3/6cd941b5728d35bc713ca3d34665a608/transformed/lifecycle-process-2.7.0/AndroidManifest.xml:30:17-78
+99                android:value="androidx.startup" />
+99-->[androidx.lifecycle:lifecycle-process:2.7.0] /home/codespace/.gradle/caches/transforms-3/6cd941b5728d35bc713ca3d34665a608/transformed/lifecycle-process-2.7.0/AndroidManifest.xml:31:17-49
+100            <meta-data
+100-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/codespace/.gradle/caches/transforms-3/06969f8046f43eda714780ada6fe13cf/transformed/profileinstaller-1.3.1/AndroidManifest.xml:29:13-31:52
+101                android:name="androidx.profileinstaller.ProfileInstallerInitializer"
+101-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/codespace/.gradle/caches/transforms-3/06969f8046f43eda714780ada6fe13cf/transformed/profileinstaller-1.3.1/AndroidManifest.xml:30:17-85
+102                android:value="androidx.startup" />
+102-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/codespace/.gradle/caches/transforms-3/06969f8046f43eda714780ada6fe13cf/transformed/profileinstaller-1.3.1/AndroidManifest.xml:31:17-49
+103        </provider>
+104
+105        <service
+105-->[androidx.room:room-runtime:2.6.1] /home/codespace/.gradle/caches/transforms-3/001d992114bee161356b4690d627c5c0/transformed/room-runtime-2.6.1/AndroidManifest.xml:24:9-28:63
+106            android:name="androidx.room.MultiInstanceInvalidationService"
+106-->[androidx.room:room-runtime:2.6.1] /home/codespace/.gradle/caches/transforms-3/001d992114bee161356b4690d627c5c0/transformed/room-runtime-2.6.1/AndroidManifest.xml:25:13-74
+107            android:directBootAware="true"
+107-->[androidx.room:room-runtime:2.6.1] /home/codespace/.gradle/caches/transforms-3/001d992114bee161356b4690d627c5c0/transformed/room-runtime-2.6.1/AndroidManifest.xml:26:13-43
+108            android:exported="false" />
+108-->[androidx.room:room-runtime:2.6.1] /home/codespace/.gradle/caches/transforms-3/001d992114bee161356b4690d627c5c0/transformed/room-runtime-2.6.1/AndroidManifest.xml:27:13-37
+109
+110        <receiver
+110-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/codespace/.gradle/caches/transforms-3/06969f8046f43eda714780ada6fe13cf/transformed/profileinstaller-1.3.1/AndroidManifest.xml:34:9-52:20
+111            android:name="androidx.profileinstaller.ProfileInstallReceiver"
+111-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/codespace/.gradle/caches/transforms-3/06969f8046f43eda714780ada6fe13cf/transformed/profileinstaller-1.3.1/AndroidManifest.xml:35:13-76
+112            android:directBootAware="false"
+112-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/codespace/.gradle/caches/transforms-3/06969f8046f43eda714780ada6fe13cf/transformed/profileinstaller-1.3.1/AndroidManifest.xml:36:13-44
+113            android:enabled="true"
+113-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/codespace/.gradle/caches/transforms-3/06969f8046f43eda714780ada6fe13cf/transformed/profileinstaller-1.3.1/AndroidManifest.xml:37:13-35
+114            android:exported="true"
+114-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/codespace/.gradle/caches/transforms-3/06969f8046f43eda714780ada6fe13cf/transformed/profileinstaller-1.3.1/AndroidManifest.xml:38:13-36
+115            android:permission="android.permission.DUMP" >
+115-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/codespace/.gradle/caches/transforms-3/06969f8046f43eda714780ada6fe13cf/transformed/profileinstaller-1.3.1/AndroidManifest.xml:39:13-57
+116            <intent-filter>
+116-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/codespace/.gradle/caches/transforms-3/06969f8046f43eda714780ada6fe13cf/transformed/profileinstaller-1.3.1/AndroidManifest.xml:40:13-42:29
+117                <action android:name="androidx.profileinstaller.action.INSTALL_PROFILE" />
+117-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/codespace/.gradle/caches/transforms-3/06969f8046f43eda714780ada6fe13cf/transformed/profileinstaller-1.3.1/AndroidManifest.xml:41:17-91
+117-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/codespace/.gradle/caches/transforms-3/06969f8046f43eda714780ada6fe13cf/transformed/profileinstaller-1.3.1/AndroidManifest.xml:41:25-88
+118            </intent-filter>
+119            <intent-filter>
+119-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/codespace/.gradle/caches/transforms-3/06969f8046f43eda714780ada6fe13cf/transformed/profileinstaller-1.3.1/AndroidManifest.xml:43:13-45:29
+120                <action android:name="androidx.profileinstaller.action.SKIP_FILE" />
+120-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/codespace/.gradle/caches/transforms-3/06969f8046f43eda714780ada6fe13cf/transformed/profileinstaller-1.3.1/AndroidManifest.xml:44:17-85
+120-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/codespace/.gradle/caches/transforms-3/06969f8046f43eda714780ada6fe13cf/transformed/profileinstaller-1.3.1/AndroidManifest.xml:44:25-82
+121            </intent-filter>
+122            <intent-filter>
+122-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/codespace/.gradle/caches/transforms-3/06969f8046f43eda714780ada6fe13cf/transformed/profileinstaller-1.3.1/AndroidManifest.xml:46:13-48:29
+123                <action android:name="androidx.profileinstaller.action.SAVE_PROFILE" />
+123-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/codespace/.gradle/caches/transforms-3/06969f8046f43eda714780ada6fe13cf/transformed/profileinstaller-1.3.1/AndroidManifest.xml:47:17-88
+123-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/codespace/.gradle/caches/transforms-3/06969f8046f43eda714780ada6fe13cf/transformed/profileinstaller-1.3.1/AndroidManifest.xml:47:25-85
+124            </intent-filter>
+125            <intent-filter>
+125-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/codespace/.gradle/caches/transforms-3/06969f8046f43eda714780ada6fe13cf/transformed/profileinstaller-1.3.1/AndroidManifest.xml:49:13-51:29
+126                <action android:name="androidx.profileinstaller.action.BENCHMARK_OPERATION" />
+126-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/codespace/.gradle/caches/transforms-3/06969f8046f43eda714780ada6fe13cf/transformed/profileinstaller-1.3.1/AndroidManifest.xml:50:17-95
+126-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/codespace/.gradle/caches/transforms-3/06969f8046f43eda714780ada6fe13cf/transformed/profileinstaller-1.3.1/AndroidManifest.xml:50:25-92
+127            </intent-filter>
+128        </receiver>
+129    </application>
+130
+131</manifest>

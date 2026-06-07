@@ -205,7 +205,7 @@ fun UptimeBanner() {
             Spacer(modifier = Modifier.width(12.dp))
             Column {
                 Text("Tiempo activo", style = MaterialTheme.typography.titleSmall)
-                Text("6h 34min en red mesh", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
+                Text("Red activa", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
             }
         }
     }
@@ -286,46 +286,8 @@ fun SignalBars(strength: Int, color: Color) {
 
 @Composable
 fun TabLogros() {
-    data class Badge(val icon: ImageVector, val title: String, val desc: String, val unlocked: Boolean)
-    val badges = listOf(
-        Badge(Icons.Filled.WifiTethering, "Primer enlace", "Conectaste tu primer nodo", true),
-        Badge(Icons.Filled.Loop, "Relay activo", "100 mensajes", true),
-        Badge(Icons.Filled.Language, "Red viva", "6 horas en línea", true),
-        Badge(Icons.Filled.Shield, "Nodo guardián", "Bloquea ataques", false),
-        Badge(Icons.Filled.Bolt, "Ultra eficiente", "24h solo texto", false),
-        Badge(Icons.Filled.Map, "Explorador", "10 nodos alcanzados", false)
-    )
-    Column(modifier = Modifier.padding(16.dp)) {
-        Text("Nivel: Nodo Ancla · 3 de 7", style = MaterialTheme.typography.titleMedium)
-        Spacer(modifier = Modifier.height(8.dp))
-        LinearProgressIndicator(progress = { 0.43f }, modifier = Modifier.fillMaxWidth().height(6.dp).clip(RoundedCornerShape(4.dp)),
-            color = MaterialTheme.colorScheme.primary, trackColor = Color.White.copy(alpha = 0.1f))
-        Text("148 / 340 msgs relay para nivel 4", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f))
-        Spacer(modifier = Modifier.height(24.dp))
-        Text("INSIGNIAS", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f))
-        Spacer(modifier = Modifier.height(12.dp))
-        for (row in badges.chunked(3)) {
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-                row.forEach { badge ->
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier.weight(1f).background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(12.dp))
-                            .border(0.5.dp, if (badge.unlocked) MaterialTheme.colorScheme.primary.copy(alpha = 0.3f) else Color.White.copy(alpha = 0.05f), RoundedCornerShape(12.dp))
-                            .padding(8.dp)
-                    ) {
-                        Icon(imageVector = badge.icon, contentDescription = null, tint = if (badge.unlocked) MaterialTheme.colorScheme.primary else Color.White.copy(alpha = 0.38f), modifier = Modifier.size(28.dp))
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(badge.title, style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
-                            color = if (badge.unlocked) MaterialTheme.colorScheme.onSurface else Color.White.copy(alpha = 0.38f))
-                        Text(badge.desc, style = MaterialTheme.typography.labelSmall.copy(fontSize = 8.sp),
-                            color = Color.White.copy(alpha = 0.38f), textAlign = TextAlign.Center, maxLines = 2,
-                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
-                    }
-                }
-                repeat(3 - row.size) { Spacer(modifier = Modifier.weight(1f)) }
-            }
-            Spacer(modifier = Modifier.height(8.dp))
-        }
+    Column(modifier = Modifier.padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+        Text("Próximamente: insignias y niveles", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
     }
 }
 

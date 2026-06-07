@@ -10,6 +10,7 @@ import android.view.SurfaceView
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.activity.compose.BackHandler
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -24,6 +25,8 @@ fun QrScanScreen(
     onQrScanned: (String) -> Unit,
     onBack: () -> Unit
 ) {
+    BackHandler { onBack() }
+    BackHandler { onBack() }
     val context = LocalContext.current
     var hasPermission by remember { mutableStateOf(false) }
 
