@@ -5,6 +5,7 @@ import android.content.Intent
 import android.os.IBinder
 import android.util.Log
 import com.malla.mvp.core.engine.LogBuffer
+import com.malla.mvp.notification.NotificationHelper
 import com.malla.mvp.core.engine.PulseManager
 import com.malla.mvp.network.GattServerManager
 import com.malla.mvp.network.MeshConnector
@@ -47,6 +48,7 @@ class MeshChatService : Service() {
 
         // Puente de mensajes (red -> Room)
         MessageBridge.start(this)
+        NotificationHelper.createChannel(this)
         LogBuffer.add("SVC", "MessageBridge iniciado")
     }
 

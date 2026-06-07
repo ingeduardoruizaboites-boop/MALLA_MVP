@@ -81,6 +81,7 @@ fun ChatScreen(
     val listState = rememberLazyListState()
     var messages by remember { mutableStateOf(emptyList<MessageEntity>()) }
     var text by remember { mutableStateOf("") }
+    var searchMessageQuery by remember { mutableStateOf("") }
     var isTyping by remember { mutableStateOf(false) }
     var showAttachmentSheet by remember { mutableStateOf(false) }
     var showBackgroundDialog by remember { mutableStateOf(false) }
@@ -277,8 +278,9 @@ fun ChatScreen(
         }
     }
 
-    val groupedMessages = remember(messages) {
-        messages.groupBy { formatDateKey(it.timestamp) }
+    val groupedMessages = remember(messages, searchMessageQuery) {
+        val filtered = if (searchMessageQuery.isBlank()) messages else messages.filter { it.content.contains(searchMessageQuery, ignoreCase = true) }
+        filtered.groupBy { formatDateKey(it.timestamp) }
     }
 
     val bgColor = when {

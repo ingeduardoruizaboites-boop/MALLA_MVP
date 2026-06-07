@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.*
 import java.util.UUID
 import com.malla.mvp.data.repository.PulsoRepository
 import com.malla.mvp.core.engine.LogBuffer
+import com.malla.mvp.notification.NotificationHelper
 
 /**
  * Puente entre la red mesh y la base de datos local.
@@ -83,6 +84,7 @@ object MessageBridge {
                 _newMessageCount.value++
                 Log.d(TAG, "[MB:MSG] Mensaje guardado en $convId: ${meshMessage.content.take(30)}...")
                 LogBuffer.add("MB", "Recibido de $convId: ${meshMessage.content.take(50)}")
+                NotificationHelper.showMessageNotification(context, meshMessage.senderId, meshMessage.content)
             }
         }
     }
