@@ -92,9 +92,6 @@ class MainActivity : FragmentActivity() {
                         MeshMessageHandler.start(application)
                         LogBuffer.add("MAIN", "MeshMessageHandler iniciado")
                     } else {
-                        context.stopService(Intent(context, MeshChatService::class.java))
-                        NetworkService.stopServer()
-                        MeshMessageHandler.stop()
                     }
                 } catch (e: Exception) {
                     android.util.Log.e("MallaMesh", "Error gestionando mesh (ignorado)", e)

@@ -217,7 +217,7 @@ fun SettingsScreen(
         AlertDialog(
             onDismissRequest = { showDiagnostic = false },
             title = { Text("Diagnóstico en vivo") },
-            text = { DiagnosticScreen() },
+            text = { DiagnosticScreen(onBack = { showDiagnostic = false }) },
             confirmButton = {
                 TextButton(onClick = { showDiagnostic = false }) { Text("Cerrar") }
             }

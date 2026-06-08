@@ -35,7 +35,8 @@ import java.util.UUID
 @Composable
 fun ConversationsScreen(
     onChatClicked: (String, String) -> Unit,
-    onProfileClicked: (String) -> Unit, onNavigateToQrScanner: () -> Unit = {}
+    onProfileClicked: (String) -> Unit,
+    onNavigateToQrScanner: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val db = remember { AppDatabase.getInstance(context) }
@@ -50,6 +51,7 @@ fun ConversationsScreen(
     var showFabMenu by remember { mutableStateOf(false) }
     var showAddContactDialog by remember { mutableStateOf(false) }
     var showIpDialog by remember { mutableStateOf(false) }
+    var showCodeInput by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
 
     LaunchedEffect(conversationDao) {
@@ -86,6 +88,17 @@ fun ConversationsScreen(
     Box(modifier = Modifier.fillMaxSize().background(
         Brush.verticalGradient(listOf(Color(0xFF0A1B2A), Color(0xFF0A1118)))
     )) {
+    if (showCodeInput) {
+        CodeInputScreen(
+            onCodeValidated = { code ->
+                showCodeInput = false
+                // TODO: buscar y agregar contacto por código
+                Toast.makeText(context, "Código validado: $code", Toast.LENGTH_SHORT).show()
+            },
+            onBack = { showCodeInput = false }
+        )
+        return@Box
+    }
         if (showStoryViewer) {
             StoryViewerScreen(imageUri = currentStoryUri, onFinished = { showStoryViewer = false })
         }
@@ -245,6 +258,84 @@ fun ConversationsScreen(
                     }
                 })
             }
+        }
+
+        // Diálogo Agregar usuario
+        if (showAddContactDialog) {
+            AlertDialog(
+                onDismissRequest = { showAddContactDialog = false },
+                title = { Text("Agregar usuario", style = MaterialTheme.typography.titleMedium) },
+                text = {
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        TextButton(onClick = { showAddContactDialog = false }, modifier = Modifier.fillMaxWidth()) {
+                            Icon(Icons.Filled.Tag, null, tint = MaterialTheme.colorScheme.primary)
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Text("Ingresar código de 8 dígitos")
+                        }
+                        TextButton(onClick = { showAddContactDialog = false; onNavigateToQrScanner() }, modifier = Modifier.fillMaxWidth()) {
+                            Icon(Icons.Filled.QrCodeScanner, null, tint = MaterialTheme.colorScheme.primary)
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Text("Escanear QR")
+                        }
+                        TextButton(onClick = { showAddContactDialog = false }, modifier = Modifier.fillMaxWidth()) {
+                            Icon(Icons.Filled.Phone, null, tint = MaterialTheme.colorScheme.primary)
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Text("Buscar por número de teléfono")
+                        }
+                        TextButton(onClick = { showAddContactDialog = false; showIpDialog = true }, modifier = Modifier.fillMaxWidth()) {
+                            Icon(Icons.Filled.Link, null, tint = MaterialTheme.colorScheme.primary)
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Text("Conectar por IP")
+                        }
+                    }
+                },
+                confirmButton = { TextButton(onClick = { showAddContactDialog = false }) { Text("Cancelar") } }
+            )
+        }
+
+        // Diálogo Conectar por IP
+        if (showIpDialog) {
+            var ipAddress by remember { mutableStateOf("") }
+            AlertDialog(
+                onDismissRequest = { showIpDialog = false },
+                title = { Text("Conectar por IP") },
+                text = {
+                    Column {
+                        Text("Ingresa la IP del otro dispositivo (se muestra en la pestaña Pulso)")
+                        Spacer(modifier = Modifier.height(8.dp))
+                        OutlinedTextField(
+                            value = ipAddress,
+                            onValueChange = { ipAddress = it },
+                            label = { Text("Dirección IP") },
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                },
+                confirmButton = {
+                    TextButton(onClick = {
+                        if (ipAddress.isNotBlank()) {
+                            scope.launch {
+                                try {
+                                    com.malla.mvp.network.NetworkService.connectToPeer(ipAddress.trim())
+                                    val convId = "peer_" + ipAddress.trim().replace(".", "_")
+                                    val conv = ConversationEntity(
+                                        id = convId,
+                                        title = "Peer " + ipAddress.trim(),
+                                        timestamp = System.currentTimeMillis()
+                                    )
+                                    conversationDao?.insertConversation(conv)
+                                    showIpDialog = false
+                                    onChatClicked(convId, "Peer " + ipAddress.trim())
+                                } catch (e: Exception) {
+                                    Toast.makeText(context, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
+                                }
+                            }
+                        }
+                    }) { Text("Conectar") }
+                },
+                dismissButton = { TextButton(onClick = { showIpDialog = false }) { Text("Cancelar") } }
+            )
         }
     }
 }

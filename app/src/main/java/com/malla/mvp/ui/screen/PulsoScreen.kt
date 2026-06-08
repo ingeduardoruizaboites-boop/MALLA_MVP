@@ -125,6 +125,37 @@ fun TabPulso(
             }
         }
         item {
+            val isBtEnabled = BleManager.getAdapter()?.isEnabled ?: false
+            val isTcpRunning = tcpPeers > 0 || isBleAdvertising
+            Card(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Column(modifier = Modifier.padding(12.dp)) {
+                    Text("Estado de la red", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(if (isBtEnabled) Icons.Filled.Bluetooth else Icons.Filled.BluetoothDisabled, null, tint = if (isBtEnabled) Color(0xFF4CAF50) else Color.Red, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(if (isBtEnabled) "Bluetooth: Activado" else "Bluetooth: Desactivado", style = MaterialTheme.typography.bodySmall, color = if (isBtEnabled) Color(0xFF4CAF50) else Color.Red)
+                    }
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(if (isBleAdvertising) Icons.Filled.Wifi else Icons.Filled.WifiOff, null, tint = if (isBleAdvertising) Color(0xFF4CAF50) else Color.Red, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(if (isBleAdvertising) "Anuncio BLE: Activo" else "Anuncio BLE: Inactivo", style = MaterialTheme.typography.bodySmall, color = if (isBleAdvertising) Color(0xFF4CAF50) else Color.Red)
+                    }
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(if (isTcpRunning) Icons.Filled.Link else Icons.Filled.LinkOff, null, tint = if (isTcpRunning) Color(0xFF4CAF50) else Color.Red, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(if (isTcpRunning) "Servidor TCP: Activo" else "Servidor TCP: Inactivo", style = MaterialTheme.typography.bodySmall, color = if (isTcpRunning) Color(0xFF4CAF50) else Color.Red)
+                    }
+                }
+            }
+        }
+        item {
             GlobeCard(totalUsers = bleBluetoothDevices.size + tcpPeers)
         }
         item {
