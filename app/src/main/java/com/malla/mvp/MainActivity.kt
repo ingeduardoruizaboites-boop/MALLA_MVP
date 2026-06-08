@@ -110,7 +110,9 @@ class MainActivity : FragmentActivity() {
                         tutorialPrefs?.getBoolean("shown", false) ?: false
                     } catch (e: Exception) { false }
                     if (!tutorialShown) {
+                        if (!isFirstLaunch) {
                         showTutorial = true
+                        }
                     }
                 }
             }

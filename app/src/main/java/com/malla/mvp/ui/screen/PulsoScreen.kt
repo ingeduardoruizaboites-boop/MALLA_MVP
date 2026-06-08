@@ -1,6 +1,7 @@
 package com.malla.mvp.ui.screen
 
 import android.bluetooth.BluetoothDevice
+import android.widget.Toast
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
@@ -18,11 +19,12 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.malla.mvp.network.BleManager
 import com.malla.mvp.core.engine.LogBuffer
+import com.malla.mvp.network.BleManager
 import com.malla.mvp.network.NetworkService
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
@@ -214,10 +216,12 @@ fun UptimeBanner() {
 @Composable
 fun TabNodos(bleBluetoothDevices: List<BluetoothDevice>, onConnectToPeer: (String) -> Unit) {
     val scope = rememberCoroutineScope()
+    val ctx = LocalContext.current
+    var ipManual by remember { mutableStateOf("") }
+
     LazyColumn(contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         item { Text("NODOS ALCANZABLES AHORA", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)) }
         item {
-            val ctx = androidx.compose.ui.platform.LocalContext.current
             Button(onClick = {
                 com.malla.mvp.network.BleManager.start(ctx)
                 android.util.Log.d("PulsoScreen", "[PULSO:SCAN] Escaneo forzado por usuario")
@@ -226,14 +230,37 @@ fun TabNodos(bleBluetoothDevices: List<BluetoothDevice>, onConnectToPeer: (Strin
             }
         }
         item {
-            val ctx2 = androidx.compose.ui.platform.LocalContext.current
             Button(onClick = {
-                com.malla.mvp.core.engine.LogBuffer.add("PULSO", "Forzando modo mesh manual")
-                val intent = android.content.Intent(ctx2, com.malla.mvp.service.MeshChatService::class.java)
-                ctx2.startService(intent)
-                android.widget.Toast.makeText(ctx2, "Modo mesh forzado", android.widget.Toast.LENGTH_SHORT).show()
+                LogBuffer.add("PULSO", "Forzando modo mesh manual")
+                val intent = android.content.Intent(ctx, com.malla.mvp.service.MeshChatService::class.java)
+                ctx.startService(intent)
+                Toast.makeText(ctx, "Modo mesh forzado", Toast.LENGTH_SHORT).show()
             }, modifier = Modifier.fillMaxWidth().padding(top = 8.dp)) {
                 Text("Forzar modo mesh")
+            }
+        }
+        item {
+            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth().padding(top = 8.dp)) {
+                OutlinedTextField(
+                    value = ipManual,
+                    onValueChange = { ipManual = it },
+                    label = { Text("IP del otro dispositivo") },
+                    singleLine = true,
+                    modifier = Modifier.weight(1f)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Button(onClick = {
+                    if (ipManual.isNotBlank()) {
+                        scope.launch {
+                            try {
+                                NetworkService.connectToPeer(ipManual.trim())
+                                Toast.makeText(ctx, "Conectado a $ipManual", Toast.LENGTH_SHORT).show()
+                            } catch (e: Exception) {
+                                Toast.makeText(ctx, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                    }
+                }) { Text("Conectar") }
             }
         }
         items(bleBluetoothDevices) { device ->
@@ -299,7 +326,6 @@ fun TabModos() {
     var compressionActive by remember { mutableStateOf(true) }
     var soloTexto by remember { mutableStateOf(false) }
 
-    // Transportes experimentales (Fase 1.5)
     var nfcActive by remember { mutableStateOf(false) }
     var ultrasoundActive by remember { mutableStateOf(false) }
     var smsBridgeActive by remember { mutableStateOf(false) }

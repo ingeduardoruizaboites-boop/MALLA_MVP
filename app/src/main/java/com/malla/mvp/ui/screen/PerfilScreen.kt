@@ -169,6 +169,15 @@ fun PerfilScreen() {
                     Button(
                         onClick = {
                             scope.launch {
+                                        val authSuccess = com.malla.mvp.core.crypto.BiometricAuthHelper.authenticate(
+                                            context as androidx.fragment.app.FragmentActivity,
+                                            "Firma tu QR",
+                                            "Confirma tu identidad para mostrar el QR"
+                                        )
+                                        if (!authSuccess) {
+                                            Toast.makeText(context, "Autenticación cancelada", Toast.LENGTH_SHORT).show()
+                                            return@launch
+                                        }
                                 try {
                                     val keystoreManager = KeystoreManager(context)
                                     qrPayload = IdentityQrPayload.generate(keystoreManager, IdentityManager)
@@ -319,4 +328,3 @@ fun PerfilScreen() {
         Spacer(modifier = Modifier.height(24.dp))
     }
 }
-
