@@ -83,7 +83,6 @@ class FlashlightTransport(private val context: Context) {
                                         val bright = aeState == CaptureResult.CONTROL_AE_STATE_FLASH_REQUIRED || aeState == CaptureResult.CONTROL_AE_STATE_CONVERGED
                                         if (bright != lastBright) {
                                             val now = System.currentTimeMillis()
-                                            val duration = now - lastChangeTime
                                             val bit = if (bright) 1 else 0
                                             receivedBits.add(bit)
                                             lastChangeTime = now

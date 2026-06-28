@@ -17,10 +17,12 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.malla.mvp.core.transport.FlashlightTransport
+import com.malla.mvp.di.Injector
 
 @Composable
-fun FaroScreen(flashlight: FlashlightTransport) {
+fun FaroScreen() {
     val context = LocalContext.current
+    val flashlight = remember { Injector.flashlightTransport }
     var message by remember { mutableStateOf("") }
     var isTransmitting by remember { mutableStateOf(false) }
     var isReceiving by remember { mutableStateOf(false) }
