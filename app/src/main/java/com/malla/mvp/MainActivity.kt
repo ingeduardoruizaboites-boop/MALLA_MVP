@@ -37,6 +37,9 @@ import com.malla.mvp.core.engine.DeviceStateMonitor
 import com.malla.mvp.core.engine.LogBuffer
 import com.malla.mvp.network.NetworkService
 import com.malla.mvp.ui.components.MainTopBar
+import com.malla.mvp.ui.components.StickerPickerDialog
+import com.malla.mvp.ui.components.StickerFullScreenDialog
+import com.malla.mvp.ui.components.StickerState
 import com.malla.mvp.ui.components.ConnectivityStatusBar
 import com.malla.mvp.ui.components.TutorialOverlay
 import com.malla.mvp.ui.screen.*
@@ -339,4 +342,6 @@ fun MainApp(
             }
         }
     }
+    StickerPickerDialog()
+    StickerFullScreenDialog()
 }
