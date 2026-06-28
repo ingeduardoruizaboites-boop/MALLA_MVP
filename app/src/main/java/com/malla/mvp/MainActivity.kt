@@ -27,6 +27,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.malla.mvp.core.transport.FlashlightTransport
 import com.malla.mvp.data.AppDatabase
 import com.malla.mvp.data.entity.ConversationEntity
 import com.malla.mvp.identity.IdentityManager
@@ -78,6 +79,7 @@ class MainActivity : FragmentActivity() {
             var showSettings by remember { mutableStateOf(false) }
             var showTutorial by remember { mutableStateOf(false) }
             val context = LocalContext.current
+            val flashlight = remember { FlashlightTransport(context) }
 
             val effectiveScheme by appThemeState.currentTheme.collectAsState()
 
