@@ -12,6 +12,7 @@ import com.malla.mvp.core.notification.INotificationHelper
 import com.malla.mvp.core.transport.FlashlightTransport
 import com.malla.mvp.core.util.ILogger
 import com.malla.mvp.data.AppDatabase
+import com.malla.mvp.data.entity.MessageEntity
 import com.malla.mvp.identity.IdentityManager
 import com.malla.mvp.network.*
 import kotlinx.coroutines.*
@@ -39,8 +40,7 @@ object Injector {
                         content = message.content,
                         senderId = message.senderId,
                         timestamp = message.timestamp,
-                        type = message.type,
-                        originalMessageId = message.originalMessageId
+                        type = "chat"
                     )
                     NetworkService.sendMessage(nsMessage)
                     Result.success(Unit)
@@ -51,7 +51,12 @@ object Injector {
             override fun addMessageListener(listener: (CoreMeshMessage) -> Unit) {
                 CoroutineScope(Dispatchers.IO).launch {
                     NetworkService.messages.collect { nsMsg ->
-                        listener(CoreMeshMessage(nsMsg.senderId, nsMsg.content, nsMsg.timestamp, nsMsg.type, nsMsg.originalMessageId))
+                        listener(CoreMeshMessage(
+                            senderId = nsMsg.senderId,
+                            content = nsMsg.content,
+                            timestamp = nsMsg.timestamp,
+                            type = 0
+                        ))
                     }
                 }
             }
@@ -61,8 +66,28 @@ object Injector {
 
         // Repositorio de mensajes (Room)
         val messageRepo = object : IMessageRepository {
-            override fun observeMessages(conversationId: String) = db!!.messageDao().observeAllMessages().map { entities -> entities.filter { it.conversationId == conversationId }.map { MessageData(it.id, it.conversationId, it.content, it.timestamp, it.isOwn) } }
-            override suspend fun saveMessage(message: MessageData) { db.messageDao().insertMessage(com.malla.mvp.data.entity.MessageEntity(message.id, message.conversationId, message.content, message.timestamp, message.isOwn, 1, mediaUri = message.mediaUri, expireAt = message.expireAt, viewOnce = message.viewOnce, transport = message.transport)) }
+            override fun observeMessages(conversationId: String): Flow<List<MessageData>> {
+                return db?.messageDao()?.observeAllMessages()?.map { entities ->
+                    entities.filter { it.conversationId == conversationId }.map {
+                        MessageData(it.id, it.conversationId, it.content, it.timestamp, it.isOwn)
+                    }
+                } ?: flowOf(emptyList())
+            }
+            override suspend fun saveMessage(message: MessageData) {
+                db?.messageDao()?.insertMessage(
+                    MessageEntity(
+                        id = message.id,
+                        conversationId = message.conversationId,
+                        content = message.content,
+                        timestamp = message.timestamp,
+                        isOwn = message.isOwn,
+                        status = 1,
+                        mediaUri = message.mediaUri,
+                        expireAt = message.expireAt,
+                        viewOnce = message.viewOnce
+                    )
+                )
+            }
             override suspend fun getLastMessage(conversationId: String): MessageData? = null
             override suspend fun updateMessageStatus(messageId: String, status: Int) {}
             override suspend fun markConversationAsRead(conversationId: String) {}
