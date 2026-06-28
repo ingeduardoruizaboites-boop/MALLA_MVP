@@ -22,6 +22,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.malla.mvp.ui.components.SmsFallbackSwitch
 import com.malla.mvp.network.NetworkService
 import kotlin.math.roundToInt
 
@@ -345,6 +346,7 @@ fun TabModos() {
         item { ModeToggleRow(Icons.Filled.Wifi, MaterialTheme.colorScheme.primary, "Wi-Fi Direct", "Alcance extendido sin internet", wifiAwareActive && !soloTexto, { if (!soloTexto) wifiAwareActive = it }) }
         item { ModeToggleRow(Icons.Filled.Loop, Color(0xFFEF9F27), "Relay de mensajes", "Reenvío para nodos lejanos", relayActive && !soloTexto, { if (!soloTexto) relayActive = it }) }
         item { ModeToggleRow(Icons.Filled.Compress, Color(0xFF7F77DD), "Compresión", "Reduce peso antes de enviar", compressionActive && !soloTexto, { if (!soloTexto) compressionActive = it }) }
+        item { SmsFallbackSwitch() }
         item {
             Card(colors = CardDefaults.cardColors(containerColor = if (soloTexto) Color(0xFF0E1A14) else MaterialTheme.colorScheme.surfaceVariant),
                 border = BorderStroke(1.dp, if (soloTexto) MaterialTheme.colorScheme.primary.copy(alpha = 0.5f) else Color.Transparent)) {
