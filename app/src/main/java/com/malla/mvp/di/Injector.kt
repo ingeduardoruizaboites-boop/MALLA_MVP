@@ -15,6 +15,9 @@ import com.malla.mvp.data.AppDatabase
 import com.malla.mvp.data.entity.MessageEntity
 import com.malla.mvp.identity.IdentityManager
 import com.malla.mvp.network.*
+import com.malla.mvp.network.DhtService
+import com.malla.mvp.network.SeedManager
+import com.malla.mvp.network.ContactDiscoveryManager
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 
@@ -113,6 +116,9 @@ object Injector {
 
         // Inicializar Premium y perfil del dispositivo
         PremiumManager.init()
+        DhtService.start()
+        SeedManager.init(context)
+        ContactDiscoveryManager.publishMyPresence()
         CoroutineScope(Dispatchers.IO).launch {
             DeviceProfile.initialize(context)
         }
