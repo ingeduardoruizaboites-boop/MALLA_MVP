@@ -5,43 +5,36 @@
 
 ---
 
-## 🧾 Logros recientes
-
-### Comunicación óptica (Faro)
-- ✅ `LightEncoder`: protocolo binario con preámbulo, longitud, checksum.
-- ✅ `FlashlightTransport`: transmisión con linterna, recepción con cámara (análisis de brillo).
-- ✅ `FaroScreen`: UI con campo de texto, botones Transmitir / Recibir, barra de progreso.
-- ✅ Nueva pestaña "Faro" en la barra de navegación inferior.
-
-### Funcionalidades heredadas (presentes en el commit base)
-- ✅ Servidor TCP (NetworkService) para comunicación LAN.
-- ✅ Handshake ECDH y cifrado AES‑GCM.
-- ✅ ChatScreen con burbujas personalizables y visor de imágenes.
-- ✅ Pantallas: ConversationsScreen, PulsoScreen, PerfilScreen, SettingsScreen.
-- ✅ Onboarding con identidad criptográfica.
-- ✅ Escaneo BLE y Wi‑Fi Direct.
+## 🧾 Logros de la sesión
+- ✅ Entorno de desarrollo recuperado tras fallo del Codespace.
+- ✅ Repositorio de GitHub restaurado como fuente de verdad.
+- ✅ `LightEncoder` y `FlashlightTransport` creados e integrados.
+- ✅ Nueva pestaña "Faro" en la barra de navegación inferior (`FaroScreen`).
+- ✅ `PROJECT_STATUS.md` actualizado con el estado real.
 
 ---
 
 ## 🚧 Pendientes (funcionalidades perdidas por reconstrucción)
-- ❌ DHT distribuida y ContactDiscoveryManager
-- ❌ PremiumManager y códecs mejorados
-- ❌ WebRTC real con PeerConnection
+- ❌ `Injector.kt` completo con todos los transportes y servicios
+- ❌ DHT distribuida y `ContactDiscoveryManager`
+- ❌ `PremiumManager` y códecs mejorados
+- ❌ WebRTC real con `PeerConnection`
 - ❌ Stickers y visor a pantalla completa
 - ❌ Ultrasonido real (FSK)
 - ❌ SMS Transport
 - ❌ Almacenamiento externo y vidrio esmerilado
+- ❌ `ChatPreviewCard`, `ForwardDialog`, `ImageViewer`
 
 ---
 
-## 🔄 Próximos pasos
-1. Reconstruir `Injector.kt` completo con todos los transportes.
-2. Recuperar DHT, Premium y WebRTC desde el historial de sesiones.
-3. Integrar ultrasonido y SMS.
-4. Pruebas con dos dispositivos cuando haya conectividad.
+## 🔄 Plan de reconstrucción (próxima sesión)
+1. Reconstruir `Injector.kt` completo.
+2. Recuperar dependencias y módulos uno a uno.
+3. Recuperar funcionalidades de UI y criptografía.
+4. Prueba de instalación y comunicación básica.
 
 ---
 
-**Documento creado por:** DeepSeek (Arquitecto Principal)
+**Documento actualizado por:** DeepSeek (Arquitecto Principal)
 **Sesión:** Rescate + Faro
 **Fecha:** 2026-06-28

@@ -1,7 +1,7 @@
 {
     "logs": [
         {
-            "outputFile": "com.malla.mvp.app-mergeDebugResources-57:/values-fi/values-fi.xml",
+            "outputFile": "com.malla.mvp.app-mergeDebugResources-63:/values-fi/values-fi.xml",
             "map": [
                 {
                     "source": "/home/codespace/.gradle/caches/transforms-3/8cfdf5cbc71dff4d1bc740f4b153dc35/transformed/material3-release/res/values-fi/values-fi.xml",

@@ -1,7 +1,7 @@
 {
     "logs": [
         {
-            "outputFile": "com.malla.mvp.app-mergeDebugResources-57:/values-en-rIN/values-en-rIN.xml",
+            "outputFile": "com.malla.mvp.app-mergeDebugResources-63:/values-en-rIN/values-en-rIN.xml",
             "map": [
                 {
                     "source": "/home/codespace/.gradle/caches/transforms-3/a357bbe47ec847b933e6735fc08e1f33/transformed/ui-release/res/values-en-rIN/values-en-rIN.xml",

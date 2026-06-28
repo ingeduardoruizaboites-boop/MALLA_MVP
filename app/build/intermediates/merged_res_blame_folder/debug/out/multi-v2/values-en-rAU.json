@@ -1,7 +1,7 @@
 {
     "logs": [
         {
-            "outputFile": "com.malla.mvp.app-mergeDebugResources-57:/values-en-rAU/values-en-rAU.xml",
+            "outputFile": "com.malla.mvp.app-mergeDebugResources-63:/values-en-rAU/values-en-rAU.xml",
             "map": [
                 {
                     "source": "/home/codespace/.gradle/caches/transforms-3/bd4b3a0f9ce03c46acf898a6cf446411/transformed/appcompat-1.6.1/res/values-en-rAU/values-en-rAU.xml",

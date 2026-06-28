@@ -8,7 +8,6 @@ object LogBuffer {
     val logs: StateFlow<List<String>> = _logs
 
     fun add(tag: String, message: String) {
-        val entry = "[${System.currentTimeMillis() % 100000}] $tag: $message"
-        _logs.value = (_logs.value + entry).takeLast(200)
+        _logs.value = _logs.value + "[${System.currentTimeMillis() % 100000}] $tag: $message"
     }
 }

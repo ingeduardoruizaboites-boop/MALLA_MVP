@@ -1,7 +1,7 @@
 {
     "logs": [
         {
-            "outputFile": "com.malla.mvp.app-mergeDebugResources-57:/values-sr/values-sr.xml",
+            "outputFile": "com.malla.mvp.app-mergeDebugResources-63:/values-sr/values-sr.xml",
             "map": [
                 {
                     "source": "/home/codespace/.gradle/caches/transforms-3/0486e2d268e1062600e63052a419a6f1/transformed/biometric-1.1.0/res/values-sr/values-sr.xml",
