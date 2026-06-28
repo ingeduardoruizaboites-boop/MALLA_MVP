@@ -1,5 +1,6 @@
 package com.malla.mvp.network
 
+import android.content.Context
 import com.malla.mvp.App
 import com.malla.mvp.core.engine.LogBuffer
 import com.malla.mvp.identity.IdentityManager
@@ -11,11 +12,18 @@ object ContactDiscoveryManager {
     private const val SALT = "malla-contact-salt-v1"
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
+    private fun getMyPhone(): String {
+        val prefs = App.context.getSharedPreferences("identity", Context.MODE_PRIVATE)
+        return prefs.getString("user_phone", "") ?: ""
+    }
+
+    private fun getMyId(): String = IdentityManager.getIdentityId()
+
     fun publishMyPresence() {
         scope.launch {
-            val phone = IdentityManager.getUserPhone(App.context)
+            val phone = getMyPhone()
             if (phone.isBlank()) return@launch
-            val myId = IdentityManager.getMyId()
+            val myId = getMyId()
             val todayHash = hashForDay(phone, 0)
             val yesterdayHash = hashForDay(phone, -1)
             DhtService.publishDiscovery(todayHash, myId)

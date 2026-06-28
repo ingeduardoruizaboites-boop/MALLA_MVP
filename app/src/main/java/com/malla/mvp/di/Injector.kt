@@ -9,6 +9,7 @@ import com.malla.mvp.core.engine.PremiumManager
 import com.malla.mvp.core.network.INetworkService
 import com.malla.mvp.core.network.MeshMessage as CoreMeshMessage
 import com.malla.mvp.core.notification.INotificationHelper
+import com.malla.mvp.core.transport.SmsTransport
 import com.malla.mvp.core.transport.FlashlightTransport
 import com.malla.mvp.core.util.ILogger
 import com.malla.mvp.data.AppDatabase
@@ -17,12 +18,14 @@ import com.malla.mvp.identity.IdentityManager
 import com.malla.mvp.network.*
 import com.malla.mvp.network.DhtService
 import com.malla.mvp.network.SeedManager
+import com.malla.mvp.network.UnifiedMessageRouter
 import com.malla.mvp.network.ContactDiscoveryManager
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 
 object Injector {
     lateinit var messageBridge: MessageBridge
+    lateinit var smsTransport: SmsTransport
     lateinit var flashlightTransport: FlashlightTransport
     lateinit var messageRepo: IMessageRepository
     lateinit var networkService: INetworkService
@@ -31,6 +34,8 @@ object Injector {
         val db = AppDatabase.getInstance(context)
 
         // Inicializar transporte Faro (luz/cámara)
+        smsTransport = SmsTransport(context)
+        smsTransport.start()
         flashlightTransport = FlashlightTransport(context)
         flashlightTransport.start()
 
@@ -112,6 +117,9 @@ object Injector {
 
         // Puente de mensajes
         messageBridge = MessageBridge(context, networkService, messageRepo, conversationRepo, logger, notificationHelper)
+        messageBridge.onSendMessage = { contactId, text ->
+            UnifiedMessageRouter.sendMessage(contactId, text)
+        }
         messageBridge.start()
 
         // Inicializar Premium y perfil del dispositivo
