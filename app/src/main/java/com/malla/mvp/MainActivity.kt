@@ -36,7 +36,6 @@ import com.malla.mvp.network.MeshMessageHandler
 import com.malla.mvp.core.engine.DeviceStateMonitor
 import com.malla.mvp.core.engine.LogBuffer
 import com.malla.mvp.network.NetworkService
-import com.malla.mvp.service.MeshChatService
 import com.malla.mvp.ui.components.MainTopBar
 import com.malla.mvp.ui.components.ConnectivityStatusBar
 import com.malla.mvp.ui.components.TutorialOverlay
@@ -87,7 +86,7 @@ class MainActivity : FragmentActivity() {
             LaunchedEffect(isOnline) {
                 try {
                     if (!isOnline) {
-                        context.startService(Intent(context, MeshChatService::class.java))
+                        // MeshChatService eliminado temporalmente
                         LogBuffer.add("MAIN", "Iniciando servicio mesh")
                         NetworkService.startServer()
                         LogBuffer.add("MAIN", "NetworkService iniciado")
@@ -321,7 +320,7 @@ fun MainApp(
         topBar = { MainTopBar(onSettingsClick = onSettingsClick, isOnline = !isMeshMode) },
         bottomBar = {
             NavigationBar(modifier = Modifier.height(56.dp)) {
-                NavigationBarItem(selected = selectedTab == 0, onClick = { selectedTab = 0 }, icon = { BadgedBox(badge = { val unreadCount by com.malla.mvp.network.MessageBridge.newMessageCount.collectAsState(); if (unreadCount > 0) Badge { Text("$unreadCount") } }) { Icon(Icons.AutoMirrored.Filled.Chat, "Chats") } }, label = { Text("Chats") })
+                NavigationBarItem(selected = selectedTab == 0, onClick = { selectedTab = 0 }, icon = { BadgedBox(badge = {}) { Icon(Icons.AutoMirrored.Filled.Chat, "Chats") } }, label = { Text("Chats") })
                 NavigationBarItem(selected = selectedTab == 1, onClick = { selectedTab = 1 }, icon = { Icon(Icons.Filled.WifiTethering, "Pulso") }, label = { Text("Pulso") })
                 NavigationBarItem(selected = selectedTab == 2, onClick = { selectedTab = 2 }, icon = { Icon(Icons.Filled.Person, "Perfil") }, label = { Text("Perfil") })
             }

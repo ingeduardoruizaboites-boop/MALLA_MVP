@@ -153,5 +153,7 @@ fun statusTextForLevel(level: MeshLevel, state: DeviceState): String {
         MeshLevel.FLASH_LIGHT -> "Señal óptica · Línea visual"
         MeshLevel.QR_CODE -> "QR · Escanea para conectar"
         MeshLevel.NO_SIGNAL -> "Sin señal · Modo supervivencia"
+        MeshLevel.TCP_DIRECT -> "TCP Directo · Conexión local"
+        else -> "Modo desconocido"
     }
 }
