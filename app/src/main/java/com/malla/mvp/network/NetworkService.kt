@@ -20,6 +20,7 @@ object NetworkService {
     private val _connectedClientsCount = MutableStateFlow(0)
     val connectedClientsCount: StateFlow<Int> = _connectedClientsCount.asStateFlow()
 
+    private var isServerRunning = false
     private val serverJob = Job()
     private val serverScope = CoroutineScope(Dispatchers.IO + serverJob)
     private val clients = mutableMapOf<String, ClientHandler>()
@@ -27,6 +28,8 @@ object NetworkService {
     val localPublicKeyBase64 = CryptoEngine.publicKeyToBase64(localKeyPair.public)
 
     fun startServer() {
+        if (isServerRunning) return
+        isServerRunning = true
         serverScope.launch {
             try {
                 val serverSocket = ServerSocket(DEFAULT_PORT)
@@ -40,6 +43,7 @@ object NetworkService {
                 }
             } catch (e: Exception) {
                 Log.e(TAG, "[NS:ERR] Error en servidor: ${e.message}", e)
+                isServerRunning = false
             }
         }
     }

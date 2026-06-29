@@ -60,6 +60,7 @@ import com.malla.mvp.data.entity.PollOptionEntity
 import com.malla.mvp.network.NetworkService
 import com.malla.mvp.ui.settings.AccessibilitySettings
 import com.malla.mvp.ui.settings.BubbleStyle
+import com.malla.mvp.ui.components.StickerState
 import com.malla.mvp.ui.components.BubbleShapes
 import kotlinx.coroutines.*
 import java.io.File
@@ -80,10 +81,6 @@ fun ChatScreen(
 ) {
     val context = LocalContext.current
     val db = AppDatabase.getInstance(context)
-    DisposableEffect(viewModel) {
-        StickerState.onSendSticker = { url -> viewModel?.sendImage(url) }
-        onDispose { StickerState.onSendSticker = null }
-    }
     val listState = rememberLazyListState()
     var messages by remember { mutableStateOf(emptyList<MessageEntity>()) }
     var text by remember { mutableStateOf("") }
@@ -93,7 +90,6 @@ fun ChatScreen(
     var showBackgroundDialog by remember { mutableStateOf(false) }
     var showEphemeralMenu by remember { mutableStateOf(false) }
     var showCreatePollDialog by remember { mutableStateOf(false) }
-    var showStickerPicker by remember { mutableStateOf(false) }
     var ephemeralDuration by remember { mutableStateOf<Long?>(null) }
     var viewOnce by remember { mutableStateOf(false) }
     var isFiestaMode by remember { mutableStateOf(false) }
@@ -668,6 +664,9 @@ fun ChatScreen(
                         Text("Documento", style = MaterialTheme.typography.labelSmall)
                     }
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        IconButton(onClick = { showAttachmentSheet = false; StickerState.openPicker() }) {
+                            Icon(Icons.Filled.InsertEmoticon, "Sticker", tint = MaterialTheme.colorScheme.primary)
+                        }
                         IconButton(onClick = { showAttachmentSheet = false; StickerState.openPicker() }) {
                             Icon(Icons.Filled.InsertEmoticon, "Sticker", tint = MaterialTheme.colorScheme.primary)
                         }
@@ -1258,8 +1257,5 @@ private val sampleMessages = mapOf(
             timestamp = System.currentTimeMillis() - it * 120000,
             isOwn = it % 3 == 0
         )
-    
-    StickerPickerDialog()
-    StickerFullScreenDialog()
-}
+    }
 )

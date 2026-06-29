@@ -96,7 +96,7 @@ fun PulsoScreen(
             0 -> TabPulso()
             1 -> TabNodos()
             2 -> TabLogros()
-            3 -> TabModos()
+            3 -> TabModos(onConnectToPeer = onConnectToPeer)
         }
     }
 }
@@ -327,7 +327,7 @@ fun TabLogros() {
 }
 
 @Composable
-fun TabModos() {
+fun TabModos(onConnectToPeer: (String) -> Unit) {
     var bleActive by remember { mutableStateOf(true) }
     var wifiAwareActive by remember { mutableStateOf(true) }
     var relayActive by remember { mutableStateOf(true) }
@@ -371,6 +371,29 @@ fun TabModos() {
                         color = if (batteryImpact < 0.3f) MaterialTheme.colorScheme.primary else Color(0xFFEF9F27),
                         trackColor = Color.White.copy(alpha = 0.1f))
                 }
+            }
+        }
+        item {
+            Spacer(modifier = Modifier.height(12.dp))
+            Text("CONEXIÓN MANUAL", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f))
+            Spacer(modifier = Modifier.height(8.dp))
+            var ipManual by remember { mutableStateOf("") }
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                OutlinedTextField(
+                    value = ipManual,
+                    onValueChange = { ipManual = it },
+                    label = { Text("IP del otro dispositivo") },
+                    singleLine = true,
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(12.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Button(onClick = {
+                    if (ipManual.isNotBlank()) {
+                        NetworkService.connectToPeer(ipManual.trim())
+                        onConnectToPeer(ipManual.trim())
+                    }
+                }) { Text("Conectar") }
             }
         }
     }
