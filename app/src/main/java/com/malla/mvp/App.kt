@@ -22,6 +22,15 @@ class App : Application(), IAppContext {
 
     override fun onCreate() {
         super.onCreate()
+        val crashFile = java.io.File(filesDir, "crash.log")
+        if (crashFile.exists()) {
+            android.widget.Toast.makeText(this, "Crash anterior: ${crashFile.readText()}", android.widget.Toast.LENGTH_LONG).show()
+            crashFile.delete()
+        }
+        Thread.setDefaultUncaughtExceptionHandler { _, throwable ->
+            crashFile.writeText(throwable.stackTraceToString())
+            android.os.Process.killProcess(android.os.Process.myPid())
+        }
         context = this
         appContextProvider = this
         cryptoProvider = CryptoEngineAdapter()

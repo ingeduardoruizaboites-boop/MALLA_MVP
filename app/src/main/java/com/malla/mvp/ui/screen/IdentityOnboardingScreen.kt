@@ -227,7 +227,13 @@ fun IdentityOnboardingScreen(onFinished: () -> Unit) {
                         )
                         Spacer(modifier = Modifier.height(32.dp))
                         Button(
-                            onClick = { currentStep = 5 },
+                            onClick = {
+                                if (alias.isNotBlank() && phone.isNotBlank()) {
+                                    currentStep = 5
+                                } else {
+                                    android.widget.Toast.makeText(context, "Completa nombre y teléfono", android.widget.Toast.LENGTH_SHORT).show()
+                                }
+                            },
                             shape = RoundedCornerShape(16.dp),
                             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CE6FF), contentColor = Color(0xFF0A1B2A))
                         ) { Text("Continuar", fontWeight = FontWeight.Bold) }

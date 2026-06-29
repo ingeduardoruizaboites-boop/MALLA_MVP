@@ -122,8 +122,8 @@ class MainActivity : FragmentActivity() {
                 AnimatedContent(
                     targetState = appState,
                     transitionSpec = {
-                        (scaleIn(tween(400), initialScale = 0.92f) + fadeIn(tween(400)))
-                            .togetherWith(scaleOut(tween(400), targetScale = 1.08f) + fadeOut(tween(400)))
+                        (slideInHorizontally { width -> width } + fadeIn(tween(300))) togetherWith
+                                (slideOutHorizontally { width -> -width } + fadeOut(tween(300)))
                     },
                     label = "app_state_transition"
                 ) { state ->
@@ -322,7 +322,7 @@ fun MainApp(
     Scaffold(
         topBar = { MainTopBar(onSettingsClick = onSettingsClick, isOnline = !isMeshMode) },
         bottomBar = {
-            NavigationBar(modifier = Modifier.height(56.dp)) {
+            NavigationBar(modifier = Modifier.height(56.dp), containerColor = MaterialTheme.colorScheme.surface) {
                 NavigationBarItem(selected = selectedTab == 0, onClick = { selectedTab = 0 }, icon = { BadgedBox(badge = {}) { Icon(Icons.AutoMirrored.Filled.Chat, "Chats") } }, label = { Text("Chats") })
                 NavigationBarItem(selected = selectedTab == 1, onClick = { selectedTab = 1 }, icon = { Icon(Icons.Filled.WifiTethering, "Pulso") }, label = { Text("Pulso") })
                 NavigationBarItem(selected = selectedTab == 2, onClick = { selectedTab = 2 }, icon = { Icon(Icons.Filled.Person, "Perfil") }, label = { Text("Perfil") })

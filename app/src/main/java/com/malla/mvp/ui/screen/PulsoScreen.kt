@@ -118,8 +118,8 @@ fun TabPulso() {
         item {
             Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                 LegendItem(color = MaterialTheme.colorScheme.primary, label = "BLE")
-                LegendItem(color = Color(0xFF378ADD), label = "Wi-Fi Aware")
-                LegendItem(color = Color(0xFF888780), label = "Relay")
+                LegendItem(color = MaterialTheme.colorScheme.secondary, label = "Wi-Fi Aware")
+                LegendItem(color = MaterialTheme.colorScheme.outline, label = "Relay")
             }
         }
         item { UptimeBanner() }
@@ -156,7 +156,7 @@ fun MapCard() {
     Card(
         modifier = Modifier.fillMaxWidth().height(220.dp),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFF0E1A14)),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         border = BorderStroke(0.5.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.25f))
     ) {
         Box(modifier = Modifier.fillMaxSize()) {

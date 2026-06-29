@@ -179,12 +179,12 @@ fun ConversationCard(
                     if (isPeeked) closeActions() else onClick()
                 },
                 modifier = Modifier.fillMaxWidth(),
-                color = Color.Transparent
+                color = MaterialTheme.colorScheme.surface.copy(alpha = 0.3f)
             ) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                        .padding(horizontal = 16.dp, vertical = 14.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Box(modifier = Modifier.size(52.dp)) {
@@ -241,8 +241,19 @@ fun ConversationCard(
                                 Text(conversation.lastMessage ?: "Sin mensajes", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f), maxLines = 1, overflow = TextOverflow.Ellipsis)
                             }
                             if (conversation.unreadCount > 0) {
-                                Badge(containerColor = MaterialTheme.colorScheme.primary, contentColor = MaterialTheme.colorScheme.onPrimary) {
+                                Badge(containerColor = MaterialTheme.colorScheme.secondary, contentColor = MaterialTheme.colorScheme.onPrimary) {
                                     Text(conversation.unreadCount.toString(), fontSize = 12.sp)
+                        Spacer(modifier = Modifier.width(4.dp))
+                        var showCallMenu by remember { mutableStateOf(false) }
+                        Box {
+                            IconButton(onClick = { showCallMenu = true }) {
+                                Icon(Icons.Filled.Phone, "Llamada", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
+                            }
+                            DropdownMenu(expanded = showCallMenu, onDismissRequest = { showCallMenu = false }) {
+                                DropdownMenuItem(text = { Text("Llamada de voz") }, onClick = { showCallMenu = false; /* TODO: iniciar llamada de voz */ })
+                                DropdownMenuItem(text = { Text("Videollamada") }, onClick = { showCallMenu = false; /* TODO: iniciar videollamada */ })
+                            }
+                        }
                                 }
                             }
                         }
@@ -301,7 +312,7 @@ fun ConversationCard(
     HorizontalDivider(
         modifier = Modifier.padding(start = 72.dp),
         thickness = 0.5.dp,
-        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f)
+        color = MaterialTheme.colorScheme.outline.copy(alpha = 0.06f)
     )
 }
 

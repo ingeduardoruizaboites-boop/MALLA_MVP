@@ -14,3 +14,5 @@ dependencyResolutionManagement {
 }
 rootProject.name = "MALLA_MVP"
 include(":app")
+include(":core")
+include(":data")

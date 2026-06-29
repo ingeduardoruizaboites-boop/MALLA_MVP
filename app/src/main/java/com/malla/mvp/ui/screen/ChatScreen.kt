@@ -946,7 +946,7 @@ fun MessageBubble(
             delay(5000)
             onDelete(message.id)
         } else if (message.expireAt != null) {
-            val remaining = message.expireAt - System.currentTimeMillis()
+            val remaining = message.expireAt!! - System.currentTimeMillis()
             if (remaining > 0) {
                 delay(remaining)
                 onDelete(message.id)
@@ -1079,11 +1079,11 @@ fun MessageBubble(
                         Text(text = check, style = MaterialTheme.typography.labelSmall, color = checkColor)
                     }
                     if (message.expireAt != null) {
-                        var remainingSeconds by remember { mutableStateOf((message.expireAt - System.currentTimeMillis()) / 1000) }
+                        var remainingSeconds by remember { mutableStateOf((message.expireAt!! - System.currentTimeMillis()) / 1000) }
                         LaunchedEffect(message.expireAt) {
                             while (remainingSeconds > 0) {
                                 delay(1000)
-                                remainingSeconds = (message.expireAt - System.currentTimeMillis()) / 1000
+                                remainingSeconds = (message.expireAt!! - System.currentTimeMillis()) / 1000
                             }
                         }
                         if (remainingSeconds > 0) {

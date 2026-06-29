@@ -27,18 +27,18 @@ data class MallaColorScheme(
         // Tema 1: MALLA Oscuro (cyan + azul noche) — POR DEFECTO
         val MALLA_DARK = MallaColorScheme(
             name = "MALLA Oscuro",
-            primary = Color(0xFF00B8D4),        // Cyan apagado
+            primary = Color(0xFF4CE6FF),        // Cyan apagado
             onPrimary = Color(0xFF0A1B2A),
-            primaryContainer = Color(0xFF004D5A),
-            secondary = Color(0xFF4CAF50),
-            onSecondary = Color(0xFF0A1B2A),
-            secondaryContainer = Color(0xFF1B5E20),
-            background = Color(0xFF0A1B2A),     // Azul noche profundo
-            surface = Color(0xFF0F2233),
+            primaryContainer = Color(0xFF003640),
+            secondary = Color(0xFFFFB347),
+            onSecondary = Color(0xFF0A0E14),
+            secondaryContainer = Color(0xFFCC7A00),
+            background = Color(0xFF0A0E14),     // Azul noche profundo
+            surface = Color(0xFF141B22),
             onBackground = Color(0xFFE0E0E0),
             onSurface = Color(0xFFE0E0E0),
-            outline = Color(0xFF00B8D4),
-            surfaceVariant = Color(0xFF1A2C3E),
+            outline = Color(0xFF4CE6FF),
+            surfaceVariant = Color(0xFF1E2A32),
             isDark = true
         )
 

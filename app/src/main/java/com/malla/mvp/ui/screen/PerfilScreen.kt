@@ -146,9 +146,9 @@ fun PerfilScreen() {
         Card(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
             shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = Color(0xFF0E2233))
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
         ) {
-            Column(modifier = Modifier.padding(16.dp)) {
+            Column(modifier = Modifier.padding(20.dp)) {
                 Text("Tu identidad MALLA", style = MaterialTheme.typography.titleSmall, color = Color(0xFF4CE6FF))
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(pubKeyTruncated ?: "No disponible", style = MaterialTheme.typography.bodySmall, color = Color(0xFF8899AA))
@@ -229,9 +229,9 @@ fun PerfilScreen() {
         Card(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
             shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = Color(0xFF0E2233))
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
         ) {
-            Column(modifier = Modifier.padding(16.dp)) {
+            Column(modifier = Modifier.padding(20.dp)) {
                 Text("Perfil público", style = MaterialTheme.typography.titleSmall, color = Color(0xFF4CE6FF))
                 Spacer(modifier = Modifier.height(12.dp))
 
