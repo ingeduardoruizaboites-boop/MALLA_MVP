@@ -112,6 +112,31 @@ fun ChatScreen(
     var pollOptions by remember { mutableStateOf(listOf("", "")) }
     var replyTo by remember { mutableStateOf<MessageEntity?>(null) }
     val coroutineScope = rememberCoroutineScope()
+    DisposableEffect(Unit) {
+        StickerState.onSendSticker = { stickerUrl ->
+            coroutineScope.launch {
+                val msg = MessageEntity(
+                    id = UUID.randomUUID().toString(),
+                    conversationId = conversationId,
+                    content = stickerUrl,
+                    isOwn = true,
+                    expireAt = null,
+                    viewOnce = false,
+                    mediaUri = null,
+                    quotedMessageId = null,
+                    quotedMessageContent = null
+                )
+                messages = messages + msg
+                db?.messageDao()?.insertMessage(msg)
+                NetworkService.sendMessage(
+                    MeshMessage(content = stickerUrl, senderId = "self", timestamp = System.currentTimeMillis(), type = "sticker")
+                )
+            }
+        }
+        onDispose {
+            StickerState.onSendSticker = null
+        }
+    }
 
     LaunchedEffect(context, conversationId) {
         val prefs = context.getSharedPreferences("ringtones", Context.MODE_PRIVATE)
@@ -683,6 +708,18 @@ fun ChatScreen(
                         Text("Documento", style = MaterialTheme.typography.labelSmall)
                     }
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        IconButton(onClick = { showAttachmentSheet = false; filePickerLauncher.launch("video/*") }) {
+                            Icon(Icons.Filled.Videocam, "Vídeo", tint = MaterialTheme.colorScheme.primary)
+                        }
+                        Text("Vídeo", style = MaterialTheme.typography.labelSmall)
+                    }
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        IconButton(onClick = { showAttachmentSheet = false; /* TODO: grabar audio */ }) {
+                            Icon(Icons.Filled.KeyboardVoice, "Nota de voz", tint = MaterialTheme.colorScheme.primary)
+                        }
+                        Text("Nota de voz", style = MaterialTheme.typography.labelSmall)
+                    }
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         IconButton(onClick = { showAttachmentSheet = false; StickerState.openPicker() }) {
                             Icon(Icons.Filled.InsertEmoticon, "Sticker", tint = MaterialTheme.colorScheme.primary)
                         }
@@ -700,6 +737,11 @@ fun ChatScreen(
                         }
                         Text("Evento", style = MaterialTheme.typography.labelSmall)
                     }
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
+                    Text("Ver una vez", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f))
+                    Switch(checked = viewOnce, onCheckedChange = { viewOnce = it }, colors = SwitchDefaults.colors(checkedTrackColor = MaterialTheme.colorScheme.primary))
                 }
                 Spacer(modifier = Modifier.height(24.dp))
             }
