@@ -241,6 +241,10 @@ class MainActivity : FragmentActivity() {
             }
         }
     }
+    override fun onDestroy() {
+        RadioManager.restoreStates(this)
+        super.onDestroy()
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
