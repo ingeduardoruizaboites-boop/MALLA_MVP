@@ -221,6 +221,13 @@ class MainActivity : FragmentActivity() {
                                     onVideoCallClick = { showCall = true; callContact = "Contacto"; callType = "video" },
                                     db = database
                                 )
+                                if (showCall) {
+                                    CallScreen(
+                                        contactName = callContact,
+                                        callType = callType,
+                                        onEndCall = { showCall = false }
+                                    )
+                                }
                             }
                         }
                     }
