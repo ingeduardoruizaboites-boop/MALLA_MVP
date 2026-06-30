@@ -3,6 +3,7 @@ package com.malla.mvp
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.os.Build
 import android.widget.Toast
 import androidx.fragment.app.FragmentActivity
 import androidx.activity.compose.BackHandler
@@ -32,6 +33,8 @@ import com.malla.mvp.data.AppDatabase
 import com.malla.mvp.data.entity.ConversationEntity
 import com.malla.mvp.identity.IdentityManager
 import com.malla.mvp.network.ConnectivityMonitor
+import com.malla.mvp.util.RadioManager
+import com.malla.mvp.service.MeshChatService
 import com.malla.mvp.network.MeshMessageHandler
 import com.malla.mvp.core.engine.DeviceStateMonitor
 import com.malla.mvp.core.engine.LogBuffer
@@ -73,6 +76,13 @@ class MainActivity : FragmentActivity() {
                 checkSelfPermission(it) != android.content.pm.PackageManager.PERMISSION_GRANTED
             }.toTypedArray()
             if (ungranted.isNotEmpty()) requestPermissions(ungranted, 1001)
+        RadioManager.enableBluetooth(this)
+        RadioManager.enableWifi(this)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            startForegroundService(Intent(this, MeshChatService::class.java))
+        } else {
+            startService(Intent(this, MeshChatService::class.java))
+        }
         }
         ConnectivityMonitor.start(application)
         DeviceStateMonitor.start(this)
