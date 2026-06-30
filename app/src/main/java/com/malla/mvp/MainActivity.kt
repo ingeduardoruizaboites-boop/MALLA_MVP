@@ -217,8 +217,8 @@ class MainActivity : FragmentActivity() {
                                     onConnectToPeer = { ip ->
                                         connectToPeerAndCreateConversation(ip) { convId -> currentConversationId = convId }
                                     },
-                                    onVoiceCallClick = { showCall = true; callContact = "Contacto"; callType = "voice" },
-                                    onVideoCallClick = { showCall = true; callContact = "Contacto"; callType = "video" },
+                                    onVoiceCallClick = { name -> showCall = true; callContact = name; callType = "voice" },
+                                    onVideoCallClick = { name -> showCall = true; callContact = name; callType = "video" },
                                     db = database
                                 )
                                 if (showCall) {
@@ -298,8 +298,8 @@ fun SettingsScreenWrapper(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainApp(
-    onVoiceCallClick: () -> Unit = {},
-    onVideoCallClick: () -> Unit = {},
+    onVoiceCallClick: (String) -> Unit = {},
+    onVideoCallClick: (String) -> Unit = {},
     isMeshMode: Boolean,
     currentConversationId: String?,
     onConversationChanged: (String?) -> Unit,
