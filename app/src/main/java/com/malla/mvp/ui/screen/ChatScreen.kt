@@ -515,6 +515,23 @@ fun ChatScreen(
                     }
                     OutlinedTextField(
                         value = text,
+                        leadingIcon = {
+                            IconButton(onClick = { /* TODO: emojis */ }, modifier = Modifier.size(36.dp)) {
+                                Icon(Icons.Filled.InsertEmoticon, "Emojis", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
+                            }
+                        },
+                        trailingIcon = {
+                            if (!isMeshMode) {
+                                Row {
+                                    IconButton(onClick = { showAttachmentSheet = true }, modifier = Modifier.size(36.dp)) {
+                                        Icon(Icons.Filled.AttachFile, "Adjuntar", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
+                                    }
+                                    IconButton(onClick = { /* TODO: cámara */ }, modifier = Modifier.size(36.dp)) {
+                                        Icon(Icons.Filled.CameraAlt, "Cámara", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
+                                    }
+                                }
+                            }
+                        },
                         onValueChange = { text = it },
                         modifier = Modifier.weight(1f),
                         placeholder = { Text("Mensaje") },
