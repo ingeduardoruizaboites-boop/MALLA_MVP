@@ -1,4 +1,5 @@
 package com.malla.mvp
+import android.Manifest
 
 import android.content.Context
 import android.content.Intent
@@ -57,6 +58,7 @@ enum class AppState { Splash, Onboarding, Main }
 class MainActivity : FragmentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // Solicitar todos los permisos necesarios al iniciar
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
             val requiredPermissions = arrayOf(
                 android.Manifest.permission.ACCESS_FINE_LOCATION,
@@ -72,7 +74,12 @@ class MainActivity : FragmentActivity() {
             val ungranted = requiredPermissions.filter {
                 checkSelfPermission(it) != android.content.pm.PackageManager.PERMISSION_GRANTED
             }.toTypedArray()
-            if (ungranted.isNotEmpty()) requestPermissions(ungranted, 1001)
+            if (ungranted.isNotEmpty()) {
+                requestPermissions(ungranted, 1001)
+            }.toTypedArray()
+            if (ungranted.isNotEmpty()) {
+                requestPermissions(ungranted, 1001)
+            }
         }
         ConnectivityMonitor.start(application)
         DeviceStateMonitor.start(this)
@@ -166,7 +173,6 @@ class MainActivity : FragmentActivity() {
                                     }
                                 )
                             } else if (showQrScanner) {
-                                BackHandler { showQrScanner = false }
                                 QrScanScreen(
                                     onQrScanned = { ip ->
                                         showQrScanner = false
@@ -175,14 +181,12 @@ class MainActivity : FragmentActivity() {
                                     onBack = { showQrScanner = false }
                                 )
                             } else if (showSettings) {
-                                BackHandler { showSettings = false }
                                 SettingsScreenWrapper(
                                     currentScheme = effectiveScheme,
                                     onSchemeSelected = { scheme -> appThemeState.selectScheme(scheme) },
                                     onBack = { showSettings = false }
                                 )
                             } else if (selectedContact != null) {
-                                BackHandler { selectedContact = null }
                                 ContactProfileScreen(contactName = selectedContact!!, onBack = { selectedContact = null })
                             } else {
                                 MainApp(
@@ -321,15 +325,7 @@ fun MainApp(
     var lastBackPressTime by remember { mutableStateOf(0L) }
     val backContext = LocalContext.current
 
-    BackHandler {
-        if (currentConversationId != null) {
-            onConversationChanged(null)
-            return@BackHandler
-        }
-        if (selectedTab != 0) {
-            selectedTab = 0
-            return@BackHandler
-        }
+    BackHandler(enabled = selectedTab == 0) {
         if (lastBackPressTime + 2000 > System.currentTimeMillis()) {
             (backContext as? android.app.Activity)?.finish()
         } else {
