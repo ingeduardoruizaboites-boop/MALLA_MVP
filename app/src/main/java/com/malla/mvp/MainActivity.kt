@@ -106,6 +106,9 @@ class MainActivity : FragmentActivity() {
             var currentConversationId by remember { mutableStateOf<String?>(null) }
             var selectedContact by remember { mutableStateOf<String?>(null) }
             var showSettings by remember { mutableStateOf(false) }
+            var showCall by remember { mutableStateOf(false) }
+            var callContact by remember { mutableStateOf("") }
+            var callType by remember { mutableStateOf("voice") }
             var showTutorial by remember { mutableStateOf(false) }
             val context = LocalContext.current
             val flashlight = remember { FlashlightTransport(context) }
@@ -205,6 +208,8 @@ class MainActivity : FragmentActivity() {
                                     onConnectToPeer = { ip ->
                                         connectToPeerAndCreateConversation(ip) { convId -> currentConversationId = convId }
                                     },
+                                    onVoiceCallClick = { showCall = true; callContact = "Contacto"; callType = "voice" },
+                                    onVideoCallClick = { showCall = true; callContact = "Contacto"; callType = "video" },
                                     db = database
                                 )
                             }
@@ -321,6 +326,8 @@ fun SplashContent(onFinished: () -> Unit) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainApp(
+    onVoiceCallClick: () -> Unit = {},
+    onVideoCallClick: () -> Unit = {},
     isMeshMode: Boolean,
     currentConversationId: String?,
     onConversationChanged: (String?) -> Unit,
@@ -357,7 +364,9 @@ fun MainApp(
             conversationId = currentConversationId,
             contactName = currentContactName,
             onBack = { onConversationChanged(null) },
-            isMeshMode = isMeshMode
+            isMeshMode = isMeshMode,
+            onVoiceCallClick = onVoiceCallClick,
+            onVideoCallClick = onVideoCallClick
         )
         return
     }
