@@ -1,4 +1,5 @@
 package com.malla.mvp.ui.screen
+import com.malla.mvp.ui.components.TypingIndicator
 
 import android.content.ClipData
 import android.content.ClipboardManager
@@ -34,6 +35,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -334,7 +336,7 @@ fun ChatScreen(
                 Column(modifier = Modifier.weight(1f)) {
                     Text(text = contactName, style = MaterialTheme.typography.titleMedium)
                     if (isTyping) {
-                        Text("escribiendo...", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
+                        TypingIndicator(contactName = contactName, contactId = conversationId)
                     } else if (status.isNotEmpty()) {
                         Text(status, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary.copy(alpha = 0.8f))
                     }
@@ -978,11 +980,14 @@ fun MessageBubble(
                 }
             }
         }
+        val scaleAnim = remember { Animatable(0f) }
+        LaunchedEffect(Unit) { scaleAnim.animateTo(1f, animationSpec = spring(dampingRatio = 0.3f, stiffness = 300f)) }
+        val scale = scaleAnim.value
 
         Surface(
             color = color, shape = shape, shadowElevation = 1.dp,
             border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)),
-            modifier = Modifier.widthIn(max = 280.dp).pointerInput(Unit) {
+            modifier = Modifier.widthIn(max = 280.dp).scale(scale).pointerInput(Unit) {
                 detectTapGestures(
                     onDoubleTap = { showReactionPicker = !showReactionPicker },
                     onLongPress = { showMessageMenu = true }

@@ -46,6 +46,7 @@ fun PerfilScreen() {
 
     var userName by remember { mutableStateOf(IdentityManager.getUserName(context)) }
     var userStatus by remember { mutableStateOf(IdentityManager.getUserStatus(context)) }
+    val phoneNumber = remember { context.getSharedPreferences("malla_prefs", Context.MODE_PRIVATE).getString("phone", "Sin número") ?: "Sin número" }
     var bannerBitmap by remember { mutableStateOf(IdentityManager.loadBanner(context)) }
 
     var editName by remember { mutableStateOf(false) }
@@ -233,6 +234,16 @@ fun PerfilScreen() {
         ) {
             Column(modifier = Modifier.padding(20.dp)) {
                 Text("Perfil público", style = MaterialTheme.typography.titleSmall, color = Color(0xFF4CE6FF))
+                        // Teléfono
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Filled.Phone, null, tint = Color.White, modifier = Modifier.size(18.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(phoneNumber, style = MaterialTheme.typography.bodyLarge, color = Color.White)
+                                Text("Número de teléfono", style = MaterialTheme.typography.labelSmall, color = Color(0xFF8899AA))
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(12.dp))
                 Spacer(modifier = Modifier.height(12.dp))
 
                 // Nombre
