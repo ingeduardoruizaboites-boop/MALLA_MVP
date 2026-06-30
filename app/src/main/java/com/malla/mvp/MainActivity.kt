@@ -25,6 +25,8 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -42,12 +44,14 @@ import com.malla.mvp.network.NetworkService
 import com.malla.mvp.ui.components.MainTopBar
 import com.malla.mvp.ui.components.StickerPickerDialog
 import com.malla.mvp.ui.components.StickerFullScreenDialog
+import com.malla.mvp.ui.components.SplashScreen
 import com.malla.mvp.ui.components.StickerState
 import com.malla.mvp.ui.components.ConnectivityStatusBar
 import com.malla.mvp.ui.components.TutorialOverlay
 import com.malla.mvp.ui.screen.*
 import com.malla.mvp.ui.settings.AccessibilitySettings
 import com.malla.mvp.ui.theme.MallaColorScheme
+import com.malla.mvp.R
 import com.malla.mvp.ui.theme.MallaTheme
 import com.malla.mvp.viewmodel.AppThemeState
 import kotlinx.coroutines.MainScope
@@ -158,7 +162,7 @@ class MainActivity : FragmentActivity() {
                     label = "app_state_transition"
                 ) { state ->
                     when (state) {
-                        AppState.Splash -> SplashContent {
+                        AppState.Splash -> SplashScreen {
                             if (isFirstLaunch) {
                                 try { prefs?.edit()?.putBoolean("first_launch", false)?.apply() } catch (_: Exception) {}
                                 appState = AppState.Onboarding
@@ -166,6 +170,11 @@ class MainActivity : FragmentActivity() {
                         }
                         AppState.Onboarding -> IdentityOnboardingScreen {
                             appState = AppState.Main
+                            val tutorialPrefs = getSharedPreferences("tutorial", MODE_PRIVATE)
+                            val alreadyShown = tutorialPrefs.getBoolean("shown", false)
+                            if (!alreadyShown) {
+                                showTutorial = true
+                            }
                         }
                         AppState.Main -> {
                             if (showTutorial) {
@@ -277,51 +286,7 @@ fun SettingsScreenWrapper(
     }
 }
 
-@Composable
-fun SplashContent(onFinished: () -> Unit) {
-    val scale = remember { Animatable(0.85f) }
-    val alpha = remember { Animatable(0f) }
-    val glowAlpha = remember { Animatable(0f) }
-    val subtitleAlpha = remember { Animatable(0f) }
-    LaunchedEffect(Unit) {
-        scale.animateTo(1f, animationSpec = tween(1000, easing = FastOutSlowInEasing))
-        alpha.animateTo(1f, animationSpec = tween(800))
-        delay(200)
-        glowAlpha.animateTo(1f, animationSpec = tween(600))
-        delay(300)
-        subtitleAlpha.animateTo(1f, animationSpec = tween(500))
-        delay(1200)
-        onFinished()
-    }
-    Box(
-        modifier = Modifier.fillMaxSize().background(Color(0xFF0A1118)),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Box(contentAlignment = Alignment.Center) {
-                Text(
-                    text = "M A L L A",
-                    style = MaterialTheme.typography.headlineLarge.copy(letterSpacing = 12.sp, fontSize = 40.sp, fontWeight = FontWeight.Bold),
-                    color = Color(0xFF4CE6FF),
-                    modifier = Modifier.scale(scale.value).alpha(alpha.value)
-                )
-                Text(
-                    text = "M A L L A",
-                    style = MaterialTheme.typography.headlineLarge.copy(letterSpacing = 12.sp, fontSize = 40.sp, fontWeight = FontWeight.Bold),
-                    color = Color(0xFF00A3C4).copy(alpha = glowAlpha.value * 0.6f),
-                    modifier = Modifier.scale(scale.value).alpha(alpha.value).offset(x = 2.dp, y = 2.dp)
-                )
-            }
-            Spacer(modifier = Modifier.height(20.dp))
-            Text(
-                text = "Conéctate sin límites",
-                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Light),
-                color = Color(0xFF8899AA).copy(alpha = subtitleAlpha.value),
-                modifier = Modifier.alpha(subtitleAlpha.value)
-            )
-        }
-    }
-}
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

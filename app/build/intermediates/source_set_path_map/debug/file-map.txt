@@ -66,3 +66,5 @@ com.malla.mvp.app-packageDebugResources-64 /workspaces/MALLA_MVP/app/build/inter
 com.malla.mvp.app-merged_res-65 /workspaces/MALLA_MVP/app/build/intermediates/merged_res/debug
 com.malla.mvp.app-debug-66 /workspaces/MALLA_MVP/app/src/debug/res
 com.malla.mvp.app-main-67 /workspaces/MALLA_MVP/app/src/main/res
+com.malla.mvp.app-packaged_res-68 /workspaces/MALLA_MVP/core/build/intermediates/packaged_res/debug
+com.malla.mvp.app-packaged_res-69 /workspaces/MALLA_MVP/data/build/intermediates/packaged_res/debug
