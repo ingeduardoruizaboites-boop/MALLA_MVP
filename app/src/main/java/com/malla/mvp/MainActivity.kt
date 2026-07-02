@@ -82,10 +82,20 @@ class MainActivity : FragmentActivity() {
             if (ungranted.isNotEmpty()) requestPermissions(ungranted, 1001)
         RadioManager.enableBluetooth(this)
         RadioManager.enableWifi(this)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            startForegroundService(Intent(this, MeshChatService::class.java))
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) == android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    startForegroundService(Intent(this, MeshChatService::class.java))
+                } else {
+                    startService(Intent(this, MeshChatService::class.java))
+                }
+            }
         } else {
-            startService(Intent(this, MeshChatService::class.java))
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                startForegroundService(Intent(this, MeshChatService::class.java))
+            } else {
+                startService(Intent(this, MeshChatService::class.java))
+            }
         }
         }
         ConnectivityMonitor.start(application)
@@ -217,17 +227,10 @@ class MainActivity : FragmentActivity() {
                                     onConnectToPeer = { ip ->
                                         connectToPeerAndCreateConversation(ip) { convId -> currentConversationId = convId }
                                     },
-                                    onVoiceCallClick = { name -> showCall = true; callContact = name; callType = "voice" },
-                                    onVideoCallClick = { name -> showCall = true; callContact = name; callType = "video" },
+                                    onVoiceCallClick = { showCall = true; callContact = "Contacto"; callType = "voice" },
+                                    onVideoCallClick = { showCall = true; callContact = "Contacto"; callType = "video" },
                                     db = database
                                 )
-                                if (showCall) {
-                                    CallScreen(
-                                        contactName = callContact,
-                                        callType = callType,
-                                        onEndCall = { showCall = false }
-                                    )
-                                }
                             }
                         }
                     }
@@ -298,8 +301,8 @@ fun SettingsScreenWrapper(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainApp(
-    onVoiceCallClick: (String) -> Unit = {},
-    onVideoCallClick: (String) -> Unit = {},
+    onVoiceCallClick: () -> Unit = {},
+    onVideoCallClick: () -> Unit = {},
     isMeshMode: Boolean,
     currentConversationId: String?,
     onConversationChanged: (String?) -> Unit,

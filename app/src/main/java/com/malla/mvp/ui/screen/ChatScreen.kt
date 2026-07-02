@@ -71,7 +71,6 @@ import org.json.JSONObject
 import org.json.JSONArray
 import java.util.*
 import kotlin.random.Random
-import com.malla.mvp.ui.components.VoiceNoteRecorderDialog
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class, androidx.compose.ui.ExperimentalComposeUiApi::class)
 @Composable
@@ -80,7 +79,7 @@ fun ChatScreen(
     contactName: String,
     isMeshMode: Boolean = false,
     onBack: () -> Unit = {},
-    onProfileClicked: () -> Unit = {}, onVoiceCallClick: (String) -> Unit = {}, onVideoCallClick: (String) -> Unit = {}
+    onProfileClicked: () -> Unit = {}, onVoiceCallClick: () -> Unit = {}, onVideoCallClick: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val db = AppDatabase.getInstance(context)
@@ -90,7 +89,6 @@ fun ChatScreen(
     var searchMessageQuery by remember { mutableStateOf("") }
     var isTyping by remember { mutableStateOf(false) }
     var showAttachmentSheet by remember { mutableStateOf(false) }
-    var showVoiceRecorder by remember { mutableStateOf(false) }
     var showBackgroundDialog by remember { mutableStateOf(false) }
     var showEphemeralMenu by remember { mutableStateOf(false) }
     var showCreatePollDialog by remember { mutableStateOf(false) }
@@ -406,8 +404,8 @@ fun ChatScreen(
                             })
                         }
                         DropdownMenuItem(text = { Text("Asignar tono") }, onClick = { showMenu = false; ringtonePickerLauncher.launch("audio/*") })
-                        DropdownMenuItem(text = { Text("Llamada de voz") }, onClick = { showMenu = false; onVoiceCallClick(contactName) })
-                        DropdownMenuItem(text = { Text("Videollamada") }, onClick = { showMenu = false; onVideoCallClick(contactName) })
+                        DropdownMenuItem(text = { Text("Llamada de voz") }, onClick = { showMenu = false; onVoiceCallClick() })
+                        DropdownMenuItem(text = { Text("Videollamada") }, onClick = { showMenu = false; onVideoCallClick() })
                         DropdownMenuItem(text = { Text("Exportar chat") }, onClick = { showMenu = false; exportChat(context, messages, contactName) })
                         DropdownMenuItem(text = { Text("Mensajes efímeros") }, onClick = { showMenu = false; showEphemeralMenu = true })
                         DropdownMenuItem(text = { Text("Modo fiesta") }, onClick = { showMenu = false; isFiestaMode = !isFiestaMode })
@@ -716,7 +714,7 @@ fun ChatScreen(
                         Text("Vídeo", style = MaterialTheme.typography.labelSmall)
                     }
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        IconButton(onClick = { showAttachmentSheet = false; showVoiceRecorder = true }) {
+                        IconButton(onClick = { showAttachmentSheet = false; /* TODO: grabar audio */ }) {
                             Icon(Icons.Filled.KeyboardVoice, "Nota de voz", tint = MaterialTheme.colorScheme.primary)
                         }
                         Text("Nota de voz", style = MaterialTheme.typography.labelSmall)

@@ -16,7 +16,6 @@ INJECTED from /workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:2:1-54:12
 INJECTED from /workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:2:1-54:12
 INJECTED from /workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:2:1-54:12
 MERGED from [:data] /workspaces/MALLA_MVP/data/build/intermediates/merged_manifest/debug/AndroidManifest.xml:2:1-7:12
-MERGED from [:media] /workspaces/MALLA_MVP/media/build/intermediates/merged_manifest/debug/AndroidManifest.xml:2:1-7:12
 MERGED from [:core] /workspaces/MALLA_MVP/core/build/intermediates/merged_manifest/debug/AndroidManifest.xml:2:1-7:12
 MERGED from [androidx.biometric:biometric:1.1.0] /home/codespace/.gradle/caches/transforms-3/0486e2d268e1062600e63052a419a6f1/transformed/biometric-1.1.0/AndroidManifest.xml:17:1-29:12
 MERGED from [androidx.compose.material3:material3-android:1.2.0] /home/codespace/.gradle/caches/transforms-3/8cfdf5cbc71dff4d1bc740f4b153dc35/transformed/material3-release/AndroidManifest.xml:17:1-22:12
@@ -283,8 +282,6 @@ INJECTED from /workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml
 INJECTED from /workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml
 MERGED from [:data] /workspaces/MALLA_MVP/data/build/intermediates/merged_manifest/debug/AndroidManifest.xml:5:5-44
 MERGED from [:data] /workspaces/MALLA_MVP/data/build/intermediates/merged_manifest/debug/AndroidManifest.xml:5:5-44
-MERGED from [:media] /workspaces/MALLA_MVP/media/build/intermediates/merged_manifest/debug/AndroidManifest.xml:5:5-44
-MERGED from [:media] /workspaces/MALLA_MVP/media/build/intermediates/merged_manifest/debug/AndroidManifest.xml:5:5-44
 MERGED from [:core] /workspaces/MALLA_MVP/core/build/intermediates/merged_manifest/debug/AndroidManifest.xml:5:5-44
 MERGED from [:core] /workspaces/MALLA_MVP/core/build/intermediates/merged_manifest/debug/AndroidManifest.xml:5:5-44
 MERGED from [androidx.biometric:biometric:1.1.0] /home/codespace/.gradle/caches/transforms-3/0486e2d268e1062600e63052a419a6f1/transformed/biometric-1.1.0/AndroidManifest.xml:20:5-22:41
