@@ -5,6 +5,8 @@ color foreground_color
 drawable ic_launcher_background
 drawable ic_launcher_foreground
 drawable ic_launcher_logo
+drawable ic_notification
+drawable ic_notification_logo
 mipmap ic_launcher
 raw zumbido
 string app_name
