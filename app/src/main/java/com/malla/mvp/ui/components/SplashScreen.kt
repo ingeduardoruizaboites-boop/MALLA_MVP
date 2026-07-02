@@ -26,7 +26,7 @@ fun SplashScreen(onFinished: () -> Unit) {
         Image(
             painter = painterResource(id = R.drawable.ic_launcher_logo),
             contentDescription = "Logo",
-            modifier = Modifier.size(120.dp),
+            modifier = Modifier.size(160.dp),
             contentScale = ContentScale.Fit
         )
     }

@@ -349,9 +349,24 @@ fun MainApp(
         topBar = { MainTopBar(onSettingsClick = onSettingsClick, isOnline = !isMeshMode) },
         bottomBar = {
             NavigationBar(modifier = Modifier.height(56.dp), containerColor = MaterialTheme.colorScheme.surface) {
-                NavigationBarItem(selected = selectedTab == 0, onClick = { selectedTab = 0 }, icon = { BadgedBox(badge = {}) { Icon(Icons.AutoMirrored.Filled.Chat, "Chats") } }, label = { Text("Chats") })
-                NavigationBarItem(selected = selectedTab == 1, onClick = { selectedTab = 1 }, icon = { Icon(Icons.Filled.WifiTethering, "Pulso") }, label = { Text("Pulso") })
-                NavigationBarItem(selected = selectedTab == 2, onClick = { selectedTab = 2 }, icon = { Icon(Icons.Filled.Person, "Perfil") }, label = { Text("Perfil") })
+                NavigationBarItem(selected = selectedTab == 0, onClick = { selectedTab = 0 }, icon = { BadgedBox(badge = {}) { Icon(Icons.AutoMirrored.Filled.Chat, "Chats") } }, label = { Text("Chats") },
+        colors = NavigationBarItemDefaults.colors(
+            selectedIconColor = MaterialTheme.colorScheme.primary,
+            unselectedIconColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+            indicatorColor = MaterialTheme.colorScheme.primary
+        ))
+                NavigationBarItem(selected = selectedTab == 1, onClick = { selectedTab = 1 }, icon = { Icon(Icons.Filled.WifiTethering, "Pulso") }, label = { Text("Pulso") },
+        colors = NavigationBarItemDefaults.colors(
+            selectedIconColor = MaterialTheme.colorScheme.primary,
+            unselectedIconColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+            indicatorColor = MaterialTheme.colorScheme.primary
+        ))
+                NavigationBarItem(selected = selectedTab == 2, onClick = { selectedTab = 2 }, icon = { Icon(Icons.Filled.Person, "Perfil") }, label = { Text("Perfil") },
+        colors = NavigationBarItemDefaults.colors(
+            selectedIconColor = MaterialTheme.colorScheme.primary,
+            unselectedIconColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+            indicatorColor = MaterialTheme.colorScheme.primary
+        ))
             }
         }
     ) { padding ->
