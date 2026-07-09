@@ -30,6 +30,7 @@ class MessageBridge(
 
     // Callback para enrutamiento unificado
     var onSendMessage: ((String, String) -> Unit)? = null
+    var onIncomingMessage: ((CoreMeshMessage) -> Unit)? = null
     var isPremium: Boolean = false
 
     // Cinta transportadora: cola y semáforo para forward
@@ -43,7 +44,12 @@ class MessageBridge(
     fun start() {
         Log.d(TAG, "[MB:LIFE] Iniciando MessageBridge (forwardLimit=$forwardLimit)")
         networkService.addMessageListener { meshMessage ->
-            scope.launch { handleIncomingMessage(meshMessage) }
+            val handler = onIncomingMessage
+            if (handler != null) {
+                handler(meshMessage)
+            } else {
+                scope.launch { handleIncomingMessage(meshMessage) }
+            }
         }
         startForwardLoop()
     }

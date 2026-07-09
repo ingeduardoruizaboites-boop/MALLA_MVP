@@ -1,12 +1,14 @@
 package com.malla.mvp
 
 import android.app.Application
+import android.os.Handler
+import android.os.Looper
 import android.widget.Toast
 import com.malla.mvp.core.crypto.ICryptoEngine
 import com.malla.mvp.crypto.CryptoEngineAdapter
 import com.malla.mvp.core.util.IAppContext
-import java.io.PrintWriter
-import java.io.StringWriter
+import com.malla.mvp.di.Injector
+import java.io.File
 
 class App : Application(), IAppContext {
     companion object {
@@ -22,26 +24,28 @@ class App : Application(), IAppContext {
 
     override fun onCreate() {
         super.onCreate()
-        val crashFile = java.io.File(filesDir, "crash.log")
-        if (crashFile.exists()) {
-            android.widget.Toast.makeText(this, "Crash anterior: ${crashFile.readText()}", android.widget.Toast.LENGTH_LONG).show()
-            crashFile.delete()
-        }
-        Thread.setDefaultUncaughtExceptionHandler { _, throwable ->
-            crashFile.writeText(throwable.stackTraceToString())
-            android.os.Process.killProcess(android.os.Process.myPid())
-        }
         context = this
         appContextProvider = this
         cryptoProvider = CryptoEngineAdapter()
+        
+        // 👇 LÍNEA FALTANTE
+        Injector.init(this)
 
+        val mainHandler = Handler(Looper.getMainLooper())
         Thread.setDefaultUncaughtExceptionHandler { _, throwable ->
-            val sw = StringWriter()
-            throwable.printStackTrace(PrintWriter(sw))
-            val stackTrace = sw.toString().take(500)
-            Toast.makeText(context, "Error: ${throwable.message}\n$stackTrace", Toast.LENGTH_LONG).show()
-            Thread.sleep(4000)
-            android.os.Process.killProcess(android.os.Process.myPid())
+            val msg = throwable.message ?: "Error desconocido"
+            // Guardar en archivo para el siguiente inicio
+            try {
+                File(filesDir, "crash.txt").writeText(msg)
+            } catch (_: Exception) {}
+            
+            mainHandler.post {
+                Toast.makeText(this, "Error fatal: $msg", Toast.LENGTH_LONG).show()
+            }
+            // Dar tiempo para ver el Toast antes de matar la app
+            mainHandler.postDelayed({
+                android.os.Process.killProcess(android.os.Process.myPid())
+            }, 3000)
         }
     }
 }

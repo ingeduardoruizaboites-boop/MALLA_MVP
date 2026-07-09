@@ -18,6 +18,7 @@ import com.malla.mvp.data.entity.PollEntity
 import com.malla.mvp.data.entity.PollOptionEntity
 import com.malla.mvp.data.entity.UserIdentityEntity
 import com.malla.mvp.data.entity.ContactEntity
+import java.io.File
 
 @Database(
     entities = [
@@ -47,17 +48,35 @@ abstract class AppDatabase : RoomDatabase() {
         fun getInstance(context: Context): AppDatabase? {
             return try {
                 INSTANCE ?: synchronized(this) {
-                    Room.databaseBuilder(
-                        context.applicationContext,
-                        AppDatabase::class.java,
-                        "malla_database"
-                    )
-                        .fallbackToDestructiveMigration()
-                        .build()
-                        .also { INSTANCE = it }
+                    INSTANCE ?: try {
+                        Room.databaseBuilder(
+                            context.applicationContext,
+                            AppDatabase::class.java,
+                            "malla_database"
+                        )
+                            .fallbackToDestructiveMigration()
+                            .build()
+                            .also { INSTANCE = it }
+                    } catch (e: Exception) {
+                        Log.e("AppDatabase", "Error al crear BD, eliminando y reintentando...", e)
+                        val dbFile = context.getDatabasePath("malla_database")
+                        if (dbFile.exists()) {
+                            dbFile.delete()
+                            dbFile.parentFile?.listFiles()?.filter { it.name.startsWith("malla_database") }?.forEach { it.delete() }
+                        }
+                        val instance = Room.databaseBuilder(
+                            context.applicationContext,
+                            AppDatabase::class.java,
+                            "malla_database"
+                        )
+                            .fallbackToDestructiveMigration()
+                            .build()
+                        INSTANCE = instance
+                        instance
+                    }
                 }
             } catch (e: Exception) {
-                Log.e("AppDatabase", "Error creando la base de datos", e)
+                Log.e("AppDatabase", "No se pudo crear la base de datos después de reintentar", e)
                 null
             }
         }

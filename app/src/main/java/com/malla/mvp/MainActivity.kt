@@ -137,7 +137,7 @@ class MainActivity : FragmentActivity() {
                         LogBuffer.add("MAIN", "Iniciando servicio mesh")
                         NetworkService.startServer()
                         LogBuffer.add("MAIN", "NetworkService iniciado")
-                        MeshMessageHandler.start(application)
+                        //MeshMessageHandler.start(application) (reemplazado por MessageReceiver)
                         LogBuffer.add("MAIN", "MeshMessageHandler iniciado")
                     } else {
                     }

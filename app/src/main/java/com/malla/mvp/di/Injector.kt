@@ -18,6 +18,7 @@ import com.malla.mvp.identity.IdentityManager
 import com.malla.mvp.network.*
 import com.malla.mvp.network.DhtService
 import com.malla.mvp.network.SeedManager
+import com.malla.mvp.network.MessageReceiver
 import com.malla.mvp.network.UnifiedMessageRouter
 import com.malla.mvp.network.ContactDiscoveryManager
 import kotlinx.coroutines.*
@@ -27,11 +28,16 @@ object Injector {
     lateinit var messageBridge: MessageBridge
     lateinit var smsTransport: SmsTransport
     lateinit var flashlightTransport: FlashlightTransport
-    lateinit var messageRepo: IMessageRepository
+    val messageRepo: IMessageRepository get() = _messageRepo
+    private lateinit var _messageRepo: IMessageRepository
     lateinit var networkService: INetworkService
 
     fun init(context: Context) {
         val db = AppDatabase.getInstance(context)
+        if (db == null) {
+            android.widget.Toast.makeText(context, "Base de datos no disponible. Funcionamiento limitado.", android.widget.Toast.LENGTH_LONG).show()
+            // La app continúa sin BD
+        }
 
         // Inicializar transporte Faro (luz/cámara)
         smsTransport = SmsTransport(context)
@@ -74,27 +80,40 @@ object Injector {
 
         // Repositorio de mensajes (Room)
         val messageRepo = object : IMessageRepository {
+            private val fallbackMessages = MutableStateFlow<List<MessageData>>(emptyList())
             override fun observeMessages(conversationId: String): Flow<List<MessageData>> {
-                return db?.messageDao()?.observeAllMessages()?.map { entities ->
-                    entities.filter { it.conversationId == conversationId }.map {
-                        MessageData(it.id, it.conversationId, it.content, it.timestamp, it.isOwn)
+                return if (db != null) {
+                    try {
+                        db.messageDao().getMessagesForConversation(conversationId).map { entities ->
+                            entities.map {
+                                MessageData(it.id, it.conversationId, it.content, it.timestamp, it.isOwn)
+                            }
+                        }
+                    } catch (e: Exception) {
+                        flowOf(emptyList())
                     }
-                } ?: flowOf(emptyList())
+                } else {
+                    fallbackMessages.map { list -> list.filter { it.conversationId == conversationId } }
+                }
             }
             override suspend fun saveMessage(message: MessageData) {
-                db?.messageDao()?.insertMessage(
-                    MessageEntity(
-                        id = message.id,
-                        conversationId = message.conversationId,
-                        content = message.content,
-                        timestamp = message.timestamp,
-                        isOwn = message.isOwn,
-                        status = 1,
-                        mediaUri = message.mediaUri,
-                        expireAt = message.expireAt,
-                        viewOnce = message.viewOnce
+                if (db != null) {
+                    db.messageDao().insertMessage(
+                        MessageEntity(
+                            id = message.id,
+                            conversationId = message.conversationId,
+                            content = message.content,
+                            timestamp = message.timestamp,
+                            isOwn = message.isOwn,
+                            status = 1,
+                            mediaUri = message.mediaUri,
+                            expireAt = message.expireAt,
+                            viewOnce = message.viewOnce
+                        )
                     )
-                )
+                } else {
+                    fallbackMessages.value = fallbackMessages.value + message
+                }
             }
             override suspend fun getLastMessage(conversationId: String): MessageData? = null
             override suspend fun updateMessageStatus(messageId: String, status: Int) {}
@@ -102,7 +121,7 @@ object Injector {
             override suspend fun getUnreadMessages(conversationId: String): List<MessageData> = emptyList()
             override suspend fun getPendingMessages(): List<MessageData> = emptyList()
         }
-        this.messageRepo = messageRepo
+        this._messageRepo = messageRepo
 
         // Repositorio de conversaciones
         val conversationRepo = object : IConversationRepository {
@@ -121,6 +140,16 @@ object Injector {
             UnifiedMessageRouter.sendMessage(contactId, text)
         }
         messageBridge.start()
+        MessageReceiver.start(context)
+        messageBridge.onIncomingMessage = { msg ->
+            val meshMsg = com.malla.mvp.network.MeshMessage(
+                content = msg.content,
+                senderId = msg.senderId,
+                timestamp = msg.timestamp,
+                type = "chat"
+            )
+            MessageReceiver.process(context, meshMsg)
+        }
 
         // Inicializar Premium y perfil del dispositivo
         PremiumManager.init()

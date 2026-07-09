@@ -68,3 +68,4 @@ com.malla.mvp.app-debug-66 /workspaces/MALLA_MVP/app/src/debug/res
 com.malla.mvp.app-main-67 /workspaces/MALLA_MVP/app/src/main/res
 com.malla.mvp.app-packaged_res-68 /workspaces/MALLA_MVP/core/build/intermediates/packaged_res/debug
 com.malla.mvp.app-packaged_res-69 /workspaces/MALLA_MVP/data/build/intermediates/packaged_res/debug
+com.malla.mvp.app-packaged_res-70 /workspaces/MALLA_MVP/media/build/intermediates/packaged_res/debug
