@@ -46,7 +46,7 @@ class ChatViewModel : ViewModel() {
 
     fun isMessageNew(timestamp: Long): Boolean = timestamp > lastLoadTime
 
-    fun sendMessage(text: String) {
+    fun sendMessage(text: String, mediaUri: String? = null) {
         val convId = _conversationId.value
         if (convId == null) return
 
@@ -56,7 +56,8 @@ class ChatViewModel : ViewModel() {
             conversationId = convId,
             content = text,
             timestamp = System.currentTimeMillis(),
-            isOwn = true
+            isOwn = true,
+            mediaUri = mediaUri
         )
 
         // Agregar inmediatamente a la lista local (prioridad máxima)

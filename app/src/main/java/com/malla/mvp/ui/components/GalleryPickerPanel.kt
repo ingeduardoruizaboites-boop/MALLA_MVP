@@ -35,12 +35,13 @@ import coil.compose.AsyncImage
 @Composable
 fun GalleryPickerPanel(
     onDismiss: () -> Unit,
-    onConfirm: (List<Uri>) -> Unit
+    onConfirm: (List<Uri>) -> Unit,
+    initialSelected: List<Uri> = emptyList()
 ) {
     val context = LocalContext.current
     var hasPermission by remember { mutableStateOf(checkImagePermission(context)) }
     var images by remember { mutableStateOf<List<Uri>>(emptyList()) }
-    val selectedUris = remember { mutableStateListOf<Uri>() }
+    val selectedUris = remember { mutableStateListOf<Uri>().apply { addAll(initialSelected) } }
 
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()

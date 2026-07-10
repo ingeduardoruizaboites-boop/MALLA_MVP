@@ -7,6 +7,7 @@ import android.os.VibrationEffect
 import android.os.Vibrator
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
+import androidx.compose.animation.core.Animatable
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -27,6 +28,8 @@ import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.PersonAdd
 import androidx.compose.material.icons.filled.Photo
 import androidx.compose.material.icons.filled.Poll
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Vibration
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -35,12 +38,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.foundation.gestures.detectTransformGestures
+import androidx.compose.foundation.gestures.detectTapGestures
+
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.malla.mvp.core.data.MessageData
@@ -76,12 +86,13 @@ fun ChatScreen(
     val listState = rememberLazyListState()
     val coroutineScope = rememberCoroutineScope()
     val shakeOffset = remember { Animatable(0f) }
+    var fullScreenImageUri by remember { mutableStateOf<Uri?>(null) }
 
     LaunchedEffect(conversationId) {
         vm.loadConversation(conversationId)
     }
 
-    // Receptor de zumbido (shake global)
+    // Receptor de zumbido
     LaunchedEffect(Unit) {
         val vibrator = context.getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
         MallaEventBus.zumbidoReceived.collect { msg ->
@@ -106,7 +117,6 @@ fun ChatScreen(
         }
     }
 
-    // Contenedor que vibra completo
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -131,29 +141,77 @@ fun ChatScreen(
                     .fillMaxSize()
                     .padding(padding)
             ) {
-                // Vista previa de imágenes
+                // Lista de mensajes
+                LazyColumn(
+                    modifier = Modifier.weight(1f),
+                    state = listState
+                ) {
+                    items(messages) { msg ->
+                        MessageBubbleV2(msg = msg, animate = vm.isMessageNew(msg.timestamp), onImageClick = { uri -> fullScreenImageUri = uri })
+                    }
+                }
+
+                // Barra inferior: cambia entre vista previa y composición normal
                 if (pendingMediaUris.isNotEmpty()) {
+                    // Barra de vista previa (WhatsApp-like)
                     Surface(
                         modifier = Modifier.fillMaxWidth(),
                         shadowElevation = 8.dp,
                         color = Color(0xFF1A1A1A)
                     ) {
                         Column(modifier = Modifier.padding(8.dp)) {
+                            // Fila de miniaturas con X para eliminar y botón + al final
                             LazyRow(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
                                 items(pendingMediaUris) { uri ->
-                                    AsyncImage(
-                                        model = uri,
-                                        contentDescription = "Miniatura",
-                                        modifier = Modifier.size(48.dp).clip(RoundedCornerShape(8.dp)),
-                                        contentScale = ContentScale.Crop
-                                    )
+                                    Box(
+                                        modifier = Modifier.size(48.dp)
+                                    ) {
+                                        AsyncImage(
+                                            model = uri,
+                                            contentDescription = "Miniatura",
+                                            modifier = Modifier
+                                                .fillMaxSize()
+                                                .clip(RoundedCornerShape(8.dp)),
+                                            contentScale = ContentScale.Crop
+                                        )
+                                        // Botón X para eliminar
+                                        Box(
+                                            modifier = Modifier
+                                                .align(Alignment.TopEnd)
+                                                .size(16.dp)
+                                                .background(Color.Black.copy(alpha = 0.6f), RoundedCornerShape(4.dp))
+                                                .clickable { pendingMediaUris.remove(uri) },
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Icon(
+                                                Icons.Filled.Close,
+                                                contentDescription = "Eliminar",
+                                                tint = Color.White,
+                                                modifier = Modifier.size(12.dp)
+                                            )
+                                        }
+                                    }
+                                }
+                                // Botón + para agregar más imágenes
+                                item {
+                                    IconButton(
+                                        onClick = { showGalleryPanel = true },
+                                        modifier = Modifier
+                                            .size(48.dp)
+                                            .background(Color(0xFF2A2A2A), RoundedCornerShape(8.dp))
+                                    ) {
+                                        Icon(Icons.Filled.Add, "Agregar más", tint = Color(0xFF4CE6FF))
+                                    }
                                 }
                             }
+                            // Fila con caption, emoji y enviar
                             Row(
-                                modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = 8.dp),
                                 verticalAlignment = Alignment.Bottom
                             ) {
                                 OutlinedTextField(
@@ -163,6 +221,11 @@ fun ChatScreen(
                                     placeholder = { Text("Añade un pie de foto...", color = Color.Gray) },
                                     maxLines = 2,
                                     textStyle = MaterialTheme.typography.bodySmall.copy(color = Color.White),
+                                    leadingIcon = {
+                                        IconButton(onClick = { showEmojiPicker = !showEmojiPicker }) {
+                                            Icon(Icons.Filled.InsertEmoticon, "Emoji", tint = Color(0xFF4CE6FF))
+                                        }
+                                    },
                                     colors = OutlinedTextFieldDefaults.colors(
                                         focusedBorderColor = Color(0xFF4CE6FF),
                                         unfocusedBorderColor = Color.Gray
@@ -171,8 +234,11 @@ fun ChatScreen(
                                 Spacer(modifier = Modifier.width(8.dp))
                                 IconButton(onClick = {
                                     coroutineScope.launch {
-                                        if (captionText.isNotBlank()) vm.sendMessage(captionText)
-                                        pendingMediaUris.forEach { uri -> vm.sendMessage("[Imagen: $uri]") }
+                                        // Enviar primera imagen con caption, las demás sin texto
+                                        pendingMediaUris.forEachIndexed { index, uri ->
+                                            val textToSend = if (index == 0 && captionText.isNotBlank()) captionText else ""
+                                            vm.sendMessage(textToSend, mediaUri = uri.toString())
+                                        }
                                         pendingMediaUris.clear()
                                         captionText = ""
                                     }
@@ -182,108 +248,98 @@ fun ChatScreen(
                             }
                         }
                     }
-                }
-
-                // Lista de mensajes
-                LazyColumn(
-                    modifier = Modifier.weight(1f),
-                    state = listState
-                ) {
-                    items(messages) { msg ->
-                        MessageBubbleV2(msg = msg, animate = vm.isMessageNew(msg.timestamp))
-                    }
-                }
-
-                // Barra de composición premium
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 6.dp),
-                    verticalAlignment = Alignment.Bottom
-                ) {
-                    // Botón de zumbido
-                    IconButton(
-                        onClick = {
-                            if (!zumbidoCooldown) {
-                                vm.sendZumbido()
-                                zumbidoCooldown = true
-
-                                // Vibración local
-                                val vibrator = context.getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
-                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                                    vibrator?.vibrate(VibrationEffect.createOneShot(200, VibrationEffect.DEFAULT_AMPLITUDE))
-                                } else {
-                                    @Suppress("DEPRECATION")
-                                    vibrator?.vibrate(200)
-                                }
-                                // Shake local
-                                coroutineScope.launch {
-                                    repeat(3) {
-                                        shakeOffset.animateTo(12f, animationSpec = tween(50))
-                                        shakeOffset.animateTo(-12f, animationSpec = tween(50))
-                                    }
-                                    shakeOffset.animateTo(0f, animationSpec = tween(50))
-                                }
-                                // Sonido
-                                try {
-                                    val mp = android.media.MediaPlayer.create(context, com.malla.mvp.R.raw.zumbido)
-                                    mp?.start()
-                                    mp?.setOnCompletionListener { it.release() }
-                                } catch (_: Exception) {}
-                            }
-                        },
-                        enabled = !zumbidoCooldown
+                } else {
+                    // Barra de composición normal
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 4.dp, vertical = 6.dp),
+                        verticalAlignment = Alignment.Bottom
                     ) {
-                        Icon(
-                            Icons.Filled.Vibration,
-                            "Zumbido",
-                            tint = if (zumbidoCooldown) Color.Gray else Color(0xFF4CE6FF)
+                        // Zumbido
+                        IconButton(
+                            onClick = {
+                                if (!zumbidoCooldown) {
+                                    vm.sendZumbido()
+                                    zumbidoCooldown = true
+                                    val vibrator = context.getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
+                                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                                        vibrator?.vibrate(VibrationEffect.createOneShot(200, VibrationEffect.DEFAULT_AMPLITUDE))
+                                    } else {
+                                        @Suppress("DEPRECATION")
+                                        vibrator?.vibrate(200)
+                                    }
+                                    coroutineScope.launch {
+                                        repeat(3) {
+                                            shakeOffset.animateTo(12f, animationSpec = tween(50))
+                                            shakeOffset.animateTo(-12f, animationSpec = tween(50))
+                                        }
+                                        shakeOffset.animateTo(0f, animationSpec = tween(50))
+                                    }
+                                    try {
+                                        val mp = android.media.MediaPlayer.create(context, com.malla.mvp.R.raw.zumbido)
+                                        mp?.start()
+                                        mp?.setOnCompletionListener { it.release() }
+                                    } catch (_: Exception) {}
+                                }
+                            },
+                            enabled = !zumbidoCooldown
+                        ) {
+                            Icon(
+                                Icons.Filled.Vibration,
+                                "Zumbido",
+                                tint = if (zumbidoCooldown) Color.Gray else Color(0xFF4CE6FF)
+                            )
+                        }
+
+                        // Campo de texto
+                        OutlinedTextField(
+                            value = text,
+                            onValueChange = { text = it },
+                            modifier = Modifier.weight(1f),
+                            placeholder = { Text("Mensaje", color = Color.Gray) },
+                            maxLines = 3,
+                            textStyle = MaterialTheme.typography.bodyMedium.copy(color = Color.White),
+                            shape = RoundedCornerShape(24.dp),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = Color(0xFF4CE6FF),
+                                unfocusedBorderColor = Color.Gray.copy(alpha = 0.5f),
+                                focusedContainerColor = Color(0xFF1A2A3A),
+                                unfocusedContainerColor = Color(0xFF1A2A3A)
+                            ),
+                            leadingIcon = {
+                                IconButton(onClick = { showEmojiPicker = !showEmojiPicker }) {
+                                    Icon(Icons.Filled.InsertEmoticon, "Emoji", tint = Color(0xFF4CE6FF))
+                                }
+                            },
+                            trailingIcon = {
+                                Row {
+                                    IconButton(onClick = { showAttachmentSheet = true }) {
+                                        Icon(Icons.Filled.AttachFile, "Adjuntar", tint = Color(0xFF4CE6FF))
+                                    }
+                                    IconButton(onClick = { /* TODO: cámara */ }) {
+                                        Icon(Icons.Filled.CameraAlt, "Cámara", tint = Color(0xFF4CE6FF))
+                                    }
+                                }
+                            }
                         )
-                    }
 
-                    // Campo de texto
-                    OutlinedTextField(
-                        value = text,
-                        onValueChange = { text = it },
-                        modifier = Modifier.weight(1f),
-                        placeholder = { Text("Mensaje", color = Color.Gray) },
-                        maxLines = 3,
-                        textStyle = MaterialTheme.typography.bodyMedium.copy(color = Color.White),
-                        shape = RoundedCornerShape(24.dp),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = Color(0xFF4CE6FF),
-                            unfocusedBorderColor = Color.Gray.copy(alpha = 0.5f),
-                            focusedContainerColor = Color(0xFF1A2A3A),
-                            unfocusedContainerColor = Color(0xFF1A2A3A)
-                        ),
-                        leadingIcon = {
-                            IconButton(onClick = { showEmojiPicker = !showEmojiPicker }) {
-                                Icon(Icons.Filled.InsertEmoticon, "Emoji", tint = Color(0xFF4CE6FF))
+                        // Micrófono / Enviar
+                        if (text.isBlank()) {
+                            IconButton(onClick = { /* TODO: grabar nota de voz */ }) {
+                                Icon(Icons.Filled.Mic, "Grabar", tint = Color(0xFF4CE6FF))
                             }
-                        },
-                        trailingIcon = {
-                            Row {
-                                IconButton(onClick = { showAttachmentSheet = true }) {
-                                    Icon(Icons.Filled.AttachFile, "Adjuntar", tint = Color(0xFF4CE6FF))
+                        } else {
+                            IconButton(
+                                onClick = {
+                                    if (text.isNotBlank()) {
+                                        vm.sendMessage(text)
+                                        text = ""
+                                    }
                                 }
-                                IconButton(onClick = { showAttachmentSheet = true }) {
-                                    Icon(Icons.Filled.CameraAlt, "Cámara", tint = Color(0xFF4CE6FF))
-                                }
+                            ) {
+                                Icon(Icons.AutoMirrored.Filled.Send, "Enviar", tint = Color(0xFF4CE6FF))
                             }
-                        }
-                    )
-
-                    // Micrófono / Enviar
-                    if (text.isBlank()) {
-                        IconButton(onClick = { /* TODO: grabar nota de voz */ }) {
-                            Icon(Icons.Filled.Mic, "Grabar", tint = Color(0xFF4CE6FF))
-                        }
-                    } else {
-                        IconButton(onClick = {
-                            if (text.isNotBlank()) {
-                                vm.sendMessage(text)
-                                text = ""
-                            }
-                        }) {
-                            Icon(Icons.AutoMirrored.Filled.Send, "Enviar", tint = Color(0xFF4CE6FF))
                         }
                     }
                 }
@@ -376,17 +432,73 @@ fun ChatScreen(
         GalleryPickerPanel(
             onDismiss = { showGalleryPanel = false },
             onConfirm = { uris ->
+                pendingMediaUris.clear()
                 pendingMediaUris.addAll(uris)
                 showGalleryPanel = false
-            }
+            },
+            initialSelected = pendingMediaUris.toList()
         )
     }
+    // Diálogo de imagen a pantalla completa con zoom
+    if (fullScreenImageUri != null) {
+        Dialog(
+            onDismissRequest = { fullScreenImageUri = null },
+            properties = DialogProperties(usePlatformDefaultWidth = false)
+        ) {
+            val scale = remember { Animatable(1f) }
+            var offset by remember { mutableStateOf(Offset.Zero) }
+            val scope = rememberCoroutineScope()
+
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black)
+                    .clickable { fullScreenImageUri = null }  // Cerrar al tocar fondo
+                    .pointerInput(Unit) {
+                        detectTransformGestures { _, pan, zoom, _ ->
+                            val newScale = (scale.value * zoom).coerceIn(0.5f, 5f)
+                            scope.launch { scale.snapTo(newScale) }
+                            offset = offset + pan
+                        }
+                    }
+                    .pointerInput(Unit) {
+                        detectTapGestures(
+                            onDoubleTap = {
+                                scope.launch {
+                                    if (scale.value > 1f) {
+                                        scale.animateTo(1f, tween(200))
+                                        offset = Offset.Zero
+                                    } else {
+                                        scale.animateTo(2f, tween(200))
+                                    }
+                                }
+                            }
+                        )
+                    },
+                contentAlignment = Alignment.Center
+            ) {
+                AsyncImage(
+                    model = fullScreenImageUri!!,
+                    contentDescription = "Imagen ampliada",
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .graphicsLayer {
+                            scaleX = scale.value
+                            scaleY = scale.value
+                            translationX = offset.x
+                            translationY = offset.y
+                        },
+                    contentScale = ContentScale.Fit
+                )
+            }
+        }
+    }
+
 }
 
 @Composable
-fun MessageBubbleV2(msg: MessageData, animate: Boolean = false) {
+fun MessageBubbleV2(msg: MessageData, animate: Boolean = false, onImageClick: (Uri) -> Unit = {}) {
     val isOwn = msg.isOwn
-    val align = if (isOwn) Alignment.End else Alignment.Start
     val bgColor = if (isOwn) Color(0xFF1A3B4A) else Color(0xFF2A2A2A)
     val scaleAnim = if (animate) {
         val anim = remember { Animatable(0.8f) }
@@ -401,11 +513,37 @@ fun MessageBubbleV2(msg: MessageData, animate: Boolean = false) {
 
     Column(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp).scale(scaleAnim),
-        horizontalAlignment = align
+        horizontalAlignment = if (isOwn) Alignment.End else Alignment.Start
     ) {
-        Surface(color = bgColor, shape = RoundedCornerShape(16.dp), shadowElevation = 2.dp) {
+        Surface(
+            color = bgColor,
+            shape = RoundedCornerShape(16.dp),
+            shadowElevation = 2.dp,
+            modifier = Modifier.widthIn(max = 280.dp)
+        ) {
             Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
-                Text(text = msg.content, color = Color.White, fontSize = 14.sp)
+                // Mostrar imagen si mediaUri existe, con click asegurado mediante Box
+                if (msg.mediaUri != null) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(max = 200.dp)
+                            .clip(RoundedCornerShape(12.dp))
+                            .clickable { onImageClick(Uri.parse(msg.mediaUri)) }
+                    ) {
+                        AsyncImage(
+                            model = Uri.parse(msg.mediaUri),
+                            contentDescription = "Imagen enviada",
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Crop
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(4.dp))
+                }
+                // Mostrar texto si no está vacío
+                if (msg.content.isNotBlank()) {
+                    Text(text = msg.content, color = Color.White, fontSize = 14.sp)
+                }
                 Text(
                     text = SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date(msg.timestamp)),
                     color = Color.White.copy(alpha = 0.5f),
