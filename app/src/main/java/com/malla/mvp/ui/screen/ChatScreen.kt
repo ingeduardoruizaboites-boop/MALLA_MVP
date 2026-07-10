@@ -149,7 +149,7 @@ fun ChatScreen(
                     actions = {
                         IconButton(onClick = onProfileClicked) {
                             Surface(
-                                modifier = Modifier.size(32.dp),
+                                modifier = Modifier.size(64.dp),
                                 shape = CircleShape,
                                 color = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
                             ) {
@@ -158,7 +158,7 @@ fun ChatScreen(
                                         text = contactName.take(1).uppercase(),
                                         color = MaterialTheme.colorScheme.primary,
                                         fontWeight = FontWeight.Bold,
-                                        fontSize = 14.sp
+                                        fontSize = 28.sp
                                     )
                                 }
                             }
