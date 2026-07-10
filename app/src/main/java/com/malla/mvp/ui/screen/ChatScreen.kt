@@ -329,11 +329,17 @@ fun ChatScreen(
                                 }
                             },
                             trailingIcon = {
-                                Row {
+                                Row(
+                                    modifier = Modifier.animateContentSize(animationSpec = tween(300, easing = FastOutSlowInEasing))
+                                ) {
                                     IconButton(onClick = { showAttachmentSheet = true }) {
                                         Icon(Icons.Filled.AttachFile, "Adjuntar", tint = Color(0xFF4CE6FF))
                                     }
-                                    if (text.isBlank()) {
+                                    AnimatedVisibility(
+                                        visible = text.isBlank(),
+                                        enter = fadeIn(tween(300)) + scaleIn(initialScale = 0.8f, animationSpec = tween(300)),
+                                        exit = fadeOut(tween(300)) + scaleOut(targetScale = 0.8f, animationSpec = tween(300))
+                                    ) {
                                         IconButton(onClick = { /* TODO: cámara */ }) {
                                             Icon(Icons.Filled.CameraAlt, "Cámara", tint = Color(0xFF4CE6FF))
                                         }
