@@ -30,6 +30,7 @@ class App : Application(), IAppContext {
         
         // 👇 LÍNEA FALTANTE
         Injector.init(this)
+        com.malla.mvp.ui.settings.ChatSettings.load(this)
 
         val mainHandler = Handler(Looper.getMainLooper())
         Thread.setDefaultUncaughtExceptionHandler { _, throwable ->

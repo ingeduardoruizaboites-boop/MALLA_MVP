@@ -111,4 +111,13 @@ object BubbleShapes {
             return Outline.Generic(path)
         }
     }
+    fun getShape(style: com.malla.mvp.ui.settings.BubbleStyle, isOwn: Boolean): Shape {
+        return when (style) {
+            com.malla.mvp.ui.settings.BubbleStyle.MODERN -> if (isOwn) ModernOwn else ModernOther
+            com.malla.mvp.ui.settings.BubbleStyle.ROUNDED -> Rounded
+            com.malla.mvp.ui.settings.BubbleStyle.COMIC -> if (isOwn) ComicOwn else ComicOther
+            com.malla.mvp.ui.settings.BubbleStyle.PIXEL -> Pixel
+            com.malla.mvp.ui.settings.BubbleStyle.COLA -> if (isOwn) ColaOwn else ColaOther
+        }
+    }
 }

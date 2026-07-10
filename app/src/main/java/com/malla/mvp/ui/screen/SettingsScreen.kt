@@ -33,6 +33,7 @@ fun SettingsScreen(
     val context = LocalContext.current
     var showDiagnostic by remember { mutableStateOf(false) }
     var showAbout by remember { mutableStateOf(false) }
+    var showChatSettings by remember { mutableStateOf(false) }
 
     LazyColumn(
         modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background),
@@ -96,73 +97,10 @@ fun SettingsScreen(
             }
         }
 
-        // Sección Chats
-        item {
-            SettingsSection(title = "Chats") {
-                val bubbleColors = listOf(
-                    null to "Tema",
-                    Color(0xFF00E5FF) to "Cyan",
-                    Color(0xFF4CAF50) to "Verde",
-                    Color(0xFFFF7043) to "Naranja",
-                    Color(0xFF9575CD) to "Morado",
-                    Color(0xFF78909C) to "Gris"
-                )
-                Column(modifier = Modifier.padding(8.dp)) {
-                    Text("Color de burbujas propias", style = MaterialTheme.typography.labelMedium)
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        bubbleColors.forEach { (color, _) ->
-                            val isSelected = AccessibilitySettings.ownBubbleColor.value == color
-                            Box(
-                                modifier = Modifier
-                                    .size(36.dp)
-                                    .clip(CircleShape)
-                                    .background(color ?: MaterialTheme.colorScheme.primaryContainer)
-                                    .then(if (isSelected) Modifier.border(2.dp, MaterialTheme.colorScheme.onSurface, CircleShape) else Modifier)
-                                    .clickable { AccessibilitySettings.ownBubbleColor.value = color; AccessibilitySettings.save(context) }
-                            )
-                        }
-                    }
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Text("Color de burbujas del contacto", style = MaterialTheme.typography.labelMedium)
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        bubbleColors.forEach { (color, _) ->
-                            val isSelected = AccessibilitySettings.otherBubbleColor.value == color
-                            Box(
-                                modifier = Modifier
-                                    .size(36.dp)
-                                    .clip(CircleShape)
-                                    .background(color ?: MaterialTheme.colorScheme.secondaryContainer)
-                                    .then(if (isSelected) Modifier.border(2.dp, MaterialTheme.colorScheme.onSurface, CircleShape) else Modifier)
-                                    .clickable { AccessibilitySettings.otherBubbleColor.value = color; AccessibilitySettings.save(context) }
-                            )
-                        }
-                    }
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text("Estilo de burbujas", style = MaterialTheme.typography.labelMedium)
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Row(horizontalArrangement = Arrangement.spacedBy(4.dp), modifier = Modifier.fillMaxWidth()) {
-                        BubbleStyle.values().forEach { style ->
-                            val isSelected = AccessibilitySettings.bubbleStyle.value == style
-                            FilterChip(
-                                selected = isSelected,
-                                onClick = { AccessibilitySettings.bubbleStyle.value = style; AccessibilitySettings.save(context) },
-                                label = { Text(style.label, style = MaterialTheme.typography.labelSmall) },
-                                colors = FilterChipDefaults.filterChipColors(
-                                    selectedContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f),
-                                    selectedLabelColor = MaterialTheme.colorScheme.primary
-                                )
-                            )
-                        }
-                    }
-                }
-            }
-        }
-
         // Sección Notificaciones
         item {
             SettingsSection(title = "Notificaciones") {
+                SettingsItem(title = "Configuración de chat", icon = Icons.Filled.ChatBubble) { showChatSettings = true }
                 SettingsItem(title = "Activar notificaciones", icon = Icons.Filled.Notifications) {
                     // TODO: Toggle
                 }
@@ -195,6 +133,11 @@ fun SettingsScreen(
                 SettingsItem(title = "Términos y privacidad", icon = Icons.Filled.Description) {}
             }
         }
+    }
+
+    if (showChatSettings) {
+        ChatSettingsScreen(onBack = { showChatSettings = false })
+        return
     }
 
     if (showAbout) {

@@ -24,6 +24,7 @@ import com.malla.mvp.identity.IdentityManager
 @Composable
 fun MainTopBar(
     onSettingsClick: () -> Unit,
+    onChatSettingsClick: () -> Unit = {},
     isOnline: Boolean
 ) {
     val currentAvatar by IdentityManager.avatarBitmap.collectAsState()
@@ -75,6 +76,10 @@ fun MainTopBar(
                     DropdownMenuItem(
                         text = { Row(verticalAlignment = Alignment.CenterVertically) { Icon(Icons.Filled.Settings, null, modifier = Modifier.size(18.dp)); Spacer(Modifier.width(8.dp)); Text("Ajustes") } },
                         onClick = { showMenu = false; onSettingsClick() }
+                    )
+                    DropdownMenuItem(
+                        text = { Row(verticalAlignment = Alignment.CenterVertically) { Icon(Icons.Filled.ChatBubble, null, modifier = Modifier.size(18.dp)); Spacer(Modifier.width(8.dp)); Text("Configuración de chat") } },
+                        onClick = { showMenu = false; onChatSettingsClick() }
                     )
                 }
             }

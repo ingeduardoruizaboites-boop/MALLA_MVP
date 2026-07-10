@@ -5,12 +5,20 @@ import android.net.Uri
 import android.os.Build
 import android.os.VibrationEffect
 import android.os.Vibrator
+import android.Manifest
+import android.content.pm.PackageManager
+import androidx.core.content.ContextCompat
+import android.location.LocationManager
+import android.location.Location
+import android.content.Intent
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.animation.core.Animatable
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -38,6 +46,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.TransformOrigin
+import androidx.compose.ui.draw.alpha
+import com.malla.mvp.ui.settings.ChatSettings
+import androidx.compose.ui.graphics.Brush
+import com.malla.mvp.ui.components.BubbleShapes
+import com.malla.mvp.ui.settings.AccessibilitySettings
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.foundation.gestures.detectTransformGestures
@@ -296,10 +310,12 @@ fun ChatScreen(
                         OutlinedTextField(
                             value = text,
                             onValueChange = { text = it },
-                            modifier = Modifier.weight(1f),
+                            modifier = Modifier
+                                .weight(1f)
+                                .verticalScroll(rememberScrollState()),
                             placeholder = { Text("Mensaje", color = Color.Gray) },
                             maxLines = 3,
-                            textStyle = MaterialTheme.typography.bodyMedium.copy(color = Color.White),
+                            textStyle = MaterialTheme.typography.bodyMedium.copy(color = Color.White, fontSize = 16.sp),
                             shape = RoundedCornerShape(24.dp),
                             colors = OutlinedTextFieldDefaults.colors(
                                 focusedBorderColor = Color(0xFF4CE6FF),
@@ -317,8 +333,10 @@ fun ChatScreen(
                                     IconButton(onClick = { showAttachmentSheet = true }) {
                                         Icon(Icons.Filled.AttachFile, "Adjuntar", tint = Color(0xFF4CE6FF))
                                     }
-                                    IconButton(onClick = { /* TODO: cámara */ }) {
-                                        Icon(Icons.Filled.CameraAlt, "Cámara", tint = Color(0xFF4CE6FF))
+                                    if (text.isBlank()) {
+                                        IconButton(onClick = { /* TODO: cámara */ }) {
+                                            Icon(Icons.Filled.CameraAlt, "Cámara", tint = Color(0xFF4CE6FF))
+                                        }
                                     }
                                 }
                             }
@@ -406,7 +424,16 @@ fun ChatScreen(
                 Spacer(modifier = Modifier.height(12.dp))
                 Row(horizontalArrangement = Arrangement.SpaceEvenly, modifier = Modifier.fillMaxWidth()) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        IconButton(onClick = { /* TODO: ubicación */ }) {
+                        IconButton(onClick = {
+                            showAttachmentSheet = false
+                            val loc = getBestLocation(context)
+                            if (loc != null) {
+                                val lat = loc.latitude; val lon = loc.longitude
+                                vm.sendMessage("📍 Ubicación actual\nhttps://maps.google.com/maps?q=$lat,$lon")
+                            } else {
+                                vm.sendMessage("📍 Ubicación no disponible. Concede permisos de ubicación.")
+                            }
+                        }) {
                             Icon(Icons.Filled.LocationOn, "Ubicación", tint = Color(0xFF4CE6FF))
                         }
                         Text("Ubicación", style = MaterialTheme.typography.labelSmall, color = Color.White)
@@ -499,57 +526,92 @@ fun ChatScreen(
 @Composable
 fun MessageBubbleV2(msg: MessageData, animate: Boolean = false, onImageClick: (Uri) -> Unit = {}) {
     val isOwn = msg.isOwn
-    val bgColor = if (isOwn) Color(0xFF1A3B4A) else Color(0xFF2A2A2A)
+    val bubbleStyle by AccessibilitySettings.bubbleStyle.collectAsState()
+    val ownBubbleColor by AccessibilitySettings.ownBubbleColor.collectAsState()
+    val otherBubbleColor by AccessibilitySettings.otherBubbleColor.collectAsState()
+    val baseColor = (if (isOwn) ownBubbleColor else otherBubbleColor)
+        ?: if (isOwn) Color(0xFF1A3B4A) else Color(0xFF2A2A2A)
+    val ownTextColor by ChatSettings.ownTextColor.collectAsState()
+    val otherTextColor by ChatSettings.otherTextColor.collectAsState()
+    val textColor = (if (isOwn) ownTextColor else otherTextColor)
+        ?: contrastingTextColor(baseColor)
+    val bubbleOpacity by ChatSettings.bubbleOpacity.collectAsState()
+    val fontSize by ChatSettings.fontSize.collectAsState()
+
+    // Animación Apple-style
     val scaleAnim = if (animate) {
-        val anim = remember { Animatable(0.8f) }
+        val anim = remember { Animatable(0.85f) }
         LaunchedEffect(msg.id) {
-            anim.animateTo(
-                1f,
-                animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow)
-            )
+            anim.animateTo(1f, animationSpec = spring(dampingRatio = 0.45f, stiffness = 1500f))
         }
         anim.value
     } else 1f
 
-    Column(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp).scale(scaleAnim),
-        horizontalAlignment = if (isOwn) Alignment.End else Alignment.Start
+    Box(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 6.dp),
+        contentAlignment = if (isOwn) Alignment.CenterEnd else Alignment.CenterStart
     ) {
         Surface(
-            color = bgColor,
-            shape = RoundedCornerShape(16.dp),
-            shadowElevation = 2.dp,
-            modifier = Modifier.widthIn(max = 280.dp)
+            shape = BubbleShapes.getShape(bubbleStyle, isOwn),
+            shadowElevation = 4.dp,
+            modifier = Modifier
+                .widthIn(min = 100.dp, max = 270.dp)
+                .graphicsLayer {
+                    scaleX = scaleAnim; scaleY = scaleAnim
+                    transformOrigin = if (isOwn) TransformOrigin(1f, 1f) else TransformOrigin(0f, 1f)
+                }
+                .alpha(bubbleOpacity),
+            color = Color.Transparent
         ) {
-            Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
-                // Mostrar imagen si mediaUri existe, con click asegurado mediante Box
-                if (msg.mediaUri != null) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .heightIn(max = 200.dp)
-                            .clip(RoundedCornerShape(12.dp))
-                            .clickable { onImageClick(Uri.parse(msg.mediaUri)) }
-                    ) {
-                        AsyncImage(
-                            model = Uri.parse(msg.mediaUri),
-                            contentDescription = "Imagen enviada",
-                            modifier = Modifier.fillMaxSize(),
-                            contentScale = ContentScale.Crop
-                        )
-                    }
-                    Spacer(modifier = Modifier.height(4.dp))
-                }
-                // Mostrar texto si no está vacío
-                if (msg.content.isNotBlank()) {
-                    Text(text = msg.content, color = Color.White, fontSize = 14.sp)
-                }
-                Text(
-                    text = SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date(msg.timestamp)),
-                    color = Color.White.copy(alpha = 0.5f),
-                    fontSize = 10.sp
+            Box(
+                modifier = Modifier.background(
+                    brush = Brush.verticalGradient(listOf(baseColor.lighten(0.15f), baseColor)),
+                    shape = BubbleShapes.getShape(bubbleStyle, isOwn)
                 )
+            ) {
+                Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
+                    if (msg.mediaUri != null) {
+                        Box(
+                            modifier = Modifier.fillMaxWidth().heightIn(max = 200.dp).clip(RoundedCornerShape(12.dp)).clickable { onImageClick(Uri.parse(msg.mediaUri)) }
+                        ) {
+                            AsyncImage(model = Uri.parse(msg.mediaUri), contentDescription = "Imagen enviada", modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+                        }
+                        Spacer(modifier = Modifier.height(4.dp))
+                    }
+                    if (msg.content.isNotBlank()) {
+                        Text(text = msg.content, color = textColor, fontSize = fontSize.sp)
+                    }
+                    Text(
+                        text = SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date(msg.timestamp)),
+                        color = textColor.copy(alpha = 0.5f),
+                        fontSize = 10.sp
+                    )
+                }
             }
         }
     }
+}
+
+
+fun Color.lighten(factor: Float = 0.1f): Color {
+    return Color(
+        red = (red + (1f - red) * factor).coerceIn(0f, 1f),
+        green = (green + (1f - green) * factor).coerceIn(0f, 1f),
+        blue = (blue + (1f - blue) * factor).coerceIn(0f, 1f),
+        alpha = alpha
+    )
+}
+
+
+fun getBestLocation(context: Context): Location? {
+    val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as? LocationManager ?: return null
+    if (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
+        ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+        return null
+    }
+    var best: Location? = null
+    try { best = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER) } catch (_: Exception) {}
+    if (best == null) try { best = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER) } catch (_: Exception) {}
+    if (best == null) try { best = locationManager.getLastKnownLocation(LocationManager.PASSIVE_PROVIDER) } catch (_: Exception) {}
+    return best
 }

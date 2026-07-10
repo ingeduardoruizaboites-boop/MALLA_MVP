@@ -22,11 +22,13 @@ class ChatViewModel : ViewModel() {
         _conversationId.value = convId
         lastLoadTime = System.currentTimeMillis()
 
-        // Cancelar suscripción anterior
         observerJob?.cancel()
-        // Suscribirse al repositorio para mantener la lista actualizada
         observerJob = viewModelScope.launch {
             try {
+                // Forzar carga inicial para no esperar al primer collect
+                val initial = Injector.messageRepo.observeMessages(convId).first()
+                _messages.value = initial
+                // Luego observar cambios en tiempo real
                 Injector.messageRepo.observeMessages(convId).collect { list ->
                     _messages.value = list
                 }

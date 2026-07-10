@@ -120,6 +120,7 @@ class MainActivity : FragmentActivity() {
             var currentConversationId by remember { mutableStateOf<String?>(null) }
             var selectedContact by remember { mutableStateOf<String?>(null) }
             var showSettings by remember { mutableStateOf(false) }
+    var showChatSettings by remember { mutableStateOf(false) }
             var showCall by remember { mutableStateOf(false) }
             var callContact by remember { mutableStateOf("") }
             var callType by remember { mutableStateOf("voice") }
@@ -162,7 +163,7 @@ class MainActivity : FragmentActivity() {
                 }
             }
 
-            MallaTheme(colorScheme = effectiveScheme, fontScale = AccessibilitySettings.fontScale.floatValue) {
+            MallaTheme(colorScheme = effectiveScheme, fontScale = AccessibilitySettings.fontScale.value) {
                 AnimatedContent(
                     targetState = appState,
                     transitionSpec = {
@@ -206,6 +207,9 @@ class MainActivity : FragmentActivity() {
                                     },
                                     onBack = { showQrScanner = false }
                                 )
+                            } else if (showChatSettings) {
+                                BackHandler { showChatSettings = false }
+                                ChatSettingsScreen(onBack = { showChatSettings = false })
                             } else if (showSettings) {
                                 BackHandler { showSettings = false }
                                 SettingsScreenWrapper(
@@ -222,6 +226,7 @@ class MainActivity : FragmentActivity() {
                                     currentConversationId = currentConversationId,
                                     onConversationChanged = { convId -> currentConversationId = convId },
                                     onSettingsClick = { showSettings = true },
+                                    onChatSettingsClick = { showChatSettings = true },
                                     onProfileClicked = { contactName -> selectedContact = contactName },
                                     onNavigateToQrScanner = { showQrScanner = true },
                                     onConnectToPeer = { ip ->
@@ -307,6 +312,7 @@ fun MainApp(
     currentConversationId: String?,
     onConversationChanged: (String?) -> Unit,
     onSettingsClick: () -> Unit,
+    onChatSettingsClick: () -> Unit = {},
     onProfileClicked: (String) -> Unit,
     onNavigateToQrScanner: () -> Unit,
     onConnectToPeer: (String) -> Unit,
@@ -346,7 +352,7 @@ fun MainApp(
         return
     }
     Scaffold(
-        topBar = { MainTopBar(onSettingsClick = onSettingsClick, isOnline = !isMeshMode) },
+        topBar = { MainTopBar(onSettingsClick = onSettingsClick, onChatSettingsClick = onChatSettingsClick, isOnline = !isMeshMode) },
         bottomBar = {
             NavigationBar(modifier = Modifier.height(56.dp), containerColor = MaterialTheme.colorScheme.surface) {
                 NavigationBarItem(selected = selectedTab == 0, onClick = { selectedTab = 0 }, icon = { BadgedBox(badge = {}) { Icon(Icons.AutoMirrored.Filled.Chat, "Chats") } }, label = { Text("Chats") },
