@@ -97,22 +97,40 @@ object Injector {
                 }
             }
             override suspend fun saveMessage(message: MessageData) {
-                if (db != null) {
-                    db.messageDao().insertMessage(
-                        MessageEntity(
-                            id = message.id,
-                            conversationId = message.conversationId,
-                            content = message.content,
-                            timestamp = message.timestamp,
-                            isOwn = message.isOwn,
-                            status = 1,
-                            mediaUri = message.mediaUri,
-                            expireAt = message.expireAt,
-                            viewOnce = message.viewOnce
+                try {
+                    if (db != null) {
+                        db.messageDao().insertMessage(
+                            MessageEntity(
+                                id = message.id,
+                                conversationId = message.conversationId,
+                                content = message.content,
+                                timestamp = message.timestamp,
+                                isOwn = message.isOwn,
+                                status = 1,
+                                mediaUri = message.mediaUri,
+                                expireAt = message.expireAt,
+                                viewOnce = message.viewOnce
+                            )
                         )
-                    )
-                } else {
-                    fallbackMessages.value = fallbackMessages.value + message
+                        android.widget.Toast.makeText(
+                            App.context,
+                            "Mensaje guardado en BD",
+                            android.widget.Toast.LENGTH_SHORT
+                        ).show()
+                    } else {
+                        fallbackMessages.value = fallbackMessages.value + message
+                        android.widget.Toast.makeText(
+                            App.context,
+                            "BD no disponible - guardado en memoria",
+                            android.widget.Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                } catch (e: Exception) {
+                    android.widget.Toast.makeText(
+                        App.context,
+                        "Error al guardar: ${e.message}",
+                        android.widget.Toast.LENGTH_LONG
+                    ).show()
                 }
             }
             override suspend fun getLastMessage(conversationId: String): MessageData? = null

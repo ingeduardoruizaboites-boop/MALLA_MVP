@@ -1,7 +1,5 @@
 package com.malla.mvp.viewmodel
 
-import android.app.Application
-import android.widget.Toast
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.malla.mvp.core.data.MessageData
@@ -12,34 +10,28 @@ import kotlinx.coroutines.launch
 import java.util.UUID
 
 class ChatViewModel : ViewModel() {
-    // Lista local como fuente de verdad principal
+    // Lista local como fuente inmediata (para UI reactiva)
     private val _messages = MutableStateFlow<List<MessageData>>(emptyList())
     val messages: StateFlow<List<MessageData>> = _messages.asStateFlow()
+
     private val _conversationId = MutableStateFlow<String?>(null)
     private var lastLoadTime = 0L
-
-    init {
-        // Confirmar creación del ViewModel
-        try {
-            val app = Injector.messageRepo
-            // Si no falla, estamos bien
-        } catch (e: Exception) {
-            // No se pudo obtener el repo, usaremos solo lista local
-        }
-    }
+    private var observerJob: kotlinx.coroutines.Job? = null
 
     fun loadConversation(convId: String) {
         _conversationId.value = convId
         lastLoadTime = System.currentTimeMillis()
 
-        // Intentar cargar desde el repositorio, si falla, iniciamos vacío
-        viewModelScope.launch {
+        // Cancelar suscripción anterior
+        observerJob?.cancel()
+        // Suscribirse al repositorio para mantener la lista actualizada
+        observerJob = viewModelScope.launch {
             try {
                 Injector.messageRepo.observeMessages(convId).collect { list ->
                     _messages.value = list
                 }
             } catch (e: Exception) {
-                _messages.value = emptyList()
+                // Si falla, mantenemos la lista local actual
             }
         }
     }
@@ -47,8 +39,7 @@ class ChatViewModel : ViewModel() {
     fun isMessageNew(timestamp: Long): Boolean = timestamp > lastLoadTime
 
     fun sendMessage(text: String, mediaUri: String? = null) {
-        val convId = _conversationId.value
-        if (convId == null) return
+        val convId = _conversationId.value ?: return
 
         // Crear el mensaje
         val msg = MessageData(
@@ -60,15 +51,16 @@ class ChatViewModel : ViewModel() {
             mediaUri = mediaUri
         )
 
-        // Agregar inmediatamente a la lista local (prioridad máxima)
+        // Agregar inmediatamente a la lista local (el usuario lo ve al instante)
         _messages.value = _messages.value + msg
 
-        // Luego intentar guardar en repositorio (mejor esfuerzo)
+        // Intentar guardar en repositorio (persistencia)
         viewModelScope.launch {
             try {
                 Injector.messageRepo.saveMessage(msg)
+                // No es necesario recargar, porque la lista local ya lo tiene
             } catch (e: Exception) {
-                // No importa, ya está en la lista local
+                // Si falla, el mensaje queda en memoria (al menos se ve)
             }
         }
 
@@ -76,20 +68,14 @@ class ChatViewModel : ViewModel() {
         viewModelScope.launch {
             try {
                 CascadeRouter.sendMessage(convId, text)
-            } catch (e: Exception) {
-                // No importa, ya está en la lista local
-            }
+            } catch (_: Exception) {}
         }
     }
 
     fun sendZumbido() {
         val convId = _conversationId.value ?: return
         viewModelScope.launch {
-            try {
-                CascadeRouter.sendMessage(convId, "Zumbido!", type = "zumbido")
-            } catch (e: Exception) {
-                // No importa
-            }
+            try { CascadeRouter.sendMessage(convId, "Zumbido!", type = "zumbido") } catch (_: Exception) {}
         }
     }
 }
