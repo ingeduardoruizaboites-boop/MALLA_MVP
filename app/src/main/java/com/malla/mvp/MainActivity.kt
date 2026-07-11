@@ -351,8 +351,9 @@ fun MainApp(
         )
         return
     }
+    val onProfileClick = { selectedTab = 2 }
     Scaffold(
-        topBar = { MainTopBar(onSettingsClick = onSettingsClick, onChatSettingsClick = onChatSettingsClick, isOnline = !isMeshMode) },
+        topBar = { MainTopBar(onSettingsClick = onSettingsClick, onChatSettingsClick = onChatSettingsClick, onProfileClick = onProfileClick, isOnline = !isMeshMode) },
         bottomBar = {
             NavigationBar(modifier = Modifier.height(56.dp), containerColor = MaterialTheme.colorScheme.surface) {
                 NavigationBarItem(selected = selectedTab == 0, onClick = { selectedTab = 0 }, icon = { BadgedBox(badge = {}) { Icon(Icons.AutoMirrored.Filled.Chat, "Chats") } }, label = { Text("Chats") },
