@@ -24,6 +24,14 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.clickable
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.animation.core.Animatable
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.layout.ContentScale
@@ -355,25 +363,49 @@ fun MainApp(
     Scaffold(
         topBar = { MainTopBar(onSettingsClick = onSettingsClick, onChatSettingsClick = onChatSettingsClick, onProfileClick = onProfileClick, isOnline = !isMeshMode) },
         bottomBar = {
-            NavigationBar(modifier = Modifier.height(56.dp), containerColor = MaterialTheme.colorScheme.surface) {
-                NavigationBarItem(selected = selectedTab == 0, onClick = { selectedTab = 0 }, icon = { BadgedBox(badge = {}) { Icon(Icons.AutoMirrored.Filled.Chat, "Chats") } }, label = { Text("Chats") },
-        colors = NavigationBarItemDefaults.colors(
-            selectedIconColor = MaterialTheme.colorScheme.primary,
-            unselectedIconColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-            indicatorColor = MaterialTheme.colorScheme.primary
-        ))
-                NavigationBarItem(selected = selectedTab == 1, onClick = { selectedTab = 1 }, icon = { Icon(Icons.Filled.WifiTethering, "Pulso") }, label = { Text("Pulso") },
-        colors = NavigationBarItemDefaults.colors(
-            selectedIconColor = MaterialTheme.colorScheme.primary,
-            unselectedIconColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-            indicatorColor = MaterialTheme.colorScheme.primary
-        ))
-                NavigationBarItem(selected = selectedTab == 2, onClick = { selectedTab = 2 }, icon = { Icon(Icons.Filled.Person, "Perfil") }, label = { Text("Perfil") },
-        colors = NavigationBarItemDefaults.colors(
-            selectedIconColor = MaterialTheme.colorScheme.primary,
-            unselectedIconColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-            indicatorColor = MaterialTheme.colorScheme.primary
-        ))
+            NavigationBar(
+                modifier = Modifier.height(56.dp),
+                containerColor = Color(0xFF0A1B2A)  // Azul petróleo profundo
+            ) {
+                NavigationBarItem(
+                    selected = selectedTab == 0,
+                    onClick = { selectedTab = 0 },
+                    icon = { Icon(Icons.AutoMirrored.Filled.Chat, "Chats") },
+                    label = { Text("Chats") },
+                    colors = NavigationBarItemDefaults.colors(
+                        selectedIconColor = Color(0xFF4CE6FF),
+                        unselectedIconColor = Color.Gray,
+                        selectedTextColor = Color(0xFF4CE6FF),
+                        unselectedTextColor = Color.Gray,
+                        indicatorColor = Color.Transparent
+                    )
+                )
+                NavigationBarItem(
+                    selected = selectedTab == 1,
+                    onClick = { selectedTab = 1 },
+                    icon = { Icon(Icons.Filled.WifiTethering, "Pulso") },
+                    label = { Text("Pulso") },
+                    colors = NavigationBarItemDefaults.colors(
+                        selectedIconColor = Color(0xFF4CE6FF),
+                        unselectedIconColor = Color.Gray,
+                        selectedTextColor = Color(0xFF4CE6FF),
+                        unselectedTextColor = Color.Gray,
+                        indicatorColor = Color.Transparent
+                    )
+                )
+                NavigationBarItem(
+                    selected = selectedTab == 2,
+                    onClick = { selectedTab = 2 },
+                    icon = { Icon(Icons.Filled.Person, "Perfil") },
+                    label = { Text("Perfil") },
+                    colors = NavigationBarItemDefaults.colors(
+                        selectedIconColor = Color(0xFF4CE6FF),
+                        unselectedIconColor = Color.Gray,
+                        selectedTextColor = Color(0xFF4CE6FF),
+                        unselectedTextColor = Color.Gray,
+                        indicatorColor = Color.Transparent
+                    )
+                )
             }
         }
     ) { padding ->
@@ -392,4 +424,48 @@ fun MainApp(
     }
     StickerPickerDialog()
     StickerFullScreenDialog()
+}
+
+@Composable
+fun PremiumNavItem(icon: ImageVector, label: String, selected: Boolean, onClick: () -> Unit) {
+    val scale = remember { Animatable(1f) }
+    LaunchedEffect(selected) {
+        if (selected) {
+            scale.animateTo(1.2f, animationSpec = spring(dampingRatio = 0.35f, stiffness = 500f))
+            scale.animateTo(1f, animationSpec = spring(dampingRatio = 0.35f, stiffness = 500f))
+        }
+    }
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.clickable(onClick = onClick).padding(vertical = 8.dp).clip(RoundedCornerShape(12.dp))
+    ) {
+        Box(
+            modifier = Modifier.size(28.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = label,
+                tint = if (selected) Color(0xFF4CE6FF) else Color.White.copy(alpha = 0.4f),
+                modifier = Modifier.graphicsLayer { scaleX = scale.value; scaleY = scale.value }
+            )
+            if (selected) {
+                Box(
+                    modifier = Modifier
+                        .offset(y = 12.dp)
+                        .size(4.dp)
+                        .clip(CircleShape)
+                        .background(Color(0xFF4CE6FF))
+                )
+            }
+        }
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(
+            text = label,
+            fontSize = 11.sp,
+            letterSpacing = 0.8.sp,
+            color = if (selected) Color(0xFF4CE6FF) else Color.White.copy(alpha = 0.4f),
+            fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal
+        )
+    }
 }

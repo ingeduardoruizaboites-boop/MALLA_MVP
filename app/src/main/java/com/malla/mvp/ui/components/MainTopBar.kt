@@ -6,7 +6,6 @@ import android.net.NetworkCapabilities
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -17,7 +16,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
@@ -84,16 +82,17 @@ fun MainTopBar(
                             bitmap = currentAvatar!!.asImageBitmap(),
                             contentDescription = "Avatar",
                             modifier = Modifier
-                                .size(40.dp)
+                                .size(44.dp)
                                 .clip(CircleShape)
-                                .border(2.dp, Color(0xFF4CE6FF), CircleShape),
+                                .border(1.dp, Color(0xFF4CE6FF), CircleShape),
                             contentScale = ContentScale.Crop
                         )
                     } else {
                         Surface(
                             modifier = Modifier
-                                .size(40.dp)
-                                .clip(CircleShape),
+                                .size(44.dp)
+                                .clip(CircleShape)
+                                .border(1.dp, Color(0xFF4CE6FF), CircleShape),
                             color = Color(0xFF4CE6FF).copy(alpha = 0.2f)
                         ) {
                             Box(contentAlignment = Alignment.Center) {
@@ -158,17 +157,9 @@ fun MainTopBar(
             }
         },
         colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = Color.Transparent,
+            containerColor = Color(0xFF0A1B2A),
             titleContentColor = Color.White,
             actionIconContentColor = Color.White
-        ),
-        modifier = Modifier.background(
-            Brush.verticalGradient(
-                listOf(
-                    Color(0xFF0A1B2A),
-                    Color(0xFF0A1118)
-                )
-            )
         )
     )
 }
