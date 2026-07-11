@@ -88,6 +88,7 @@ MERGED from [androidx.sqlite:sqlite:2.4.0] /home/codespace/.gradle/caches/transf
 MERGED from [androidx.compose.runtime:runtime-saveable-android:1.6.1] /home/codespace/.gradle/caches/transforms-3/61ff85dd1040f747379f53a0237b3d2b/transformed/runtime-saveable-release/AndroidManifest.xml:2:1-7:12
 MERGED from [androidx.compose.runtime:runtime-android:1.6.1] /home/codespace/.gradle/caches/transforms-3/a02ab48192195fed1ec6b0f7efb98037/transformed/runtime-release/AndroidManifest.xml:2:1-7:12
 MERGED from [androidx.annotation:annotation-experimental:1.4.0] /home/codespace/.gradle/caches/transforms-3/44a7225d63fc593cbd7941e20da18da5/transformed/annotation-experimental-1.4.0/AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.security:security-crypto:1.1.0-alpha06] /home/codespace/.gradle/caches/transforms-3/98ab82b72c7baee8912bc1f3ac49c9a7/transformed/security-crypto-1.1.0-alpha06/AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] /home/codespace/.gradle/caches/transforms-3/4431dc15771925f9c73f462bf37582cd/transformed/versionedparcelable-1.1.1/AndroidManifest.xml:17:1-27:12
 MERGED from [androidx.arch.core:core-runtime:2.2.0] /home/codespace/.gradle/caches/transforms-3/a596724fd6d30d8f96db7f6fc822a20f/transformed/core-runtime-2.2.0/AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.interpolator:interpolator:1.0.0] /home/codespace/.gradle/caches/transforms-3/c8bc8441aa1940645ac7905c00fe16c8/transformed/interpolator-1.0.0/AndroidManifest.xml:17:1-22:12
@@ -427,6 +428,8 @@ MERGED from [androidx.compose.runtime:runtime-android:1.6.1] /home/codespace/.gr
 MERGED from [androidx.compose.runtime:runtime-android:1.6.1] /home/codespace/.gradle/caches/transforms-3/a02ab48192195fed1ec6b0f7efb98037/transformed/runtime-release/AndroidManifest.xml:5:5-44
 MERGED from [androidx.annotation:annotation-experimental:1.4.0] /home/codespace/.gradle/caches/transforms-3/44a7225d63fc593cbd7941e20da18da5/transformed/annotation-experimental-1.4.0/AndroidManifest.xml:5:5-44
 MERGED from [androidx.annotation:annotation-experimental:1.4.0] /home/codespace/.gradle/caches/transforms-3/44a7225d63fc593cbd7941e20da18da5/transformed/annotation-experimental-1.4.0/AndroidManifest.xml:5:5-44
+MERGED from [androidx.security:security-crypto:1.1.0-alpha06] /home/codespace/.gradle/caches/transforms-3/98ab82b72c7baee8912bc1f3ac49c9a7/transformed/security-crypto-1.1.0-alpha06/AndroidManifest.xml:20:5-44
+MERGED from [androidx.security:security-crypto:1.1.0-alpha06] /home/codespace/.gradle/caches/transforms-3/98ab82b72c7baee8912bc1f3ac49c9a7/transformed/security-crypto-1.1.0-alpha06/AndroidManifest.xml:20:5-44
 MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] /home/codespace/.gradle/caches/transforms-3/4431dc15771925f9c73f462bf37582cd/transformed/versionedparcelable-1.1.1/AndroidManifest.xml:20:5-22:41
 MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] /home/codespace/.gradle/caches/transforms-3/4431dc15771925f9c73f462bf37582cd/transformed/versionedparcelable-1.1.1/AndroidManifest.xml:20:5-22:41
 MERGED from [androidx.arch.core:core-runtime:2.2.0] /home/codespace/.gradle/caches/transforms-3/a596724fd6d30d8f96db7f6fc822a20f/transformed/core-runtime-2.2.0/AndroidManifest.xml:20:5-44

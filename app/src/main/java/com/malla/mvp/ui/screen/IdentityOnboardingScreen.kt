@@ -205,6 +205,7 @@ fun IdentityOnboardingScreen(onFinished: () -> Unit) {
                             onClick = {
                                 scope.launch {
                                     AppDatabase.getInstance(context)?.identityDao()?.updateDisplayName(alias.ifBlank { "Usuario MALLA" })
+                                    IdentityManager.setUserName(context, alias.ifBlank { "Usuario MALLA" })
                                     currentStep = 4
                                 }
                             },
@@ -228,11 +229,8 @@ fun IdentityOnboardingScreen(onFinished: () -> Unit) {
                         Spacer(modifier = Modifier.height(32.dp))
                         Button(
                             onClick = {
-                                if (alias.isNotBlank() && phone.isNotBlank()) {
-                                    currentStep = 5
-                                } else {
-                                    android.widget.Toast.makeText(context, "Completa nombre y teléfono", android.widget.Toast.LENGTH_SHORT).show()
-                                }
+                                IdentityManager.setUserPhone(context, phone)
+                                currentStep = 5
                             },
                             shape = RoundedCornerShape(16.dp),
                             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CE6FF), contentColor = Color(0xFF0A1B2A))

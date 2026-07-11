@@ -1,6 +1,7 @@
 package com.malla.mvp.identity
 
 import android.content.Context
+import android.content.SharedPreferences
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
@@ -8,6 +9,8 @@ import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
 import android.util.Base64
 import android.util.Log
+import androidx.security.crypto.EncryptedSharedPreferences
+import androidx.security.crypto.MasterKeys
 import java.io.File
 import java.io.FileOutputStream
 import java.security.KeyPairGenerator
@@ -22,6 +25,7 @@ object IdentityManager {
     private const val TAG = "IdentityManager"
     private const val KEY_ALIAS = "malla_identity"
     private const val USER_NAME_KEY = "user_name"
+    private const val USER_PHONE_KEY = "user_phone"
     private const val USER_STATUS_KEY = "user_status"
     private const val AVATAR_FILE = "avatar.jpg"
     private const val BANNER_FILE = "banner.jpg"
@@ -34,7 +38,25 @@ object IdentityManager {
     private val _avatarBitmap = MutableStateFlow<Bitmap?>(null)
     val avatarBitmap: StateFlow<Bitmap?> = _avatarBitmap
 
+    private var encryptedPrefs: SharedPreferences? = null
+
     fun init(context: Context) {
+        try {
+            // Inicializar SharedPreferences encriptadas
+            val masterKeyAlias = MasterKeys.getOrCreate(MasterKeys.AES256_GCM_SPEC)
+            encryptedPrefs = EncryptedSharedPreferences.create(
+                "malla_secure_identity",
+                masterKeyAlias,
+                context,
+                EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+                EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+            )
+        } catch (e: Exception) {
+            Log.e(TAG, "[IDENTITY:ERR] Error inicializando almacenamiento seguro: ${e.message}", e)
+            // Fallback a SharedPreferences normales (menos seguro)
+            encryptedPrefs = context.getSharedPreferences("malla_secure_identity_fallback", Context.MODE_PRIVATE)
+        }
+
         try {
             val ks = KeyStore.getInstance("AndroidKeyStore").apply { load(null) }
             if (!ks.containsAlias(KEY_ALIAS)) {
@@ -95,21 +117,33 @@ object IdentityManager {
     }
 
     fun getUserName(context: Context): String {
-        val prefs = context.getSharedPreferences("identity", Context.MODE_PRIVATE)
+        val prefs = encryptedPrefs ?: context.getSharedPreferences("malla_secure_identity_fallback", Context.MODE_PRIVATE)
         return prefs.getString(USER_NAME_KEY, "Usuario Malla") ?: "Usuario Malla"
     }
 
     fun setUserName(context: Context, name: String) {
-        context.getSharedPreferences("identity", Context.MODE_PRIVATE).edit().putString(USER_NAME_KEY, name).apply()
+        val prefs = encryptedPrefs ?: context.getSharedPreferences("malla_secure_identity_fallback", Context.MODE_PRIVATE)
+        prefs.edit().putString(USER_NAME_KEY, name).apply()
+    }
+
+    fun getUserPhone(context: Context): String {
+        val prefs = encryptedPrefs ?: context.getSharedPreferences("malla_secure_identity_fallback", Context.MODE_PRIVATE)
+        return prefs.getString(USER_PHONE_KEY, "Sin número") ?: "Sin número"
+    }
+
+    fun setUserPhone(context: Context, phone: String) {
+        val prefs = encryptedPrefs ?: context.getSharedPreferences("malla_secure_identity_fallback", Context.MODE_PRIVATE)
+        prefs.edit().putString(USER_PHONE_KEY, phone).apply()
     }
 
     fun getUserStatus(context: Context): String {
-        val prefs = context.getSharedPreferences("identity", Context.MODE_PRIVATE)
+        val prefs = encryptedPrefs ?: context.getSharedPreferences("malla_secure_identity_fallback", Context.MODE_PRIVATE)
         return prefs.getString(USER_STATUS_KEY, "Conectado") ?: "Conectado"
     }
 
     fun setUserStatus(context: Context, status: String) {
-        context.getSharedPreferences("identity", Context.MODE_PRIVATE).edit().putString(USER_STATUS_KEY, status).apply()
+        val prefs = encryptedPrefs ?: context.getSharedPreferences("malla_secure_identity_fallback", Context.MODE_PRIVATE)
+        prefs.edit().putString(USER_STATUS_KEY, status).apply()
     }
 
     fun saveAvatar(context: Context, uri: Uri): Bitmap? {

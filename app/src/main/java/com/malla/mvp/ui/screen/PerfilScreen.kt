@@ -43,10 +43,7 @@ fun PerfilScreen() {
     val avatarBitmap by IdentityManager.avatarBitmap.collectAsState()
     var userName by remember { mutableStateOf(IdentityManager.getUserName(context)) }
     var userStatus by remember { mutableStateOf(IdentityManager.getUserStatus(context)) }
-    val phoneNumber = remember {
-        context.getSharedPreferences("malla_prefs", android.content.Context.MODE_PRIVATE)
-            .getString("phone", "Sin número") ?: "Sin número"
-    }
+    val phoneNumber = remember { IdentityManager.getUserPhone(context) }
     var bannerBitmap by remember { mutableStateOf(IdentityManager.loadBanner(context)) }
 
     val prefs = remember { context.getSharedPreferences("perfil_prefs", android.content.Context.MODE_PRIVATE) }
