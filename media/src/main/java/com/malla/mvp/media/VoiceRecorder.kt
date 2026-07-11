@@ -33,7 +33,7 @@ class VoiceRecorder(private val context: Context) {
             return null
         }
 
-        outputFile = File(context.cacheDir, "voice_${System.currentTimeMillis()}.3gp")
+        outputFile = File(context.cacheDir, "voice_${System.currentTimeMillis()}.m4a")
         recorder = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
             MediaRecorder(context)
         } else {
@@ -43,15 +43,14 @@ class VoiceRecorder(private val context: Context) {
         try {
             recorder?.apply {
                 setAudioSource(MediaRecorder.AudioSource.MIC)
-                setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP)
+                setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
                 setOutputFile(outputFile?.absolutePath)
-                setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB)
-                setAudioSamplingRate(8000)
+                setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
+                setAudioSamplingRate(44100)
                 setAudioChannels(1)
-                Log.d(TAG, "Preparando grabación...")
                 prepare()
                 start()
-                Log.d(TAG, "Grabación iniciada")
+                Log.d(TAG, "Grabación AAC iniciada")
                 isRecording = true
                 startAmplitudeSampling()
             }

@@ -71,6 +71,7 @@ import coil.compose.AsyncImage
 import com.malla.mvp.core.data.MessageData
 import com.malla.mvp.events.MallaEventBus
 import com.malla.mvp.ui.components.GalleryPickerPanel
+import com.malla.mvp.ui.components.VoiceRecorderButton
 import com.malla.mvp.viewmodel.ChatViewModel
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.geometry.CornerRadius
