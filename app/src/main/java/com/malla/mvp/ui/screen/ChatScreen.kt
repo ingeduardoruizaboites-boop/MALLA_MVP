@@ -195,6 +195,13 @@ fun ChatScreen(
                     }
                 }
 
+                // Auto-scroll al último mensaje
+                LaunchedEffect(messages.size) {
+                    if (messages.isNotEmpty()) {
+                        listState.animateScrollToItem(messages.size - 1)
+                    }
+                }
+
                 // Barra inferior: cambia entre vista previa y composición normal
                 if (pendingMediaUris.isNotEmpty()) {
                     // Barra de vista previa (WhatsApp-like)
