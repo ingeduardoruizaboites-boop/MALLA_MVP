@@ -103,7 +103,7 @@ fun VoiceRecorderButton(
         AnimatedVisibility(
             visible = showPanel,
             enter = slideInVertically(initialOffsetY = { it }) + fadeIn(tween(200)),
-            exit = slideOutVertically(targetOffsetY = { it }) + fadeOut(tween(200))
+            exit = slideOutVertically(targetOffsetY = { -it }) + fadeOut(tween(200))
         ) {
             Box(
                 modifier = Modifier
