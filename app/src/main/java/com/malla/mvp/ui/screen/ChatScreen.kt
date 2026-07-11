@@ -72,6 +72,13 @@ import com.malla.mvp.core.data.MessageData
 import com.malla.mvp.events.MallaEventBus
 import com.malla.mvp.ui.components.GalleryPickerPanel
 import com.malla.mvp.viewmodel.ChatViewModel
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.gestures.waitForUpOrCancellation
+import androidx.compose.foundation.gestures.awaitFirstDown
+import com.malla.mvp.ui.components.AudioBubblePlayer
+import com.malla.mvp.media.VoiceRecorder
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
@@ -102,6 +109,9 @@ fun ChatScreen(
     val coroutineScope = rememberCoroutineScope()
     val shakeOffset = remember { Animatable(0f) }
     var fullScreenImageUri by remember { mutableStateOf<Uri?>(null) }
+    var isRecording by remember { mutableStateOf(false) }
+    var elapsedSeconds by remember { mutableIntStateOf(0) }
+    val voiceRecorder = remember { VoiceRecorder(context) }
 
     LaunchedEffect(conversationId) {
         vm.loadConversation(conversationId)
@@ -369,8 +379,84 @@ fun ChatScreen(
 
                         // Micrófono / Enviar
                         if (text.isBlank()) {
-                            IconButton(onClick = { /* TODO: grabar nota de voz */ }) {
-                                Icon(Icons.Filled.Mic, "Grabar", tint = Color(0xFF4CE6FF))
+                            Box(
+                                modifier = Modifier
+                                    .size(48.dp)
+                                    .clip(CircleShape)
+                                    .background(if (isRecording) Color.Red.copy(alpha = 0.2f) else Color.Transparent)
+                                    .pointerInput(Unit) {
+                                        awaitPointerEventScope {
+                                            while (true) {
+                                                awaitFirstDown()
+                                                try {
+                                                    // Verificar permiso
+                                                    if (androidx.core.content.ContextCompat.checkSelfPermission(
+                                                            context,
+                                                            android.Manifest.permission.RECORD_AUDIO
+                                                        ) != android.content.pm.PackageManager.PERMISSION_GRANTED
+                                                    ) {
+                                                        android.widget.Toast.makeText(context, "Permiso de micrófono requerido", android.widget.Toast.LENGTH_SHORT).show()
+                                                        return@awaitPointerEventScope
+                                                    }
+                                                    val file = voiceRecorder.startRecording()
+                                                    if (file == null) {
+                                                        android.widget.Toast.makeText(context, "Error al iniciar grabación", android.widget.Toast.LENGTH_SHORT).show()
+                                                        return@awaitPointerEventScope
+                                                    }
+                                                    isRecording = true
+                                                    elapsedSeconds = 0
+                                                    val timerJob = coroutineScope.launch {
+                                                        while (isRecording) {
+                                                            delay(1000)
+                                                            elapsedSeconds++
+                                                        }
+                                                    }
+                                                    waitForUpOrCancellation()
+                                                    timerJob.cancel()
+                                                    val recordedFile = try {
+                                                        voiceRecorder.stopRecording()
+                                                    } catch (e: Exception) {
+                                                        android.widget.Toast.makeText(context, "Error al detener: ${e.message}", android.widget.Toast.LENGTH_SHORT).show()
+                                                        null
+                                                    }
+                                                    isRecording = false
+                                                    elapsedSeconds = 0
+                                                    if (recordedFile != null && recordedFile.length() > 0) {
+                                                        vm.sendMessage("", mediaUri = recordedFile.absolutePath)
+                                                    } else {
+                                                        android.widget.Toast.makeText(context, "Audio vacío o no disponible", android.widget.Toast.LENGTH_SHORT).show()
+                                                    }
+                                                } catch (e: Exception) {
+                                                    android.widget.Toast.makeText(context, "Error inesperado: ${e.message}", android.widget.Toast.LENGTH_SHORT).show()
+                                                    isRecording = false
+                                                    elapsedSeconds = 0
+                                                }
+                                            }
+                                        }
+                                    },
+                                contentAlignment = Alignment.Center
+                            ) {
+                                if (isRecording) {
+                                    // Animación de pulsación
+                                    val infiniteTransition = rememberInfiniteTransition(label = "pulse")
+                                    val pulseScale by infiniteTransition.animateFloat(
+                                        initialValue = 1f, targetValue = 1.3f,
+                                        animationSpec = infiniteRepeatable(animation = tween(400), repeatMode = RepeatMode.Reverse),
+                                        label = "pulse"
+                                    )
+                                    Icon(Icons.Filled.Mic, "Grabando", tint = Color.Red, modifier = Modifier.size(24.dp).scale(pulseScale))
+                                } else {
+                                    Icon(Icons.Filled.Mic, "Grabar", tint = Color(0xFF4CE6FF))
+                                }
+                            }
+                            if (isRecording) {
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(
+                                    text = formatSeconds(elapsedSeconds),
+                                    color = Color.Red.copy(alpha = 0.8f),
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
                             }
                         } else {
                             IconButton(
@@ -384,6 +470,35 @@ fun ChatScreen(
                                 Icon(Icons.AutoMirrored.Filled.Send, "Enviar", tint = Color(0xFF4CE6FF))
                             }
                         }
+                    }
+                }
+
+                                // Indicador de grabación estilo WhatsApp
+                if (isRecording) {
+                    val amp by voiceRecorder.amplitude.collectAsState()
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Canvas(modifier = Modifier.weight(1f).height(24.dp)) {
+                            val barCount = 20
+                            val barWidth = size.width / barCount * 0.6f
+                            val spacing = size.width / barCount * 0.4f
+                            val maxBarHeight = size.height
+                            val normalizedAmp = (amp / 32767f).coerceIn(0.01f, 1f)
+                            for (i in 0 until barCount) {
+                                val fraction = (i.toFloat() / barCount)
+                                val barHeight = maxBarHeight * normalizedAmp * (0.3f + 0.7f * fraction)
+                                drawRoundRect(
+                                    color = Color(0xFF4CE6FF),
+                                    topLeft = Offset(i * (barWidth + spacing), maxBarHeight - barHeight),
+                                    size = Size(barWidth, barHeight),
+                                    cornerRadius = CornerRadius(2f, 2f)
+                                )
+                            }
+                        }
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(formatSeconds(elapsedSeconds), color = Color.White.copy(alpha = 0.8f), fontSize = 12.sp)
                     }
                 }
 
@@ -596,12 +711,18 @@ fun MessageBubbleV2(msg: MessageData, animate: Boolean = false, onImageClick: (U
             ) {
                 Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
                     if (msg.mediaUri != null) {
-                        Box(
-                            modifier = Modifier.fillMaxWidth().heightIn(max = 200.dp).clip(RoundedCornerShape(12.dp)).clickable { onImageClick(Uri.parse(msg.mediaUri)) }
-                        ) {
-                            AsyncImage(model = Uri.parse(msg.mediaUri), contentDescription = "Imagen enviada", modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+                        val uri = Uri.parse(msg.mediaUri)
+                        if (msg.mediaUri.endsWith(".3gp") || msg.mediaUri.endsWith(".m4a") || msg.mediaUri.contains("voice_")) {
+                            AudioBubblePlayer(filePath = msg.mediaUri, modifier = Modifier.fillMaxWidth())
+                            Spacer(modifier = Modifier.height(4.dp))
+                        } else {
+                            Box(
+                                modifier = Modifier.fillMaxWidth().heightIn(max = 200.dp).clip(RoundedCornerShape(12.dp)).clickable { onImageClick(uri) }
+                            ) {
+                                AsyncImage(model = uri, contentDescription = "Imagen enviada", modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+                            }
+                            Spacer(modifier = Modifier.height(4.dp))
                         }
-                        Spacer(modifier = Modifier.height(4.dp))
                     }
                     if (msg.content.isNotBlank()) {
                         Text(text = msg.content, color = textColor, fontSize = fontSize.sp)
@@ -639,4 +760,11 @@ fun getBestLocation(context: Context): Location? {
     if (best == null) try { best = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER) } catch (_: Exception) {}
     if (best == null) try { best = locationManager.getLastKnownLocation(LocationManager.PASSIVE_PROVIDER) } catch (_: Exception) {}
     return best
+}
+
+
+fun formatSeconds(seconds: Int): String {
+    val min = seconds / 60
+    val sec = seconds % 60
+    return "%02d:%02d".format(min, sec)
 }
