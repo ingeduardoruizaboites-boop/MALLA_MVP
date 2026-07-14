@@ -79,8 +79,6 @@ object MeshMessageHandler {
                         timestamp = meshMsg.timestamp,
                         isOwn = false,
                         status = 1,
-                        quotedMessageId = meshMsg.quotedMessageId,
-                        quotedMessageContent = meshMsg.quotedMessageContent
                     )
                     messageDao.insertMessage(msgEntity)
 

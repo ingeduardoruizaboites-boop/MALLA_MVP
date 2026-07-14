@@ -1,4 +1,5 @@
 package com.malla.mvp
+import com.malla.mvp.network.MeshMessageHandler
 
 import android.content.Context
 import android.content.Intent
@@ -45,7 +46,6 @@ import com.malla.mvp.identity.IdentityManager
 import com.malla.mvp.network.ConnectivityMonitor
 import com.malla.mvp.util.RadioManager
 import com.malla.mvp.service.MeshChatService
-import com.malla.mvp.network.MeshMessageHandler
 import com.malla.mvp.core.engine.DeviceStateMonitor
 import com.malla.mvp.core.engine.LogBuffer
 import com.malla.mvp.network.NetworkService
@@ -146,8 +146,6 @@ class MainActivity : FragmentActivity() {
                         LogBuffer.add("MAIN", "Iniciando servicio mesh")
                         NetworkService.startServer()
                         LogBuffer.add("MAIN", "NetworkService iniciado")
-                        //MeshMessageHandler.start(application) (reemplazado por MessageReceiver)
-                        LogBuffer.add("MAIN", "MeshMessageHandler iniciado")
                     } else {
                     }
                 } catch (e: Exception) {

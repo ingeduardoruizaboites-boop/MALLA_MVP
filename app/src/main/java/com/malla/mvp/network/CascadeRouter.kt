@@ -1,4 +1,5 @@
 package com.malla.mvp.network
+import com.malla.mvp.core.network.MeshMessage
 
 import android.content.Context
 import android.widget.Toast
@@ -45,7 +46,7 @@ object CascadeRouter {
                 if (NetworkService.connectedClientsCount.value > 0) {
                     try {
                         NetworkService.sendMessage(
-                            MeshMessage(content = content, senderId = "self", type = type)
+                            MeshMessage(content = content, senderId = "self", type = if (type == "zumbido") 4 else 0)
                         )
                         LogBuffer.add(TAG, "Enviado por TCP a $contactId")
                         return@launch

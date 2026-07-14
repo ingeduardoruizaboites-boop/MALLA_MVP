@@ -1,6 +1,6 @@
 package com.malla.mvp.events
 
-import com.malla.mvp.data.entity.MeshMessage
+import com.malla.mvp.core.network.MeshMessage
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow

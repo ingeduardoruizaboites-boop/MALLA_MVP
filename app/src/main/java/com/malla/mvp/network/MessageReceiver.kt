@@ -1,4 +1,5 @@
 package com.malla.mvp.network
+import com.malla.mvp.core.network.MeshMessage
 
 import android.content.Context
 import android.util.Log
@@ -40,7 +41,7 @@ object MessageReceiver {
                     content = body,
                     senderId = sender,
                     timestamp = System.currentTimeMillis(),
-                    type = "sms"
+                    type = 0
                 )
                 process(context, meshMsg)
             }
@@ -102,7 +103,7 @@ object MessageReceiver {
             messageDao.insertMessage(msgEntity)
 
             MallaEventBus.messageReceived.emit(meshMsg)
-            if (meshMsg.type == "zumbido") {
+            if (meshMsg.type == 0) {
                 MallaEventBus.zumbidoReceived.emit(meshMsg)
             }
             LogBuffer.add(TAG, "Mensaje guardado de ${meshMsg.senderId}")

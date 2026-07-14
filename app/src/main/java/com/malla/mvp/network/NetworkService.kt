@@ -1,4 +1,5 @@
 package com.malla.mvp.network
+import com.malla.mvp.core.network.MeshMessage
 import com.malla.mvp.core.engine.LogBuffer
 
 import com.malla.mvp.crypto.CryptoEngine
@@ -136,7 +137,7 @@ object NetworkService {
                     input?.readFully(encrypted)
                     val decrypted = CryptoEngine.decrypt(encrypted, secretKey!!)
                     val parts = decrypted.split("|", limit = 4)
-                    val type = parts.getOrElse(0) { "chat" }
+                    val type = if (parts.getOrElse(0) { "chat" } == "zumbido") 4 else 0
                     val quoteId = parts.getOrElse(1) { "" }.ifBlank { null }
                     val quoteContent = parts.getOrElse(2) { "" }.ifBlank { null }
                     val text = parts.getOrElse(3) { decrypted }
@@ -144,8 +145,6 @@ object NetworkService {
                         content = text,
                         senderId = clientId,
                         type = type,
-                        quotedMessageId = quoteId,
-                        quotedMessageContent = quoteContent
                     )
                     Log.d(TAG, "[NS:MSG] Mensaje recibido de $clientId (tipo=$type, ${encrypted.size} bytes)")
             LogBuffer.add("NS", "Mensaje recibido: tipo=${type}")
@@ -160,8 +159,7 @@ object NetworkService {
 
         suspend fun send(message: MeshMessage) {
             try {
-                val wire = "${message.type}|${message.quotedMessageId ?: ""}|${message.quotedMessageContent ?: ""}|${message.content}"
-                val encrypted = CryptoEngine.encrypt(wire, secretKey!!)
+                val encrypted = CryptoEngine.encrypt(message.content, secretKey!!)
                 output?.writeInt(encrypted.size)
                 output?.write(encrypted)
                 output?.flush()
@@ -181,11 +179,3 @@ object NetworkService {
     }
 }
 
-data class MeshMessage(
-    val content: String,
-    val senderId: String = "self",
-    val timestamp: Long = System.currentTimeMillis(),
-    val type: String = "chat",
-    val quotedMessageId: String? = null,
-    val quotedMessageContent: String? = null
-)

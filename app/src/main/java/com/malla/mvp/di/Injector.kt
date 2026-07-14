@@ -50,11 +50,11 @@ object Injector {
             override val connectionState: Flow<Boolean> = NetworkService.connectedClientsCount.map { it > 0 }
             override suspend fun sendMeshMessage(message: CoreMeshMessage): Result<Unit> {
                 return try {
-                    val nsMessage = com.malla.mvp.network.MeshMessage(
+                    val nsMessage = com.malla.mvp.core.network.MeshMessage(
                         content = message.content,
                         senderId = message.senderId,
                         timestamp = message.timestamp,
-                        type = "chat"
+                        type = 0
                     )
                     NetworkService.sendMessage(nsMessage)
                     Result.success(Unit)
@@ -160,11 +160,11 @@ object Injector {
         messageBridge.start()
         MessageReceiver.start(context)
         messageBridge.onIncomingMessage = { msg ->
-            val meshMsg = com.malla.mvp.network.MeshMessage(
+            val meshMsg = com.malla.mvp.core.network.MeshMessage(
                 content = msg.content,
                 senderId = msg.senderId,
                 timestamp = msg.timestamp,
-                type = "chat"
+                type = 0
             )
             MessageReceiver.process(context, meshMsg)
         }

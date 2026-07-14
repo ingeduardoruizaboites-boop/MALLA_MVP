@@ -51,7 +51,7 @@ class WebRtcManager(private val context: Context) {
 
         CoroutineScope(Dispatchers.IO).launch {
             NetworkService.messages.collect { msg ->
-                if (msg.type == "webrtc") {
+                if (msg.type == 5) {
                     handleSignal(msg.content, msg.senderId)
                 }
             }

@@ -15,6 +15,4 @@ data class MessageEntity(
     val expireAt: Long? = null,
     val mediaUri: String? = null,
     val viewOnce: Boolean = false,
-    val quotedMessageId: String? = null,        // NUEVO
-    val quotedMessageContent: String? = null    // NUEVO
 )

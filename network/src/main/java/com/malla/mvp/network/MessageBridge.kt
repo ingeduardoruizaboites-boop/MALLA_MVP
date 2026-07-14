@@ -7,7 +7,7 @@ import com.malla.mvp.core.data.IConversationRepository
 import com.malla.mvp.core.data.IMessageRepository
 import com.malla.mvp.core.data.MessageData
 import com.malla.mvp.core.network.INetworkService
-import com.malla.mvp.core.network.MeshMessage as CoreMeshMessage
+import com.malla.mvp.core.network.MeshMessage
 import com.malla.mvp.core.notification.INotificationHelper
 import com.malla.mvp.core.util.ILogger
 import kotlinx.coroutines.*
@@ -34,7 +34,7 @@ class MessageBridge(
 
     // Cinta transportadora: cola y semáforo para forward
     private val forwardSemaphore = Semaphore(forwardLimit)
-    private val forwardQueue = ConcurrentLinkedQueue<CoreMeshMessage>()
+    private val forwardQueue = ConcurrentLinkedQueue<MeshMessage>()
     private var forwardJob: Job? = null
 
     private val _newMessageCount = MutableStateFlow(0)
@@ -61,7 +61,7 @@ class MessageBridge(
         } else {
             scope.launch {
                 try {
-                    val msg = CoreMeshMessage(senderId = "Yo", content = text, type = 0)
+                    val msg = MeshMessage(senderId = "Yo", content = text, type = 0)
                     networkService.sendMeshMessage(msg)
                 } catch (e: Exception) {
                     Log.e(TAG, "[MB:SEND] Error enviando: ${e.message}")
@@ -71,7 +71,7 @@ class MessageBridge(
     }
 
     // ── Recepción de mensajes ──
-    private suspend fun handleIncomingMessage(meshMessage: CoreMeshMessage) {
+    private suspend fun handleIncomingMessage(meshMessage: MeshMessage) {
         val convId = meshMessage.senderId
 
         // Crear conversación si no existe
@@ -123,7 +123,7 @@ class MessageBridge(
         }
     }
 
-    fun scheduleForward(message: CoreMeshMessage) {
+    fun scheduleForward(message: MeshMessage) {
         if (isPremium && forwardSemaphore.tryAcquire()) {
             scope.launch {
                 try {
@@ -144,7 +144,7 @@ class MessageBridge(
     // ── WebRTC ──
     fun sendWebRtcSignal(contactId: String, signal: String) {
         scope.launch {
-            val msg = CoreMeshMessage(senderId = "Yo", content = signal, type = 3)
+            val msg = MeshMessage(senderId = "Yo", content = signal, type = 3)
             networkService.sendMeshMessage(msg)
         }
     }

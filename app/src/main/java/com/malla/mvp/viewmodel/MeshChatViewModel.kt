@@ -10,7 +10,7 @@ import com.malla.mvp.data.AppDatabase
 import com.malla.mvp.data.entity.MessageEntity
 import com.malla.mvp.data.entity.PollEntity
 import com.malla.mvp.data.entity.PollOptionEntity
-import com.malla.mvp.network.MeshMessage
+import com.malla.mvp.core.network.MeshMessage
 import com.malla.mvp.network.NetworkService
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -88,8 +88,6 @@ class MeshChatViewModel(application: Application) : AndroidViewModel(application
      */
     fun sendMessage(
         text: String,
-        quotedMessageId: String? = null,
-        quotedMessageContent: String? = null,
         expireAt: Long? = null,
         viewOnce: Boolean = false,
         mediaUri: String? = null
@@ -104,8 +102,6 @@ class MeshChatViewModel(application: Application) : AndroidViewModel(application
                 expireAt = expireAt,
                 mediaUri = mediaUri,
                 viewOnce = viewOnce,
-                quotedMessageId = quotedMessageId,
-                quotedMessageContent = quotedMessageContent
             )
             db?.messageDao()?.insertMessage(msg)
             NetworkService.sendMessage(
@@ -113,8 +109,6 @@ class MeshChatViewModel(application: Application) : AndroidViewModel(application
                     content = msg.content,
                     senderId = "self",
                     timestamp = System.currentTimeMillis(),
-                    quotedMessageId = quotedMessageId,
-                    quotedMessageContent = quotedMessageContent
                 )
             )
             _inputText.value = ""
