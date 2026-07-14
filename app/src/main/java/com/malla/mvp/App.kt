@@ -27,9 +27,14 @@ class App : Application(), IAppContext {
         context = this
         appContextProvider = this
         cryptoProvider = CryptoEngineAdapter()
+        try {
+            Injector.init(this)
+        } catch (e: Exception) {
+            android.widget.Toast.makeText(this, "Error al iniciar servicios: ${e.message}", android.widget.Toast.LENGTH_LONG).show()
+        }
+
         
         // 👇 LÍNEA FALTANTE
-        Injector.init(this)
         com.malla.mvp.ui.settings.ChatSettings.load(this)
 
         val mainHandler = Handler(Looper.getMainLooper())
@@ -37,6 +42,7 @@ class App : Application(), IAppContext {
             val msg = throwable.message ?: "Error desconocido"
             // Guardar en archivo para el siguiente inicio
             try {
+        Injector.init(this)
                 File(filesDir, "crash.txt").writeText(msg)
             } catch (_: Exception) {}
             
