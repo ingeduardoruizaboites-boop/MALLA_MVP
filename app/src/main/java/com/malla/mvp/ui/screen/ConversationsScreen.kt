@@ -72,6 +72,16 @@ fun ConversationsScreen(
         else conversations.filter { it.title.contains(searchQuery, ignoreCase = true) }
     }
 
+
+    val selfChat = com.malla.mvp.data.entity.ConversationEntity(
+        id = "self_chat",
+        title = "Yo (Mensajes guardados)",
+        lastMessage = "Toca para guardar notas, imágenes, documentos...",
+        timestamp = System.currentTimeMillis(),
+        unreadCount = 0,
+        isGroup = false
+    )
+
     val tabFiltered = remember(filtered, selectedTab) {
         when (selectedTab) {
             0 -> filtered
@@ -211,7 +221,8 @@ fun ConversationsScreen(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            if (tabFiltered.isEmpty()) {
+            val displayList = listOf(selfChat) + tabFiltered
+    if (displayList.isEmpty()) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Icon(Icons.Filled.ChatBubbleOutline, null, tint = Color.White.copy(alpha = 0.3f), modifier = Modifier.size(48.dp))
@@ -221,7 +232,7 @@ fun ConversationsScreen(
                 }
             } else {
                 LazyColumn(contentPadding = PaddingValues(vertical = 4.dp)) {
-                    items(tabFiltered, key = { it.id }) { conversation ->
+                    items(displayList, key = { it.id }) { conversation ->
                         val avatarBitmap: Bitmap? = if (conversation.id == "sim_alicia") IdentityManager.loadAvatar(context) else null
                         ConversationCard(
                             conversation = conversation,
