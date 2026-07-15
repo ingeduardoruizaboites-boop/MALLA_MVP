@@ -48,7 +48,7 @@ object Injector {
         // Adaptador de red (NetworkService -> INetworkService)
         val networkService = object : INetworkService {
             override val connectionState: Flow<Boolean> = NetworkService.connectedClientsCount.map { it > 0 }
-            override suspend fun sendMeshMessage(message: CoreMeshMessage): Result<Unit> {
+            override suspend fun sendMeshMessage(message: CoreMeshMessage, recipientId: String): Result<Unit> {
                 return try {
                     val nsMessage = com.malla.mvp.core.network.MeshMessage(
                         content = message.content,
@@ -56,7 +56,7 @@ object Injector {
                         timestamp = message.timestamp,
                         type = 0
                     )
-                    NetworkService.sendMessageTo(nsMessage.senderId, nsMessage) // TODO: obtener recipientId real del contexto
+                    NetworkService.sendMessageTo(recipientId, nsMessage) // TODO: obtener recipientId real del contexto
                     Result.success(Unit)
                 } catch (e: Exception) {
                     Result.failure(e)

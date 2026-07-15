@@ -21,7 +21,7 @@ object UnifiedMessageRouter {
             if (isTransportAvailable(contactId, "tcp")) {
                 try {
                     Injector.networkService.sendMeshMessage(
-                        com.malla.mvp.core.network.MeshMessage(senderId = "Yo", content = content, type = 0)
+                        com.malla.mvp.core.network.MeshMessage(senderId = "Yo", content = content, type = 0), contactId
                     )
                     LogBuffer.add("ROUTER", "Enviado a $contactId por TCP")
                     return@launch

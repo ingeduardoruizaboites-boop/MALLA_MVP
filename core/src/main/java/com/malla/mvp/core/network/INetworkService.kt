@@ -5,7 +5,7 @@ import kotlinx.coroutines.flow.Flow
 
 interface INetworkService {
     val connectionState: Flow<Boolean>
-    suspend fun sendMeshMessage(message: MeshMessage): Result<Unit>
+    suspend fun sendMeshMessage(message: MeshMessage, recipientId: String): Result<Unit>
     fun addMessageListener(listener: (MeshMessage) -> Unit)
     fun removeMessageListener(listener: (MeshMessage) -> Unit)
 }

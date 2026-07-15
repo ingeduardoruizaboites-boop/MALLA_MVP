@@ -36,9 +36,7 @@ object CascadeRouter {
                                 content = content,
                                 type = if (type == "zumbido") 4 else 0
                             )
-                        )
-                        LogBuffer.add(TAG, "Enviado por Internet a $contactId")
-                        return@launch
+                        , contactId)
                     } catch (e: Exception) {
                         LogBuffer.add(TAG, "Internet falló: ${e.message}")
                     }

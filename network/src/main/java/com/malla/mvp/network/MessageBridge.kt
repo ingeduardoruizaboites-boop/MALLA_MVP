@@ -62,7 +62,7 @@ class MessageBridge(
             scope.launch {
                 try {
                     val msg = MeshMessage(senderId = "Yo", content = text, type = 0)
-                    networkService.sendMeshMessage(msg)
+                    networkService.sendMeshMessage(msg, msg.senderId)
                 } catch (e: Exception) {
                     Log.e(TAG, "[MB:SEND] Error enviando: ${e.message}")
                 }
@@ -108,7 +108,7 @@ class MessageBridge(
                     forwardSemaphore.acquire()
                     launch {
                         try {
-                            networkService.sendMeshMessage(msg)
+                            networkService.sendMeshMessage(msg, msg.senderId)
                             Log.d(TAG, "[MB:FWD] Mensaje reenviado")
                         } catch (e: Exception) {
                             Log.e(TAG, "[MB:FWD] Error reenviando: ${e.message}")
@@ -127,7 +127,7 @@ class MessageBridge(
         if (isPremium && forwardSemaphore.tryAcquire()) {
             scope.launch {
                 try {
-                    networkService.sendMeshMessage(message)
+                    networkService.sendMeshMessage(message, message.senderId)
                 } catch (e: Exception) {
                     Log.e(TAG, "[MB:FWD] Premium: error reenviando: ${e.message}")
                 } finally {
@@ -145,7 +145,7 @@ class MessageBridge(
     fun sendWebRtcSignal(contactId: String, signal: String) {
         scope.launch {
             val msg = MeshMessage(senderId = "Yo", content = signal, type = 3)
-            networkService.sendMeshMessage(msg)
+            networkService.sendMeshMessage(msg, msg.senderId)
         }
     }
 
