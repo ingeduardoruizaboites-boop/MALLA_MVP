@@ -68,5 +68,10 @@ com.malla.mvp.app-merged_res-66 /workspaces/MALLA_MVP/app/build/intermediates/me
 com.malla.mvp.app-debug-67 /workspaces/MALLA_MVP/app/src/debug/res
 com.malla.mvp.app-main-68 /workspaces/MALLA_MVP/app/src/main/res
 com.malla.mvp.app-packaged_res-69 /workspaces/MALLA_MVP/core/build/intermediates/packaged_res/debug
-com.malla.mvp.app-packaged_res-70 /workspaces/MALLA_MVP/data/build/intermediates/packaged_res/debug
-com.malla.mvp.app-packaged_res-71 /workspaces/MALLA_MVP/media/build/intermediates/packaged_res/debug
+com.malla.mvp.app-packaged_res-70 /workspaces/MALLA_MVP/crypto/build/intermediates/packaged_res/debug
+com.malla.mvp.app-packaged_res-71 /workspaces/MALLA_MVP/data/build/intermediates/packaged_res/debug
+com.malla.mvp.app-packaged_res-72 /workspaces/MALLA_MVP/events/build/intermediates/packaged_res/debug
+com.malla.mvp.app-packaged_res-73 /workspaces/MALLA_MVP/identity/build/intermediates/packaged_res/debug
+com.malla.mvp.app-packaged_res-74 /workspaces/MALLA_MVP/media/build/intermediates/packaged_res/debug
+com.malla.mvp.app-packaged_res-75 /workspaces/MALLA_MVP/network/build/intermediates/packaged_res/debug
+com.malla.mvp.app-packaged_res-76 /workspaces/MALLA_MVP/transport/build/intermediates/packaged_res/debug

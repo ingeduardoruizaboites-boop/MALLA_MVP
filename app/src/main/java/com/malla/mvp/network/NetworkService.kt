@@ -7,6 +7,7 @@ import com.malla.mvp.core.network.MeshMessage
 import com.malla.mvp.core.engine.LogBuffer
 
 import com.malla.mvp.crypto.CryptoEngine
+import com.malla.mvp.core.crypto.DoubleRatchet
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import java.io.*
@@ -117,8 +118,10 @@ object NetworkService {
         val clientId = "${socket.inetAddress.hostAddress}:${socket.port}"
         private var input: DataInputStream? = null
         private var output: DataOutputStream? = null
-        private var secretKey: SecretKey? = null
+        private var ratchet: DoubleRatchet? = null
         private var running = false
+        // Caché de mensajes-clave saltados (contador -> clave) para tolerar desorden
+        private val skippedKeys = mutableMapOf<Int, ByteArray>()
 
     fun start() {
             running = true
@@ -168,13 +171,28 @@ object NetworkService {
                     throw Exception("Identidad del peer ha cambiado (posible MITM)")
                 } else if (savedId == null) {
                     prefs.edit().putString("identity_$clientId", peerIdentityKeyB64).apply()
-                identityToClient[peerIdentityKeyB64] = clientId
                     Log.d(TAG, "[NS:HS] TOFU: primera conexión con $clientId, identidad guardada")
                 }
+                // Actualizar mapeo de identidad siempre (reconexiones)
+                identityToClient[peerIdentityKeyB64] = clientId
 
                 // 6. Inicializar DoubleRatchet con la clave efímera remota
                 val peerPublicKey = CryptoEngine.base64ToPublicKey(peerEphemeralKeyB64)
-                secretKey = CryptoEngine.deriveSharedSecret(localKeyPair.private, peerPublicKey)
+                // Intentar restaurar estado anterior del ratchet
+                val savedStateB64 = App.context.getSharedPreferences("ratchet_state", android.content.Context.MODE_PRIVATE)
+                    .getString("state_$clientId", null)
+                if (savedStateB64 != null) {
+                    try {
+                        val savedState = android.util.Base64.decode(savedStateB64, android.util.Base64.NO_WRAP)
+                        ratchet = DoubleRatchet.restoreState(savedState, localKeyPair, peerPublicKey, clientId)
+                        Log.d(TAG, "[NS:HS] Ratchet restaurado para $clientId")
+                    } catch (e: Exception) {
+                        Log.w(TAG, "[NS:HS] No se pudo restaurar ratchet, iniciando nuevo: ${e.message}")
+                        ratchet = DoubleRatchet(localKeyPair, peerPublicKey, clientId)
+                    }
+                } else {
+                    ratchet = DoubleRatchet(localKeyPair, peerPublicKey, clientId)
+                }
                 Log.d(TAG, "[NS:HS] Handshake autenticado completado con $clientId")
                 LogBuffer.add("NS", "Handshake seguro OK: ${clientId}")
                 _connectedClientsCount.value = clients.size
@@ -191,14 +209,42 @@ object NetworkService {
         private suspend fun listenForMessages() {
             try {
                 while (running) {
-                    val length = input?.readInt() ?: break
+                    // Leer si es un mensaje de control o de datos
+                    val header = input?.readUTF() ?: break
+                    if (header.startsWith("RATCHET_STEP|")) {
+                        handleRatchetStep(header.removePrefix("RATCHET_STEP|"))
+                        continue
+                    }
+                    // Si no es control, asumimos que es longitud del mensaje (compatibilidad)
+                    val length = try { header.toInt() } catch (e: NumberFormatException) { break }
                     val encrypted = ByteArray(length)
                     input?.readFully(encrypted)
-                    val decrypted = CryptoEngine.decrypt(encrypted, secretKey!!)
+                    val currentRatchet = ratchet ?: break
+                    val decryptedBase64 = String(encrypted, Charsets.UTF_8)
+                    // Intentar descifrar con la clave actual; si falla, buscar en caché de saltados
+                    val decrypted = try {
+                        currentRatchet.decrypt(decryptedBase64)
+                    } catch (e: Exception) {
+                        // Intentar con claves saltadas almacenadas (desorden)
+                        var recovered: String? = null
+                        val skippedEntries = skippedKeys.entries.sortedBy { it.key }
+                        for ((counter, key) in skippedEntries) {
+                            try {
+                                val cipher = javax.crypto.Cipher.getInstance("AES/GCM/NoPadding")
+                                val iv = android.util.Base64.decode(decryptedBase64, android.util.Base64.NO_WRAP).copyOfRange(0, 12)
+                                val encryptedData = android.util.Base64.decode(decryptedBase64, android.util.Base64.NO_WRAP).copyOfRange(12, encrypted.size)
+                                val keySpec = javax.crypto.spec.SecretKeySpec(key, "AES")
+                                cipher.init(javax.crypto.Cipher.DECRYPT_MODE, keySpec, javax.crypto.spec.GCMParameterSpec(128, iv))
+                                recovered = String(cipher.doFinal(encryptedData), Charsets.UTF_8)
+                                skippedKeys.remove(counter)
+                                break
+                            } catch (_: Exception) { }
+                        }
+                        recovered ?: throw e
+                    }
+
                     val parts = decrypted.split("|", limit = 4)
                     val type = if (parts.getOrElse(0) { "chat" } == "zumbido") 4 else 0
-                    val quoteId = parts.getOrElse(1) { "" }.ifBlank { null }
-                    val quoteContent = parts.getOrElse(2) { "" }.ifBlank { null }
                     val text = parts.getOrElse(3) { decrypted }
                     val message = MeshMessage(
                         content = text,
@@ -206,7 +252,7 @@ object NetworkService {
                         type = type,
                     )
                     Log.d(TAG, "[NS:MSG] Mensaje recibido de $clientId (tipo=$type, ${encrypted.size} bytes)")
-            LogBuffer.add("NS", "Mensaje recibido: tipo=${type}")
+                    LogBuffer.add("NS", "Mensaje recibido: tipo=${type}")
                     _messages.emit(message)
                 }
             } catch (e: Exception) {
@@ -218,13 +264,46 @@ object NetworkService {
 
         suspend fun send(message: MeshMessage) {
             try {
-                val encrypted = CryptoEngine.encrypt(message.content, secretKey!!)
+                val currentRatchet = ratchet ?: return
+                // Realizar ratchetStep cada 10 mensajes (o por tiempo)
+                if (messageCount++ % 10 == 0) {
+                    val newPubKey = currentRatchet.ratchetStep()
+                    // Enviar la nueva clave pública al peer
+                    val newPubKeyB64 = android.util.Base64.encodeToString(newPubKey.encoded, android.util.Base64.NO_WRAP)
+                    output?.writeUTF("RATCHET_STEP|$newPubKeyB64")
+                    output?.flush()
+                    // Guardar estado del ratchet
+                    App.context.getSharedPreferences("ratchet_state", android.content.Context.MODE_PRIVATE)
+                        .edit().putString("state_$clientId", android.util.Base64.encodeToString(currentRatchet.exportState(), android.util.Base64.NO_WRAP)).apply()
+                    Log.d(TAG, "[NS:RATCHET] Ratchet step enviado a $clientId")
+                }
+
+                val encryptedBase64 = currentRatchet.encrypt(message.content)
+                val encrypted = encryptedBase64.toByteArray(Charsets.UTF_8)
                 output?.writeInt(encrypted.size)
                 output?.write(encrypted)
                 output?.flush()
-                Log.d(TAG, "[NS:MSG] Mensaje enviado a $clientId (${encrypted.size} bytes cifrados)")
+                Log.d(TAG, "[NS:MSG] Mensaje enviado a $clientId (${encrypted.size} bytes cifrados con DoubleRatchet)")
             } catch (e: Exception) {
                 Log.e(TAG, "[NS:ERR] Error enviando mensaje a $clientId: ${e.message}", e)
+            }
+        }
+
+        // Contador de mensajes para decidir cuándo hacer ratchetStep
+        private var messageCount = 0
+
+        // Procesar mensajes de control del ratchet (nueva clave pública del peer)
+        private fun handleRatchetStep(newPubKeyB64: String) {
+            try {
+                val currentRatchet = ratchet ?: return
+                val newPubKey = CryptoEngine.base64ToPublicKey(newPubKeyB64)
+                currentRatchet.receiveRemoteRatchetKey(newPubKey)
+                // Guardar estado tras recibir ratchet step
+                App.context.getSharedPreferences("ratchet_state", android.content.Context.MODE_PRIVATE)
+                    .edit().putString("state_$clientId", android.util.Base64.encodeToString(currentRatchet.exportState(), android.util.Base64.NO_WRAP)).apply()
+                Log.d(TAG, "[NS:RATCHET] Ratchet step recibido de $clientId")
+            } catch (e: Exception) {
+                Log.e(TAG, "[NS:RATCHET] Error procesando ratchet step: ${e.message}", e)
             }
         }
 
@@ -232,6 +311,7 @@ object NetworkService {
             running = false
             try { socket.close() } catch (_: Exception) {}
             clients.remove(clientId)
+            identityToClient.values.removeAll { it == clientId }
             _connectedClientsCount.value = clients.size
             Log.d(TAG, "[NS:TCP] Cliente desconectado: $clientId (total: ${clients.size})")
         }
