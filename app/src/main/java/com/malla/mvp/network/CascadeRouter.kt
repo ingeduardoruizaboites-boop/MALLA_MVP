@@ -7,6 +7,8 @@ import com.malla.mvp.App
 import com.malla.mvp.core.engine.LogBuffer
 import com.malla.mvp.data.AppDatabase
 import com.malla.mvp.data.entity.MessageEntity
+import com.malla.mvp.network.BleManager
+import com.malla.mvp.network.WifiDirectManager
 import com.malla.mvp.di.Injector
 import com.malla.mvp.identity.IdentityManager
 import kotlinx.coroutines.*
@@ -67,7 +69,48 @@ object CascadeRouter {
                     }
                 }
 
-                // 4. Mesh (pendiente por ahora)
+                // 4. Mesh: intentar BLE
+                val bleDevices = BleManager.foundBluetoothDevices.value
+                if (bleDevices.isNotEmpty()) {
+                    try {
+                        val device = bleDevices.firstOrNull {
+                            it.name == contactId || it.address == contactId
+                        }
+                        if (device != null) {
+                            val ip = BleManager.connectAndReadIp(device)
+                            if (ip != null) {
+                                NetworkService.connectToPeer(ip)
+                                NetworkService.sendMessageTo(contactId, 
+                                    MeshMessage(content = content, senderId = "self", type = if (type == "zumbido") 4 else 0)
+                                )
+                                LogBuffer.add(TAG, "Enviado por BLE a $contactId (IP: $ip)")
+                                return@launch
+                            }
+                        }
+                    } catch (e: Exception) {
+                        LogBuffer.add(TAG, "BLE falló: ${e.message}")
+                    }
+                }
+
+                // 4b. Mesh: intentar Wi‑Fi Direct
+                val wifiPeers = WifiDirectManager.peers.value
+                if (wifiPeers.isNotEmpty()) {
+                    try {
+                        val peer = wifiPeers.firstOrNull { it == contactId }
+                        if (peer != null) {
+                            WifiDirectManager.connectToPeer(peer)
+                            // Tras conexión, enviar por TCP
+                            NetworkService.sendMessageTo(contactId, 
+                                MeshMessage(content = content, senderId = "self", type = if (type == "zumbido") 4 else 0)
+                            )
+                            LogBuffer.add(TAG, "Enviado por Wi‑Fi Direct a $contactId")
+                            return@launch
+                        }
+                    } catch (e: Exception) {
+                        LogBuffer.add(TAG, "Wi‑Fi Direct falló: ${e.message}")
+                    }
+                }
+
                 LogBuffer.add(TAG, "Mesh no disponible, guardando pendiente")
 
                 // 5. Guardar pendiente
