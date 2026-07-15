@@ -42,6 +42,13 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun contactDao(): ContactDao
 
     companion object {
+        val CALLBACK = object : RoomDatabase.Callback() {
+            override fun onCreate(db: androidx.sqlite.db.SupportSQLiteDatabase) {
+                super.onCreate(db)
+                db.execSQL("INSERT INTO conversations (id, title, lastMessage, timestamp, unreadCount, isGroup) VALUES ('self_chat', 'Yo (Mensajes guardados)', 'Toca para guardar notas, imágenes, documentos...', strftime('%s','now'), 0, 0)")
+            }
+        }
+
         @Volatile
         private var INSTANCE: AppDatabase? = null
 
@@ -55,6 +62,7 @@ abstract class AppDatabase : RoomDatabase() {
                             "malla_database"
                         )
                             .fallbackToDestructiveMigration()
+                            .addCallback(AppDatabase.CALLBACK)
                             .build()
                             .also { INSTANCE = it }
                     } catch (e: Exception) {
@@ -70,6 +78,7 @@ abstract class AppDatabase : RoomDatabase() {
                             "malla_database"
                         )
                             .fallbackToDestructiveMigration()
+                            .addCallback(AppDatabase.CALLBACK)
                             .build()
                         INSTANCE = instance
                         instance

@@ -514,10 +514,11 @@ fun MessageBubbleV2(msg: MessageData, animate: Boolean = false, onImageClick: (U
                 )
             ) {
                 Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
-                    if (msg.mediaUri != null) {
-                        val uri = Uri.parse(msg.mediaUri)
-                        if (msg.mediaUri.endsWith(".3gp") || msg.mediaUri.endsWith(".m4a") || msg.mediaUri.contains("voice_")) {
-                            AudioBubblePlayer(filePath = msg.mediaUri, modifier = Modifier.fillMaxWidth())
+                    val media = msg.mediaUri
+                    if (media != null) {
+                        val uri = Uri.parse(media)
+                        if (media.endsWith(".3gp") || media.endsWith(".m4a") || media.contains("voice_")) {
+                            AudioBubblePlayer(filePath = media, modifier = Modifier.fillMaxWidth())
                             Spacer(modifier = Modifier.height(4.dp))
                         } else {
                             Box(

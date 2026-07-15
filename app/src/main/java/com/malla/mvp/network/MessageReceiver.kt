@@ -1,5 +1,4 @@
 package com.malla.mvp.network
-import com.malla.mvp.core.network.MeshMessage
 
 import android.content.Context
 import android.util.Log
@@ -8,6 +7,7 @@ import com.malla.mvp.data.AppDatabase
 import com.malla.mvp.data.entity.ConversationEntity
 import com.malla.mvp.data.entity.MessageEntity
 import com.malla.mvp.di.Injector
+import com.malla.mvp.core.network.MeshMessage
 import com.malla.mvp.events.MallaEventBus
 import kotlinx.coroutines.*
 import java.util.UUID
@@ -37,7 +37,7 @@ object MessageReceiver {
                 val parts = raw.split("|", limit = 2)
                 val sender = parts.getOrElse(0) { "unknown" }
                 val body = parts.getOrElse(1) { raw }
-                val meshMsg = MeshMessage(
+                val meshMsg = com.malla.mvp.core.network.MeshMessage(
                     content = body,
                     senderId = sender,
                     timestamp = System.currentTimeMillis(),
@@ -103,7 +103,7 @@ object MessageReceiver {
             messageDao.insertMessage(msgEntity)
 
             MallaEventBus.messageReceived.emit(meshMsg)
-            if (meshMsg.type == 0) {
+            if (meshMsg.type == 4) {
                 MallaEventBus.zumbidoReceived.emit(meshMsg)
             }
             LogBuffer.add(TAG, "Mensaje guardado de ${meshMsg.senderId}")

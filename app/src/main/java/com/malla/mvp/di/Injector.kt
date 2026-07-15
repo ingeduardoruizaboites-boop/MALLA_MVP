@@ -34,24 +34,6 @@ object Injector {
 
     fun init(context: Context) {
         val db = AppDatabase.getInstance(context)
-        // Crear chat propio (Mensajes guardados) si no existe
-        kotlinx.coroutines.MainScope().launch(kotlinx.coroutines.Dispatchers.IO) {
-            if (db != null) {
-                val existing = db.conversationDao().getConversationById("self_chat")
-                if (existing == null) {
-                    val selfConv = com.malla.mvp.data.entity.ConversationEntity(
-                        id = "self_chat",
-                        title = "Yo (Mensajes guardados)",
-                        lastMessage = "Toca para guardar notas, imágenes, documentos...",
-                        timestamp = System.currentTimeMillis(),
-                        unreadCount = 0,
-                        isGroup = false
-                    )
-                    db.conversationDao().insertConversation(selfConv)
-                }
-            }
-        }
-
         if (db == null) {
             android.widget.Toast.makeText(context, "Base de datos no disponible. Funcionamiento limitado.", android.widget.Toast.LENGTH_LONG).show()
             // La app continúa sin BD
@@ -177,15 +159,6 @@ object Injector {
         }
         messageBridge.start()
         MessageReceiver.start(context)
-        messageBridge.onIncomingMessage = { msg ->
-            val meshMsg = com.malla.mvp.core.network.MeshMessage(
-                content = msg.content,
-                senderId = msg.senderId,
-                timestamp = msg.timestamp,
-                type = 0
-            )
-            MessageReceiver.process(context, meshMsg)
-        }
 
         // Inicializar Premium y perfil del dispositivo
         PremiumManager.init()

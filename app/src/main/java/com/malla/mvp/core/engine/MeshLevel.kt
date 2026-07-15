@@ -1,6 +1,0 @@
-package com.malla.mvp.core.engine
-
-enum class MeshLevel {
-    BLE, WIFI_DIRECT, TCP_DIRECT, NFC, ULTRASOUND, SMS_BRIDGE,
-    ONLINE_WIFI, ONLINE_MOBILE, BLUETOOTH_CLASSIC, QR_CODE, FLASH_LIGHT, NO_SIGNAL
-}

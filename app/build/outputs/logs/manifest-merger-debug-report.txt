@@ -15,8 +15,13 @@ ADDED from /workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:2:1-54:12
 INJECTED from /workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:2:1-54:12
 INJECTED from /workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:2:1-54:12
 INJECTED from /workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:2:1-54:12
+MERGED from [:network] /workspaces/MALLA_MVP/network/build/intermediates/merged_manifest/debug/AndroidManifest.xml:2:1-7:12
+MERGED from [:identity] /workspaces/MALLA_MVP/identity/build/intermediates/merged_manifest/debug/AndroidManifest.xml:2:1-7:12
+MERGED from [:events] /workspaces/MALLA_MVP/events/build/intermediates/merged_manifest/debug/AndroidManifest.xml:2:1-7:12
+MERGED from [:transport] /workspaces/MALLA_MVP/transport/build/intermediates/merged_manifest/debug/AndroidManifest.xml:2:1-7:12
 MERGED from [:data] /workspaces/MALLA_MVP/data/build/intermediates/merged_manifest/debug/AndroidManifest.xml:2:1-7:12
 MERGED from [:media] /workspaces/MALLA_MVP/media/build/intermediates/merged_manifest/debug/AndroidManifest.xml:2:1-7:12
+MERGED from [:crypto] /workspaces/MALLA_MVP/crypto/build/intermediates/merged_manifest/debug/AndroidManifest.xml:2:1-7:12
 MERGED from [:core] /workspaces/MALLA_MVP/core/build/intermediates/merged_manifest/debug/AndroidManifest.xml:2:1-7:12
 MERGED from [androidx.biometric:biometric:1.1.0] /home/codespace/.gradle/caches/transforms-3/49c37141d3478ad09eb1047a38676985/transformed/biometric-1.1.0/AndroidManifest.xml:17:1-29:12
 MERGED from [androidx.compose.material3:material3-android:1.2.0] /home/codespace/.gradle/caches/transforms-3/7d7c0deab91643ec6957a623e65742d4/transformed/material3-release/AndroidManifest.xml:17:1-22:12
@@ -282,10 +287,20 @@ uses-sdk
 INJECTED from /workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml reason: use-sdk injection requested
 INJECTED from /workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml
 INJECTED from /workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml
+MERGED from [:network] /workspaces/MALLA_MVP/network/build/intermediates/merged_manifest/debug/AndroidManifest.xml:5:5-44
+MERGED from [:network] /workspaces/MALLA_MVP/network/build/intermediates/merged_manifest/debug/AndroidManifest.xml:5:5-44
+MERGED from [:identity] /workspaces/MALLA_MVP/identity/build/intermediates/merged_manifest/debug/AndroidManifest.xml:5:5-44
+MERGED from [:identity] /workspaces/MALLA_MVP/identity/build/intermediates/merged_manifest/debug/AndroidManifest.xml:5:5-44
+MERGED from [:events] /workspaces/MALLA_MVP/events/build/intermediates/merged_manifest/debug/AndroidManifest.xml:5:5-44
+MERGED from [:events] /workspaces/MALLA_MVP/events/build/intermediates/merged_manifest/debug/AndroidManifest.xml:5:5-44
+MERGED from [:transport] /workspaces/MALLA_MVP/transport/build/intermediates/merged_manifest/debug/AndroidManifest.xml:5:5-44
+MERGED from [:transport] /workspaces/MALLA_MVP/transport/build/intermediates/merged_manifest/debug/AndroidManifest.xml:5:5-44
 MERGED from [:data] /workspaces/MALLA_MVP/data/build/intermediates/merged_manifest/debug/AndroidManifest.xml:5:5-44
 MERGED from [:data] /workspaces/MALLA_MVP/data/build/intermediates/merged_manifest/debug/AndroidManifest.xml:5:5-44
 MERGED from [:media] /workspaces/MALLA_MVP/media/build/intermediates/merged_manifest/debug/AndroidManifest.xml:5:5-44
 MERGED from [:media] /workspaces/MALLA_MVP/media/build/intermediates/merged_manifest/debug/AndroidManifest.xml:5:5-44
+MERGED from [:crypto] /workspaces/MALLA_MVP/crypto/build/intermediates/merged_manifest/debug/AndroidManifest.xml:5:5-44
+MERGED from [:crypto] /workspaces/MALLA_MVP/crypto/build/intermediates/merged_manifest/debug/AndroidManifest.xml:5:5-44
 MERGED from [:core] /workspaces/MALLA_MVP/core/build/intermediates/merged_manifest/debug/AndroidManifest.xml:5:5-44
 MERGED from [:core] /workspaces/MALLA_MVP/core/build/intermediates/merged_manifest/debug/AndroidManifest.xml:5:5-44
 MERGED from [androidx.biometric:biometric:1.1.0] /home/codespace/.gradle/caches/transforms-3/49c37141d3478ad09eb1047a38676985/transformed/biometric-1.1.0/AndroidManifest.xml:20:5-22:41

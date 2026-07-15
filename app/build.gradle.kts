@@ -41,6 +41,12 @@ dependencies {
     implementation(project(":core"))
     implementation(project(":data"))
     implementation(project(":media"))
+    implementation(project(":crypto"))
+    implementation(project(":network"))
+    implementation(project(":identity"))
+    implementation(project(":events"))
+    implementation(project(":transport"))
+
     implementation("androidx.biometric:biometric:1.1.0")
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.7.0")
     val composeBom = platform("androidx.compose:compose-bom:2024.02.00")

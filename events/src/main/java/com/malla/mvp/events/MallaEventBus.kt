@@ -25,6 +25,7 @@ object MallaEventBus {
     // ── Mensajería ────────────────────────────────────────────────
     /** Mensaje recibido desde la red mesh (ya validado y guardado) */
     val messageReceived = MutableSharedFlow<MeshMessage>(extraBufferCapacity = 10)
+    val zumbidoReceived = MutableSharedFlow<MeshMessage>(extraBufferCapacity = 5)
     /** Se detectó un intento de replay (mensaje duplicado) */
     val replayAttackDetected = MutableSharedFlow<String>(extraBufferCapacity = 5)
 
