@@ -34,16 +34,41 @@ object ContactDiscoveryManager {
     }
 
 
-    private fun generateHashcash(challenge: String, difficulty: Int): Long {
-        val requiredPrefix = "0".repeat(difficulty)
-        var nonce = 0L
+    private fun hasLeadingZeroBits(hash: ByteArray, bits: Int): Boolean {
+        var total = 0
+        for (byte in hash) {
+            if (byte == 0.toByte()) {
+                total += 8
+                if (total >= bits) return true
+            } else {
+                var mask = 0x80
+                for (i in 0..7) {
+                    if ((byte.toInt() and mask) == 0) {
+                        total++
+                        if (total >= bits) return true
+                    } else {
+                        return false
+                    }
+                    mask = mask shr 1
+                }
+            }
+        }
+        return total >= bits
+    }
+
+    private fun generateHashcash(challenge: String, difficultyBits: Int): Long {
         val startTime = System.currentTimeMillis()
+        val timeoutMs = 5000L
+        var nonce = 0L
+        val digest = java.security.MessageDigest.getInstance("SHA-256")
         while (true) {
+            if (System.currentTimeMillis() - startTime > timeoutMs) {
+                LogBuffer.add("DISCOVERY", "Hashcash timeout: no se encontró nonce para $challenge en ${timeoutMs}ms")
+                return -1L
+            }
             val input = challenge + nonce.toString()
-            val digest = java.security.MessageDigest.getInstance("SHA-256")
             val hash = digest.digest(input.toByteArray(Charsets.UTF_8))
-            val hexHash = hash.joinToString("") { "%02x".format(it) }
-            if (hexHash.startsWith(requiredPrefix)) {
+            if (hasLeadingZeroBits(hash, difficultyBits)) {
                 val elapsed = System.currentTimeMillis() - startTime
                 LogBuffer.add("DISCOVERY", "Hashcash generado en ${elapsed}ms: nonce=$nonce")
                 return nonce
@@ -52,12 +77,12 @@ object ContactDiscoveryManager {
         }
     }
 
-    fun testHashcashDifficulty(difficulty: Int): Long {
+    fun testHashcashDifficulty(difficultyBits: Int): Long {
         val challenge = "test-${System.currentTimeMillis()}"
         val start = System.currentTimeMillis()
-        val nonce = generateHashcash(challenge, difficulty)
+        val nonce = generateHashcash(challenge, difficultyBits)
         val end = System.currentTimeMillis()
-        LogBuffer.add("DISCOVERY", "Tiempo para dificultad $difficulty: ${end - start}ms (nonce=$nonce)")
+        LogBuffer.add("DISCOVERY", "Tiempo para dificultad $difficultyBits: ${end - start}ms (nonce=$nonce)")
         return nonce
     }
 
@@ -68,8 +93,8 @@ object ContactDiscoveryManager {
             val myId = getMyId()
             val todayHash = hashForDay(phone, 0)
             val yesterdayHash = hashForDay(phone, -1)
-            val nonceToday = generateHashcash(todayHash, com.malla.mvp.network.DhtService.DIFFICULTY)
-            val nonceYesterday = generateHashcash(yesterdayHash, com.malla.mvp.network.DhtService.DIFFICULTY)
+            val nonceToday = generateHashcash(todayHash, com.malla.mvp.network.DhtService.DIFFICULTY_BITS)
+            val nonceYesterday = generateHashcash(yesterdayHash, com.malla.mvp.network.DhtService.DIFFICULTY_BITS)
             DhtService.publishDiscoveryHashcash(todayHash, nonceToday, myId)
             DhtService.publishDiscoveryHashcash(yesterdayHash, nonceYesterday, myId)
             LogBuffer.add("DISCOVERY", "Presencia publicada para $myId")

@@ -48,10 +48,8 @@ object DhtService {
         val input = challenge + nonce.toString()
         val digest = java.security.MessageDigest.getInstance("SHA-256")
         val hash = digest.digest(input.toByteArray(Charsets.UTF_8))
-        val hexHash = hash.joinToString("") { "%02x".format(it) }
-        // Verificar que el hash tenga al menos DIFFICULTY bits cero al inicio
-        val requiredPrefix = "0".repeat(DIFFICULTY)
-        if (!hexHash.startsWith(requiredPrefix)) {
+        if (!hasLeadingZeroBits(hash, DIFFICULTY_BITS)) {
+            val hexHash = hash.joinToString("") { "%02x".format(it) }
             LogBuffer.add("DHT", "Hashcash rechazado: $hexHash")
             return
         }
@@ -59,20 +57,40 @@ object DhtService {
         LogBuffer.add("DHT", "Hashcash válido para $challenge publicado por $myId")
     }
 
+    // Verificar que el hash tenga al menos `bits` bits en cero al inicio
+    private fun hasLeadingZeroBits(hash: ByteArray, bits: Int): Boolean {
+        var total = 0
+        for (byte in hash) {
+            if (byte == 0.toByte()) {
+                total += 8
+                if (total >= bits) return true
+            } else {
+                var mask = 0x80
+                for (i in 0..7) {
+                    if ((byte.toInt() and mask) == 0) {
+                        total++
+                        if (total >= bits) return true
+                    } else {
+                        return false
+                    }
+                    mask = mask shr 1
+                }
+            }
+        }
+        return total >= bits
+    }
+
     fun verifyAndPublish(challenge: String, nonce: Long, myId: String): Boolean {
         val input = challenge + nonce.toString()
         val digest = java.security.MessageDigest.getInstance("SHA-256")
         val hash = digest.digest(input.toByteArray(Charsets.UTF_8))
-        val hexHash = hash.joinToString("") { "%02x".format(it) }
-        val requiredPrefix = "0".repeat(DIFFICULTY)
-        return if (hexHash.startsWith(requiredPrefix)) {
-            routingTable[challenge] = "discovery|$myId"
-            LogBuffer.add("DHT", "Publicación hashcash verificada para $myId")
-            true
-        } else false
+        if (!hasLeadingZeroBits(hash, DIFFICULTY_BITS)) return false
+        routingTable[challenge] = "discovery|$myId"
+        LogBuffer.add("DHT", "Publicación hashcash verificada para $myId")
+        return true
     }
 
-    const val DIFFICULTY = 20
+    const val DIFFICULTY_BITS = 20
 
 
     fun findDiscovery(hash: String): String? {
