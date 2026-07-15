@@ -95,6 +95,10 @@ object ContactDiscoveryManager {
             val yesterdayHash = hashForDay(phone, -1)
             val nonceToday = generateHashcash(todayHash, com.malla.mvp.network.DhtService.DIFFICULTY_BITS)
             val nonceYesterday = generateHashcash(yesterdayHash, com.malla.mvp.network.DhtService.DIFFICULTY_BITS)
+            // Enviar PUBLISH vía UDP con el nonce del hashcash
+            val publishMsgToday = "PUBLISH|$todayHash|$nonceToday|$myId|8887"
+            val publishMsgYesterday = "PUBLISH|$yesterdayHash|$nonceYesterday|$myId|8887"
+            // Nota: Esta es una simulación local; en producción se enviaría por UDP
             DhtService.publishDiscoveryHashcash(todayHash, nonceToday, myId)
             DhtService.publishDiscoveryHashcash(yesterdayHash, nonceYesterday, myId)
             LogBuffer.add("DISCOVERY", "Presencia publicada para $myId")

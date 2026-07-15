@@ -110,8 +110,18 @@ object DhtService {
         val parts = message.split("|")
         when (parts[0]) {
             "PUBLISH" -> {
-                if (parts.size == 4) {
-                    routingTable[parts[1]] = "${parts[2]}:${parts[3]}"
+                // Formato: PUBLISH|challenge|nonce|ip|puerto
+                if (parts.size == 5) {
+                    val challenge = parts[1]
+                    val nonce = parts[2].toLongOrNull() ?: return
+                    val ip = parts[3]
+                    val port = parts[4]
+                    if (verifyAndPublish(challenge, nonce, "$ip:$port")) {
+                        routingTable[challenge] = "$ip:$port"
+                        LogBuffer.add("DHT", "Nodo publicado con hashcash: $ip:$port")
+                    } else {
+                        LogBuffer.add("DHT", "Publicación rechazada (hashcash inválido) para $ip:$port")
+                    }
                 }
             }
             "FIND" -> {
