@@ -3,6 +3,7 @@ import com.malla.mvp.core.network.MeshMessage
 import com.malla.mvp.core.engine.LogBuffer
 
 import com.malla.mvp.crypto.CryptoEngine
+import com.malla.mvp.core.crypto.DoubleRatchet
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import java.io.*
@@ -102,7 +103,7 @@ object NetworkService {
         val clientId = "${socket.inetAddress.hostAddress}:${socket.port}"
         private var input: DataInputStream? = null
         private var output: DataOutputStream? = null
-        private var secretKey: SecretKey? = null
+        private var ratchet: DoubleRatchet? = null
         private var running = false
 
         fun start() {
@@ -111,13 +112,16 @@ object NetworkService {
                 input = DataInputStream(socket.getInputStream())
                 output = DataOutputStream(socket.getOutputStream())
 
+                // Enviar clave pública local
                 output?.writeUTF(localPublicKeyBase64)
                 output?.flush()
+                // Recibir clave pública remota
                 val peerPubKeyBase64 = input?.readUTF() ?: throw Exception("No se recibió clave pública")
                 val peerPublicKey = CryptoEngine.base64ToPublicKey(peerPubKeyBase64)
-                secretKey = CryptoEngine.deriveSharedSecret(localKeyPair.private, peerPublicKey)
-                Log.d(TAG, "[NS:HS] Handshake completado con $clientId")
-            LogBuffer.add("NS", "Handshake ECDH OK: ${clientId}")
+                // Inicializar DoubleRatchet con el secreto ECDH
+                ratchet = DoubleRatchet(localKeyPair, peerPublicKey, clientId)
+                Log.d(TAG, "[NS:HS] Handshake con DoubleRatchet completado con $clientId")
+                LogBuffer.add("NS", "Handshake DoubleRatchet OK: ${clientId}")
                 _connectedClientsCount.value = clients.size
 
                 serverScope.launch {
@@ -135,7 +139,8 @@ object NetworkService {
                     val length = input?.readInt() ?: break
                     val encrypted = ByteArray(length)
                     input?.readFully(encrypted)
-                    val decrypted = CryptoEngine.decrypt(encrypted, secretKey!!)
+                    val decryptedBase64 = String(encrypted, Charsets.UTF_8)
+                    val decrypted = ratchet!!.decrypt(decryptedBase64)
                     val parts = decrypted.split("|", limit = 4)
                     val type = if (parts.getOrElse(0) { "chat" } == "zumbido") 4 else 0
                     val quoteId = parts.getOrElse(1) { "" }.ifBlank { null }
@@ -159,7 +164,8 @@ object NetworkService {
 
         suspend fun send(message: MeshMessage) {
             try {
-                val encrypted = CryptoEngine.encrypt(message.content, secretKey!!)
+                val encryptedBase64 = ratchet!!.encrypt(message.content)
+                val encrypted = encryptedBase64.toByteArray(Charsets.UTF_8)
                 output?.writeInt(encrypted.size)
                 output?.write(encrypted)
                 output?.flush()

@@ -93,16 +93,12 @@ class MainActivity : FragmentActivity() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) == android.content.pm.PackageManager.PERMISSION_GRANTED) {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    startForegroundService(Intent(this, MeshChatService::class.java))
                 } else {
-                    startService(Intent(this, MeshChatService::class.java))
                 }
             }
         } else {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                startForegroundService(Intent(this, MeshChatService::class.java))
             } else {
-                startService(Intent(this, MeshChatService::class.java))
             }
         }
         }

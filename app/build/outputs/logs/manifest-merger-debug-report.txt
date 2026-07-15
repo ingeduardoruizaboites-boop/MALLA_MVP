@@ -11,10 +11,10 @@ INJECTED from /workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:44:9-52:20
 	android:name
 		ADDED from /workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:45:13-62
 manifest
-ADDED from /workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:2:1-54:12
-INJECTED from /workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:2:1-54:12
-INJECTED from /workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:2:1-54:12
-INJECTED from /workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:2:1-54:12
+ADDED from /workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:2:1-55:12
+INJECTED from /workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:2:1-55:12
+INJECTED from /workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:2:1-55:12
+INJECTED from /workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:2:1-55:12
 MERGED from [:network] /workspaces/MALLA_MVP/network/build/intermediates/merged_manifest/debug/AndroidManifest.xml:2:1-7:12
 MERGED from [:identity] /workspaces/MALLA_MVP/identity/build/intermediates/merged_manifest/debug/AndroidManifest.xml:2:1-7:12
 MERGED from [:events] /workspaces/MALLA_MVP/events/build/intermediates/merged_manifest/debug/AndroidManifest.xml:2:1-7:12
@@ -207,8 +207,8 @@ ADDED from /workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:22:5-87
 	android:name
 		ADDED from /workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:22:22-84
 application
-ADDED from /workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:23:5-53:19
-INJECTED from /workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:23:5-53:19
+ADDED from /workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:23:5-54:19
+INJECTED from /workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:23:5-54:19
 MERGED from [androidx.compose.ui:ui-tooling-android:1.6.1] /home/codespace/.gradle/caches/transforms-3/ddcaa30b073b6994f6d43856786fddac/transformed/ui-tooling-release/AndroidManifest.xml:22:5-26:19
 MERGED from [androidx.compose.ui:ui-tooling-android:1.6.1] /home/codespace/.gradle/caches/transforms-3/ddcaa30b073b6994f6d43856786fddac/transformed/ui-tooling-release/AndroidManifest.xml:22:5-26:19
 MERGED from [androidx.compose.ui:ui-test-manifest:1.6.1] /home/codespace/.gradle/caches/transforms-3/0422ca281cb24d62a98ae3186f3b7252/transformed/ui-test-manifest-1.6.1/AndroidManifest.xml:22:5-26:19
@@ -277,6 +277,12 @@ ADDED from /workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:40:9-43:40
 		ADDED from /workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:42:13-53
 	android:name
 		ADDED from /workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:41:13-52
+activity#com.malla.mvp.CrashReportActivity
+ADDED from /workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:53:9-82
+	android:exported
+		ADDED from /workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:53:55-79
+	android:name
+		ADDED from /workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:53:19-54
 meta-data#android.support.FILE_PROVIDER_PATHS
 ADDED from /workspaces/MALLA_MVP/app/src/main/AndroidManifest.xml:49:13-51:54
 	android:resource

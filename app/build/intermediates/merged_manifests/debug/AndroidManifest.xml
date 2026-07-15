@@ -82,6 +82,9 @@
         </provider>
 
         <activity
+            android:name="com.malla.mvp.CrashReportActivity"
+            android:exported="false" />
+        <activity
             android:name="androidx.compose.ui.tooling.PreviewActivity"
             android:exported="true" />
         <activity
