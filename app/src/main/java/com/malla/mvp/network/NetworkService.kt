@@ -29,6 +29,7 @@ object NetworkService {
     private val serverJob = Job()
     private val serverScope = CoroutineScope(Dispatchers.IO + serverJob)
     private val clients = mutableMapOf<String, ClientHandler>()
+    private val identityToClient = mutableMapOf<String, String>()
     private val localKeyPair = CryptoEngine.generateKeyPair()
     val localPublicKeyBase64 = CryptoEngine.publicKeyToBase64(localKeyPair.public)
 
@@ -76,10 +77,20 @@ object NetworkService {
         }
     }
 
-    fun sendMessage(message: MeshMessage) {
-        Log.d(TAG, "[NS:MSG] Enviando mensaje tipo=${message.type} a ${clients.size} clientes")
+    fun sendMessageTo(recipientId: String, message: MeshMessage) {
+        val clientId = identityToClient[recipientId]
+        if (clientId == null) {
+            Log.e(TAG, "[NS:MSG] No hay conexión activa con $recipientId")
+            return
+        }
+        val handler = clients[clientId]
+        if (handler == null) {
+            Log.e(TAG, "[NS:MSG] Cliente $recipientId no encontrado en conexiones")
+            return
+        }
+        Log.d(TAG, "[NS:MSG] Enviando mensaje a $recipientId (client: $clientId)")
         serverScope.launch {
-            clients.values.forEach { it.send(message) }
+            handler.send(message)
         }
     }
 
@@ -157,6 +168,7 @@ object NetworkService {
                     throw Exception("Identidad del peer ha cambiado (posible MITM)")
                 } else if (savedId == null) {
                     prefs.edit().putString("identity_$clientId", peerIdentityKeyB64).apply()
+                identityToClient[peerIdentityKeyB64] = clientId
                     Log.d(TAG, "[NS:HS] TOFU: primera conexión con $clientId, identidad guardada")
                 }
 

@@ -45,7 +45,7 @@ object CascadeRouter {
                 // 2. TCP directo
                 if (NetworkService.connectedClientsCount.value > 0) {
                     try {
-                        NetworkService.sendMessage(
+                        NetworkService.sendMessageTo(contactId, 
                             MeshMessage(content = content, senderId = "self", type = if (type == "zumbido") 4 else 0)
                         )
                         LogBuffer.add(TAG, "Enviado por TCP a $contactId")

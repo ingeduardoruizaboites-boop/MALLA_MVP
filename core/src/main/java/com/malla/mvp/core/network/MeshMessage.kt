@@ -8,4 +8,5 @@ data class MeshMessage(
     val type: Int = 0,
     val status: Int = 0,
     val originalMessageId: String? = null,
+    val recipientId: String? = null
 )

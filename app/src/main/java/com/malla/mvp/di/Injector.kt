@@ -56,7 +56,7 @@ object Injector {
                         timestamp = message.timestamp,
                         type = 0
                     )
-                    NetworkService.sendMessage(nsMessage)
+                    NetworkService.sendMessageTo(nsMessage.senderId, nsMessage) // TODO: obtener recipientId real del contexto
                     Result.success(Unit)
                 } catch (e: Exception) {
                     Result.failure(e)

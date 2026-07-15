@@ -104,7 +104,8 @@ class MeshChatViewModel(application: Application) : AndroidViewModel(application
                 viewOnce = viewOnce,
             )
             db?.messageDao()?.insertMessage(msg)
-            NetworkService.sendMessage(
+            val convId = _conversationId.value ?: return@launch
+            NetworkService.sendMessageTo(convId,
                 MeshMessage(
                     content = msg.content,
                     senderId = "self",
