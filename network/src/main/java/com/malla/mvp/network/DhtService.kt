@@ -44,6 +44,37 @@ object DhtService {
         LogBuffer.add("DHT", "Publicado discovery: $hash")
     }
 
+    fun publishDiscoveryHashcash(challenge: String, nonce: Long, myId: String) {
+        val input = challenge + nonce.toString()
+        val digest = java.security.MessageDigest.getInstance("SHA-256")
+        val hash = digest.digest(input.toByteArray(Charsets.UTF_8))
+        val hexHash = hash.joinToString("") { "%02x".format(it) }
+        // Verificar que el hash tenga al menos DIFFICULTY bits cero al inicio
+        val requiredPrefix = "0".repeat(DIFFICULTY)
+        if (!hexHash.startsWith(requiredPrefix)) {
+            LogBuffer.add("DHT", "Hashcash rechazado: $hexHash")
+            return
+        }
+        routingTable[challenge] = "discovery|$myId"
+        LogBuffer.add("DHT", "Hashcash válido para $challenge publicado por $myId")
+    }
+
+    fun verifyAndPublish(challenge: String, nonce: Long, myId: String): Boolean {
+        val input = challenge + nonce.toString()
+        val digest = java.security.MessageDigest.getInstance("SHA-256")
+        val hash = digest.digest(input.toByteArray(Charsets.UTF_8))
+        val hexHash = hash.joinToString("") { "%02x".format(it) }
+        val requiredPrefix = "0".repeat(DIFFICULTY)
+        return if (hexHash.startsWith(requiredPrefix)) {
+            routingTable[challenge] = "discovery|$myId"
+            LogBuffer.add("DHT", "Publicación hashcash verificada para $myId")
+            true
+        } else false
+    }
+
+    const val DIFFICULTY = 20
+
+
     fun findDiscovery(hash: String): String? {
         val entry = routingTable[hash] ?: return null
         if (entry.startsWith("discovery|")) return entry.removePrefix("discovery|")

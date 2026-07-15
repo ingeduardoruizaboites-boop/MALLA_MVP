@@ -26,6 +26,34 @@ object ContactDiscoveryManager {
         return hash.joinToString("") { "%02x".format(it) }
     }
 
+
+    private fun generateHashcash(challenge: String, difficulty: Int): Long {
+        val requiredPrefix = "0".repeat(difficulty)
+        var nonce = 0L
+        val startTime = System.currentTimeMillis()
+        while (true) {
+            val input = challenge + nonce.toString()
+            val digest = java.security.MessageDigest.getInstance("SHA-256")
+            val hash = digest.digest(input.toByteArray(Charsets.UTF_8))
+            val hexHash = hash.joinToString("") { "%02x".format(it) }
+            if (hexHash.startsWith(requiredPrefix)) {
+                val elapsed = System.currentTimeMillis() - startTime
+                LogBuffer.add("DISCOVERY", "Hashcash generado en ${elapsed}ms: nonce=$nonce")
+                return nonce
+            }
+            nonce++
+        }
+    }
+
+    fun testHashcashDifficulty(difficulty: Int): Long {
+        val challenge = "test-${System.currentTimeMillis()}"
+        val start = System.currentTimeMillis()
+        val nonce = generateHashcash(challenge, difficulty)
+        val end = System.currentTimeMillis()
+        LogBuffer.add("DISCOVERY", "Tiempo para dificultad $difficulty: ${end - start}ms (nonce=$nonce)")
+        return nonce
+    }
+
     fun publishMyPresence() {
         scope.launch {
             val phone = getMyPhone()
@@ -33,8 +61,10 @@ object ContactDiscoveryManager {
             val myId = getMyId()
             val todayHash = hashForDay(phone, 0)
             val yesterdayHash = hashForDay(phone, -1)
-            DhtService.publishDiscovery(todayHash, myId)
-            DhtService.publishDiscovery(yesterdayHash, myId)
+            val nonceToday = generateHashcash(todayHash, com.malla.mvp.network.DhtService.DIFFICULTY)
+            val nonceYesterday = generateHashcash(yesterdayHash, com.malla.mvp.network.DhtService.DIFFICULTY)
+            DhtService.publishDiscoveryHashcash(todayHash, nonceToday, myId)
+            DhtService.publishDiscoveryHashcash(yesterdayHash, nonceYesterday, myId)
             LogBuffer.add("DISCOVERY", "Presencia publicada para $myId")
         }
     }
