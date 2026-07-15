@@ -1,97 +1,78 @@
-═══ PROJECT_STATUS.md — Reconstruido desde git ═══
-**Fecha:** 2026-07-13
-**Commit actual:** c047b788 (HEAD -> main)
-**Última actualización manual:** commit 5855d54b (2026-06-28)
+═══ PROJECT_STATUS.md — Actualizado tras Ronda de Correcciones ═══
+**Fecha:** 2026-07-14
+**Commit actual:** 6dde5b63 (main)
+**Última reconstrucción desde git:** 2026-07-13 (commit 5855d54b)
 
 ## ── ESTADO GENERAL DEL PROYECTO ──
 Fase actual: 3 – Comunicación Avanzada y Pre‑Mesh Discovery
-Porcentaje estimado de avance: ~75 %
-Estado de compilación: COMPILA (BUILD SUCCESSFUL) con warnings.
-App funcional: navegación, chat persistente, notas de voz push-to-talk, barra inferior modularizada, indicador de grabación, perfil encriptado, temas dinámicos.
+Porcentaje estimado de avance: ~80 %
+Estado de compilación: COMPILA (BUILD SUCCESSFUL) con warnings no críticos.
+App funcional: navegación, chat persistente, notas de voz push‑to‑talk, barra inferior modularizada, indicador de grabación, perfil encriptado, temas dinámicos.
+Módulos huérfanos (:crypto, :network, :identity, :events, :transport) conectados a :app.
 
 ## ── ARQUITECTURA DE MÓDULOS ──
-- :app → UI, ViewModels, Injector, Managers (dependencias circulares con :network por resolver)
-- :core → Interfaces, modelos, utilidades base
-- :data → Room, DAOs, repositorios
+- :app → UI, ViewModels, Injector, Managers (dependencias con :network, :identity, etc.)
+- :core → Interfaces, modelos, utilidades base, DoubleRatchet, KeystoreManager
+- :data → Room, DAOs, repositorios, AppDatabase (con callback para chat propio)
 - :crypto → CryptoEngine, adaptador
-- :events → MallaEventBus
-- :identity → IdentityManager (almacenamiento encriptado)
+- :events → MallaEventBus (zumbidoReceived, messageReceived, etc.)
+- :identity → IdentityManager (almacenamiento encriptado, claves, avatar)
 - :transport → Transportes reales (BleTransport, WifiDirectTransport, TcpDirectTransport, MeshLinker)
 - :media → VoiceRecorder, PttManager
 - :network → BleManager, WifiDirectManager, ConnectivityMonitor, DhtService, MessageBridge, etc.
 
-## ── RESUMEN DE CAMBIOS DESDE ÚLTIMO PROJECT_STATUS.md ──
-(agrupados por funcionalidad, evidencia en git log)
+## ── CAMBIOS RECIENTES (desde último PROJECT_STATUS.md) ──
 
-### Modularización completa (commits dd7cc1fc, 2a8d936b)
-- Se crearon los módulos :core, :data, :crypto, :events, :identity, :media, :network, :transport.
-- Se movieron entidades Room, DAOs, interfaces y managers a sus módulos.
-- `Injector` se adaptó para usar los nuevos módulos.
-- Se eliminaron archivos duplicados (DoubleRatchet, IdenticonGenerator, PulseManager, transportes viejos, pantallas obsoletas).
+### Ronda de Correcciones de Seguridad (Puntos 1‑6)
+1. **Double Ratchet real** – Implementado en `:core` con HKDF, chain keys, ratchet asimétrico. Integrado en `NetworkService.ClientHandler` (handshake, send, listenForMessages). Caché de mensajes saltados para tolerar desorden (hasta 20 claves). Persistencia del estado del ratchet en `SharedPreferences`. **Compila, pendiente prueba real con 2 dispositivos.**
+2. **Handshake autenticado con TOFU** – `ClientHandler.start()` firma la clave efímera con ECDSA (KeystoreManager) y verifica la firma del peer. TOFU guarda identidad y rechaza cambios (posible MITM). **Compila, pendiente prueba real.**
+3. **Salt de descubrimiento único por identidad** – Reemplazado el salt fijo por un salt determinístico derivado del número de teléfono con PBKDF2 (100k iteraciones). Así dos usuarios pueden calcular el mismo hash sin compartir un salt global. **Compila, pendiente prueba real.**
+4. **Anti‑Sybil con hashcash** – `DhtService` exige hashcash (SHA‑256 con N=20 bits en cero). `ContactDiscoveryManager` genera el nonce. Timeout de 5s para evitar bucles infinitos. **Compila, pendiente prueba real.**
+5. **Unicast en lugar de broadcast** – `NetworkService.sendMessageTo(recipientId, message)` envía solo al `ClientHandler` correcto, mapeando identidades a conexiones. Actualizadas todas las llamadas en `Injector`, `CascadeRouter`, `MeshChatViewModel`, etc. **Compila, pendiente prueba real.**
+6. **Cascada real de transportes** – `CascadeRouter` ahora intenta BLE (`BleManager.connectAndReadIp`) y Wi‑Fi Direct (`WifiDirectManager.connectToPeer`) antes de guardar como pendiente. **Compila, pendiente prueba real.**
 
-### Reconstrucción de servicios de red y comunicaciones (f7df3d36..14caf107)
-- `Injector` completamente reconstruido con FlashlightTransport, NetworkService, MessageBridge, SmsTransport, UnifiedMessageRouter.
-- `MessageBridge` con callbacks de envío/recepción, forward y procesamiento unificado.
-- `DhtService`, `SeedManager`, `ContactDiscoveryManager` integrados.
-- `PulsoScreen` restaurado desde backup; switch SMS en pestaña MODOS.
-- `FaroScreen` reactivado con comunicación óptica.
+### Ronda de Integración (Puntos A‑G)
+- **A:** Build limpio con `./gradlew clean assembleDebug` (BUILD SUCCESSFUL).
+- **B:** DoubleRatchet conectado a NetworkService (reemplaza CryptoEngine estático). **Pendiente prueba real.**
+- **C:** Descubrimiento de contactos arreglado: salt determinístico PBKDF2. **Pendiente prueba real.**
+- **D:** Dificultad del hashcash corregida a bits reales (20) + timeout 5s. **Pendiente prueba real.**
+- **E:** Verificación hashcash en handler UDP (`handleMessage`). **Pendiente prueba real.**
+- **F:** `identityToClient` se actualiza siempre (no solo primer contacto) y se limpia en `disconnect()`. **Pendiente prueba real.**
+- **G:** Nivel Internet de la cascada arreglado: `INetworkService.sendMeshMessage` recibe `recipientId` real desde `CascadeRouter`. **Pendiente prueba real.**
 
-### ChatScreen y UI premium (20179170..95b8fc5b)
-- ChatScreen funcional con burbujas premium, shake global, envío de imágenes (GalleryPickerPanel), zoom, zumbido, barra de texto animada.
-- `ChatViewModel` con persistencia en Room.
-- `CascadeRouter` y `MessageReceiver` para encaminamiento de mensajes.
-- `MainTopBar` con avatar 44dp, borde cian, indicador de conexión inteligente.
-- `PerfilScreen` con almacenamiento encriptado de identidad (IdentityManager).
-- `Stickers` integrados con selector y visor a pantalla completa.
-- Navegación corregida (BackHandler en submenús, doble toque para salir).
-- Control automático de Bluetooth/WiFi con `RadioManager` y servicio foreground.
+## ── DECISIONES TÉCNICAS RECIENTES ──
+- Double Ratchet con caché de mensajes saltados para tolerar mensajes fuera de orden (típico en redes mesh).
+- Salt de descubrimiento determinístico por número de teléfono (PBKDF2) en vez de salt fijo o por identidad.
+- Hashcash con bits reales y timeout en vez de caracteres hex.
+- Mapeo `identityToClient` en NetworkService para enrutar mensajes unicast por identidad, no por IP.
+- Chat propio "Yo" intentado implementar mediante Room callback y modificaciones en UI, pero causó crash. **Pendiente de resolver de forma segura (deuda técnica).**
 
-### Notas de voz push-to-talk (e601265d..cbd22ef8)
-- `VoiceRecorder` mejorado (AAC) con `amplitude` StateFlow.
-- `VoiceRecorderButton` modularizado con animación de onda sinusoidal.
-- `ChatInputBar` integrado con campo de texto, zumbido y botón de micrófono.
-- Indicador de grabación estilo ondas en barra inferior.
-- Auto-scroll al último mensaje implementado.
-
-### Estabilización y permisos (ebfb098e, 2803c05b, 50da606e, fe8efead)
-- Protección del servicio foreground con permiso POST_NOTIFICATIONS.
-- Permisos solicitados al iniciar (ubicación, Bluetooth, cámara, etc.).
-- Restauración de estados de Bluetooth/WiFi en onDestroy.
-
-## ── DECISIONES TÉCNICAS IDENTIFICADAS ──
-1. No refactorizar `Injector` para romper ciclos con :network en esta fase.
-2. Uso de AAC para grabación de voz (calidad y compatibilidad).
-3. Extracción de la barra de chat a `ChatInputBar` independiente.
-4. Indicador de grabación visual con onda sinusoidal animada.
-5. Chat propio "Yo" (self_chat) añadido en ConversationsScreen.
-6. Uso de `EncryptedSharedPreferences` para datos sensibles de identidad.
-7. Eliminación de PulseManager y lógica de decisión automática; se delegó a ConnectivityMonitor y selección manual en PulsoScreen.
-
-## ── ERRORES RESUELTOS (según commits) ──
+## ── ERRORES RESUELTOS EN ESTA SESIÓN ──
 - Crash por `AppDatabase.getInstance()` nulo → manejo de null y fallback.
 - Grabación de audio vacía → cambio a codec AAC con fuente MIC.
 - `AnimatedVisibility` en Row → reemplazado por Crossfade.
 - `Injector.messageRepo` no inicializado → verificación `isInitialized` en ChatViewModel.
 - Indentación en `ConversationsScreen` que ocultaba lista → corrección de inserción del chat propio.
-- Crash temprano por `WifiDirectManager` no inicializado → se añadió inicialización en Injector (sesión actual).
-- Duplicación de chat "Yo" en ConversationsScreen → eliminado.
+- Crash temprano por `WifiDirectManager` no inicializado → se añadió inicialización en Injector.
+- Servicio `MeshChatService` no existente → eliminado del manifest.
+- Duplicación de clases al conectar módulos huérfanos → eliminados 31 archivos duplicados.
+- Handshake sin autenticación → añadida firma ECDSA + TOFU.
+- Broadcast en TCP → corregido a unicast con `sendMessageTo`.
+- Nivel Internet sin `recipientId` → corregido en toda la cadena (INetworkService, Injector, CascadeRouter, MessageBridge).
 
 ## ── DEUDA TÉCNICA ACTUAL ──
-1. **Pruebas de comunicación real** – BLE, Wi‑Fi Direct, TCP no se han probado entre dispositivos físicos.
-2. **Refactorización de Injector** – pendiente para eliminar dependencias circulares con :network.
-3. **Vista previa de imágenes estilo WhatsApp** – incompleta, se requiere `GetContent` y lista `pendingMediaUris`.
-4. **Notas de voz** – el indicador visual de ondas a veces no se mueve (posible problema de permisos o amplitud cero).
-5. **Icono de notificación grande** (`setLargeIcon`) no implementado.
-6. **Cobertura de pruebas unitarias** – inexistente.
-7. **Limpieza de warnings** – hay múltiples deprecaciones y variables sin uso.
+1. **Pruebas de comunicación real** – Todos los puntos de seguridad e integración requieren pruebas con 2 dispositivos (o más) para validar Double Ratchet, handshake autenticado, descubrimiento, hashcash, unicast, cascada BLE/Wi‑Fi Direct, etc.
+2. **Chat propio "Yo"** – Funcionalidad no implementada de forma segura (causó crash en intentos anteriores). Se requiere un enfoque que no dependa de `IdentityManager` durante la composición.
+3. **Refactorización de Injector** – Pendiente para eliminar dependencias circulares con `:network`.
+4. **Vista previa de imágenes estilo WhatsApp** – Incompleta.
+5. **Cobertura de pruebas unitarias** – Inexistente.
+6. **Limpieza de warnings** – Múltiples deprecaciones y variables sin uso.
 
 ## ── PRÓXIMOS PASOS PRIORITARIOS ──
-1. Verificar que el chat "Yo" funciona correctamente.
-2. Probar grabación y reproducción de notas de voz con permisos adecuados.
-3. Implementar vista previa de imágenes adjuntas.
-4. Pruebas de comunicación en dispositivos reales.
-5. Refactorizar `Injector`.
-6. Actualizar este archivo en cada commit significativo.
+1. Realizar pruebas manuales de los puntos A‑G con dos dispositivos reales.
+2. Implementar chat "Yo" de forma segura.
+3. Refactorizar `Injector`.
+4. Actualizar este archivo en cada commit significativo.
 
 ── RECONSTRUCCIÓN ──
-Este archivo fue reconstruido el 2026-07-13 desde git log, cubriendo desde el commit 5855d54b hasta HEAD (c047b788), porque no se actualizó en tiempo real durante ese período. Cualquier decisión o contexto de esas sesiones que NO haya quedado reflejado en un commit (conversaciones, descartes, razones no documentadas en el mensaje del commit) se considera perdido y no está reflejado aquí.
+Este archivo fue reconstruido el 2026-07-14 desde git log, cubriendo desde el commit 5855d54b hasta HEAD (6dde5b63), porque no se actualizó en tiempo real durante ese período. Cualquier decisión o contexto de esas sesiones que NO haya quedado reflejado en un commit se considera perdido y no está reflejado aquí.
