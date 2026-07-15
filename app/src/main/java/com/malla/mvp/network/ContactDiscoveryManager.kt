@@ -18,11 +18,18 @@ object ContactDiscoveryManager {
 
     private fun getMyId(): String = IdentityManager.getIdentityId()
 
-    private fun getPersonalSalt(): String {
-        val pubKeyB64 = IdentityManager.getPublicKeyBase64() ?: return "malla-contact-salt-v1" // fallback
-        val pubKeyBytes = android.util.Base64.decode(pubKeyB64, android.util.Base64.NO_WRAP)
-        val digest = java.security.MessageDigest.getInstance("SHA-256")
-        val hash = digest.digest(pubKeyBytes)
+    // Salt compartido derivado determinísticamente del número de teléfono
+    // usando PBKDF2 con muchas iteraciones para encarecer enumeración
+    private fun getSharedSalt(phone: String): String {
+        val salt = "malla-contact-salt-v2".toByteArray(Charsets.UTF_8)
+        val spec = javax.crypto.spec.PBEKeySpec(
+            phone.toCharArray(),
+            salt,
+            100000, // iteraciones PBKDF2
+            256
+        )
+        val factory = javax.crypto.SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256")
+        val hash = factory.generateSecret(spec).encoded
         return hash.joinToString("") { "%02x".format(it) }
     }
 
@@ -77,7 +84,7 @@ object ContactDiscoveryManager {
 
     private fun hashForDay(phone: String, dayOffset: Int): String {
         val day = TimeUnit.MILLISECONDS.toDays(System.currentTimeMillis()) + dayOffset
-        val input = phone + getPersonalSalt() + day.toString()
+        val input = phone + getSharedSalt(phone) + day.toString()
         val digest = MessageDigest.getInstance("SHA-256")
         val hash = digest.digest(input.toByteArray(Charsets.UTF_8))
         return hash.joinToString("") { "%02x".format(it) }
