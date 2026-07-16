@@ -14,22 +14,21 @@ class ConversationRepository(private val db: AppDatabase) {
     private val conversationDao: ConversationDao = db.conversationDao()
     private val messageDao: MessageDao = db.messageDao()
 
-    fun observeAll(): Flow<List<ConversationWithLastMessage>> {
-        val conversationsFlow = conversationDao.getAllConversations()
-        val messagesFlow = messageDao.observeAllMessages()
-
-        return conversationsFlow.combine(messagesFlow) { conversations, messages ->
-            conversations.map { conv ->
-                val lastMsg = messages
-                    .filter { it.conversationId == conv.id }
-                    .maxByOrNull { it.timestamp }
-                ConversationWithLastMessage(
-                    conversation = conv,
-                    lastMessage = lastMsg
-                )
-            }
-        }
-    }
+    // fun observeAll(): Flow<List<ConversationWithLastMessage>> {
+    //     val conversationsFlow = conversationDao.getAllConversations()
+    //     val messagesFlow = messageDao.observeAllMessages()
+    //     return conversationsFlow.combine(messagesFlow) { conversations, messages ->
+    //         conversations.map { conv ->
+    //             val lastMsg = messages
+    //                 .filter { it.conversationId == conv.id }
+    //                 .maxByOrNull { it.timestamp }
+    //             ConversationWithLastMessage(
+    //                 conversation = conv,
+    //                 lastMessage = lastMsg
+    //             )
+    //         }
+    //     }
+    // }
 
     suspend fun insertInitialDemoDataIfNeeded() {
         if (conversationDao.getCount() > 0) return

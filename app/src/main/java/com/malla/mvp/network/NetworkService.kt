@@ -120,6 +120,7 @@ object NetworkService {
         private var output: DataOutputStream? = null
         private var ratchet: DoubleRatchet? = null
         private var running = false
+        private var peerIdentity: String? = null
         // Caché de mensajes-clave saltados (contador -> clave) para tolerar desorden
         private val skippedKeys = mutableMapOf<Int, ByteArray>()
 
@@ -164,34 +165,35 @@ object NetworkService {
 
                 // 5. TOFU: verificar identidad guardada
                 val prefs = App.context.getSharedPreferences("malla_tofu", android.content.Context.MODE_PRIVATE)
-                val savedId = prefs.getString("identity_$clientId", null)
+                val savedId = prefs.getString("identity_$peerIdentityKeyB64", null)
                 if (savedId != null && savedId != peerIdentityKeyB64) {
                     Log.w(TAG, "[NS:HS] ALERTA: identidad de $clientId ha cambiado desde $savedId")
                     LogBuffer.add("NS", "TOFU WARNING: identidad cambiada para ${clientId}")
                     throw Exception("Identidad del peer ha cambiado (posible MITM)")
                 } else if (savedId == null) {
-                    prefs.edit().putString("identity_$clientId", peerIdentityKeyB64).apply()
+                    prefs.edit().putString("identity_$peerIdentityKeyB64", peerIdentityKeyB64).apply()
                     Log.d(TAG, "[NS:HS] TOFU: primera conexión con $clientId, identidad guardada")
                 }
                 // Actualizar mapeo de identidad siempre (reconexiones)
                 identityToClient[peerIdentityKeyB64] = clientId
+                peerIdentity = peerIdentityKeyB64
 
                 // 6. Inicializar DoubleRatchet con la clave efímera remota
                 val peerPublicKey = CryptoEngine.base64ToPublicKey(peerEphemeralKeyB64)
                 // Intentar restaurar estado anterior del ratchet
                 val savedStateB64 = App.context.getSharedPreferences("ratchet_state", android.content.Context.MODE_PRIVATE)
-                    .getString("state_$clientId", null)
+                    .getString("state_$peerIdentity", null)
                 if (savedStateB64 != null) {
                     try {
                         val savedState = android.util.Base64.decode(savedStateB64, android.util.Base64.NO_WRAP)
-                        ratchet = DoubleRatchet.restoreState(savedState, localKeyPair, peerPublicKey, clientId)
+                        ratchet = DoubleRatchet.restoreState(savedState, localKeyPair, peerPublicKey, peerIdentityKeyB64)
                         Log.d(TAG, "[NS:HS] Ratchet restaurado para $clientId")
                     } catch (e: Exception) {
                         Log.w(TAG, "[NS:HS] No se pudo restaurar ratchet, iniciando nuevo: ${e.message}")
-                        ratchet = DoubleRatchet(localKeyPair, peerPublicKey, clientId)
+                        ratchet = DoubleRatchet(localKeyPair, peerPublicKey, peerIdentityKeyB64)
                     }
                 } else {
-                    ratchet = DoubleRatchet(localKeyPair, peerPublicKey, clientId)
+                    ratchet = DoubleRatchet(localKeyPair, peerPublicKey, peerIdentityKeyB64)
                 }
                 Log.d(TAG, "[NS:HS] Handshake autenticado completado con $clientId")
                 LogBuffer.add("NS", "Handshake seguro OK: ${clientId}")
@@ -274,7 +276,7 @@ object NetworkService {
                     output?.flush()
                     // Guardar estado del ratchet
                     App.context.getSharedPreferences("ratchet_state", android.content.Context.MODE_PRIVATE)
-                        .edit().putString("state_$clientId", android.util.Base64.encodeToString(currentRatchet.exportState(), android.util.Base64.NO_WRAP)).apply()
+                        .edit().putString("state_$peerIdentity", android.util.Base64.encodeToString(currentRatchet.exportState(), android.util.Base64.NO_WRAP)).apply()
                     Log.d(TAG, "[NS:RATCHET] Ratchet step enviado a $clientId")
                 }
 
@@ -300,7 +302,7 @@ object NetworkService {
                 currentRatchet.receiveRemoteRatchetKey(newPubKey)
                 // Guardar estado tras recibir ratchet step
                 App.context.getSharedPreferences("ratchet_state", android.content.Context.MODE_PRIVATE)
-                    .edit().putString("state_$clientId", android.util.Base64.encodeToString(currentRatchet.exportState(), android.util.Base64.NO_WRAP)).apply()
+                    .edit().putString("state_$peerIdentity", android.util.Base64.encodeToString(currentRatchet.exportState(), android.util.Base64.NO_WRAP)).apply()
                 Log.d(TAG, "[NS:RATCHET] Ratchet step recibido de $clientId")
             } catch (e: Exception) {
                 Log.e(TAG, "[NS:RATCHET] Error procesando ratchet step: ${e.message}", e)

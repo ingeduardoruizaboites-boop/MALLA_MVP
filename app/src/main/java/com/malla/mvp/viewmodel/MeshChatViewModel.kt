@@ -60,21 +60,21 @@ class MeshChatViewModel(application: Application) : AndroidViewModel(application
      */
     fun loadConversation(convId: String) {
         _conversationId.value = convId
-        loadPolls(convId)
+//        loadPolls(convId)
     }
 
-    private fun loadPolls(convId: String) {
-        viewModelScope.launch {
-            db?.pollDao()?.getPollsForGroup(convId)?.collect { pollList ->
-                _polls.value = pollList
-                pollList.forEach { poll ->
-                    db.pollDao().getOptionsForPoll(poll.id).collect { options ->
-                        _optionsMap.value = _optionsMap.value + (poll.id to options)
-                    }
-                }
-            }
-        }
-    }
+//    private fun loadPolls(convId: String) {
+//        viewModelScope.launch {
+//            db?.pollDao()?.getPollsForGroup(convId)?.collect { pollList ->
+//                _polls.value = pollList
+//                pollList.forEach { poll ->
+//                    db.pollDao().getOptionsForPoll(poll.id).collect { options ->
+//                        _optionsMap.value = _optionsMap.value + (poll.id to options)
+//                    }
+//                }
+//            }
+//        }
+//    }
 
     fun updateInputText(text: String) {
         _inputText.value = text
@@ -121,7 +121,7 @@ class MeshChatViewModel(application: Application) : AndroidViewModel(application
      */
     fun votePoll(optionId: String, pollId: String) {
         viewModelScope.launch {
-            db?.pollDao()?.incrementVoteCount(optionId, 1)
+//            db?.pollDao()?.incrementVoteCount(optionId, 1)
             // Actualizar el mapa local
             val currentOptions = _optionsMap.value[pollId] ?: return@launch
             val updated = currentOptions.map { opt ->
@@ -135,13 +135,13 @@ class MeshChatViewModel(application: Application) : AndroidViewModel(application
         val convId = _conversationId.value ?: return
         viewModelScope.launch {
             val pollId = UUID.randomUUID().toString()
-            db?.pollDao()?.insertPoll(PollEntity(id = pollId, groupId = convId, question = question, creatorId = "self"))
+//            db?.pollDao()?.insertPoll(PollEntity(id = pollId, groupId = convId, question = question, creatorId = "self"))
             options.forEach { text ->
                 if (text.isNotBlank()) {
-                    db?.pollDao()?.insertOption(PollOptionEntity(id = UUID.randomUUID().toString(), pollId = pollId, text = text))
+//                    db?.pollDao()?.insertOption(PollOptionEntity(id = UUID.randomUUID().toString(), pollId = pollId, text = text))
                 }
             }
-            loadPolls(convId) // refrescar
+//            loadPolls(convId) // refrescar
         }
     }
 

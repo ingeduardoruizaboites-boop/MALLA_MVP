@@ -8,7 +8,6 @@ import androidx.room.RoomDatabase
 import com.malla.mvp.data.dao.ConversationDao
 import com.malla.mvp.data.dao.MessageDao
 import com.malla.mvp.data.dao.StoryDao
-import com.malla.mvp.data.dao.PollDao
 import com.malla.mvp.data.dao.IdentityDao
 import com.malla.mvp.data.dao.ContactDao
 import com.malla.mvp.data.entity.ConversationEntity
@@ -37,7 +36,6 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun conversationDao(): ConversationDao
     abstract fun messageDao(): MessageDao
     abstract fun storyDao(): StoryDao
-    abstract fun pollDao(): PollDao
     abstract fun identityDao(): IdentityDao
     abstract fun contactDao(): ContactDao
 

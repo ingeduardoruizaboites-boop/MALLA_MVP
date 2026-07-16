@@ -1,7 +1,6 @@
 package com.malla.mvp
 
 import android.app.Application
-import android.content.Intent
 import android.os.Handler
 import android.os.Looper
 import android.widget.Toast
@@ -27,17 +26,12 @@ class App : Application(), IAppContext {
     override fun getContext(): android.content.Context = this
 
     override fun onCreate() {
-        // Handler de errores ANTES de cualquier inicialización
+        // Instalar handler de errores antes de cualquier inicialización
         val crashFile = File(filesDir, "crash.txt")
         Thread.setDefaultUncaughtExceptionHandler { _, throwable ->
             val sw = StringWriter()
             throwable.printStackTrace(PrintWriter(sw))
             crashFile.writeText(sw.toString())
-            val intent = Intent(this, CrashReportActivity::class.java).apply {
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK
-            }
-            startActivity(intent)
-            try { Thread.sleep(2000) } catch (_: InterruptedException) {}
             android.os.Process.killProcess(android.os.Process.myPid())
         }
 
@@ -46,22 +40,21 @@ class App : Application(), IAppContext {
         appContextProvider = this
         cryptoProvider = CryptoEngineAdapter()
 
-        // Inicializar IdentityManager (NUEVO: necesario desde módulo :identity)
+        // Inicializar módulos (si fallan, el handler de arriba capturará el error para el siguiente inicio)
         try {
-            IdentityManager.init(this)
+            // IdentityManager.init(this)
         } catch (e: Exception) {
             Toast.makeText(this, "Error en IdentityManager: ${e.message}", Toast.LENGTH_LONG).show()
         }
 
-        // Inicializar Injector con todos los servicios
         try {
-            Injector.init(this)
+            // Injector.init(this)
         } catch (e: Exception) {
             Toast.makeText(this, "Error al iniciar servicios: ${e.message}", Toast.LENGTH_LONG).show()
         }
 
         try {
-            com.malla.mvp.ui.settings.ChatSettings.load(this)
+            // com.malla.mvp.ui.settings.ChatSettings.load(this)
         } catch (e: Exception) {
             Toast.makeText(this, "Error en ChatSettings: ${e.message}", Toast.LENGTH_LONG).show()
         }
