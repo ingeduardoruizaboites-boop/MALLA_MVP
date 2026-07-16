@@ -1,4 +1,5 @@
 plugins {
+    id("com.google.devtools.ksp")
     id("com.android.library")
     id("org.jetbrains.kotlin.android")
 }

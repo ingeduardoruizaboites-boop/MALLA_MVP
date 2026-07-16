@@ -97,12 +97,15 @@ object NetworkService {
         return "Desconocida"
     }
 
+
+    private val identityToClient = mutableMapOf<String, String>()
     class ClientHandler(private val socket: Socket) {
         val clientId = "${socket.inetAddress.hostAddress}:${socket.port}"
         private var input: DataInputStream? = null
         private var output: DataOutputStream? = null
         private var secretKey: SecretKey? = null
         private var running = false
+        private var peerIdentity: String? = null
 
         fun start() {
             running = true
@@ -114,6 +117,8 @@ object NetworkService {
                 output?.flush()
                 val peerPubKeyBase64 = input?.readUTF() ?: throw Exception("No se recibió clave pública")
                 val peerPublicKey = CryptoEngine.base64ToPublicKey(peerPubKeyBase64)
+                peerIdentity = peerPubKeyBase64
+                identityToClient[peerPubKeyBase64] = clientId
                 secretKey = CryptoEngine.deriveSharedSecret(localKeyPair.private, peerPublicKey)
                 Log.d(TAG, "[NS:HS] Handshake completado con $clientId")
             LogBuffer.add("NS", "Handshake ECDH OK: ${clientId}")
@@ -175,6 +180,7 @@ object NetworkService {
             running = false
             try { socket.close() } catch (_: Exception) {}
             clients.remove(clientId)
+            identityToClient.remove(peerIdentity ?: "")
             _connectedClientsCount.value = clients.size
             Log.d(TAG, "[NS:TCP] Cliente desconectado: $clientId (total: ${clients.size})")
         }
