@@ -24,6 +24,7 @@ object NetworkService {
     private val serverJob = Job()
     private val serverScope = CoroutineScope(Dispatchers.IO + serverJob)
     private val clients = mutableMapOf<String, ClientHandler>()
+    private val identityToClient = mutableMapOf<String, String>()
     private val localKeyPair = CryptoEngine.generateKeyPair()
     val localPublicKeyBase64 = CryptoEngine.publicKeyToBase64(localKeyPair.public)
 
@@ -97,8 +98,6 @@ object NetworkService {
         return "Desconocida"
     }
 
-
-    private val identityToClient = mutableMapOf<String, String>()
     class ClientHandler(private val socket: Socket) {
         val clientId = "${socket.inetAddress.hostAddress}:${socket.port}"
         private var input: DataInputStream? = null

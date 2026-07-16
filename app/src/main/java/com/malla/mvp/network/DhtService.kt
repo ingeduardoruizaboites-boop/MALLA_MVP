@@ -57,6 +57,20 @@ object DhtService {
 
     fun lookupBlocking(id: String): String? = routingTable[id]
 
+    fun broadcastMessage(message: String) {
+        try {
+            val broadcastAddress = InetAddress.getByName("255.255.255.255")
+            val data = message.toByteArray(Charsets.UTF_8)
+            val packet = DatagramPacket(data, data.size, broadcastAddress, DHT_PORT)
+            scope.launch {
+                socket.send(packet)
+                LogBuffer.add("DHT", "Broadcast enviado: $message")
+            }
+        } catch (e: Exception) {
+            LogBuffer.add("DHT", "Error en broadcast: ${e.message}")
+        }
+    }
+
     private fun handleMessage(message: String, senderAddress: InetAddress, senderPort: Int) {
         val parts = message.split("|")
         when (parts[0]) {

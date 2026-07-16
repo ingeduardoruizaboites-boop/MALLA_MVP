@@ -4,6 +4,7 @@ import android.content.Context
 import com.malla.mvp.App
 import com.malla.mvp.core.engine.LogBuffer
 import com.malla.mvp.identity.IdentityManager
+import com.malla.mvp.network.NetworkService
 import kotlinx.coroutines.*
 import java.security.MessageDigest
 import java.util.concurrent.TimeUnit
@@ -24,17 +25,26 @@ object ContactDiscoveryManager {
             val phone = getMyPhone()
             if (phone.isBlank()) return@launch
             val myId = getMyId()
+            val myIp = NetworkService.getLocalIpAddress()
             val todayHash = hashForDay(phone, 0)
             val yesterdayHash = hashForDay(phone, -1)
             DhtService.publishDiscovery(todayHash, myId)
             DhtService.publishDiscovery(yesterdayHash, myId)
-            LogBuffer.add("DISCOVERY", "Presencia publicada para $myId")
+            DhtService.broadcastMessage("PUBLISH|$todayHash|$myIp|${DhtService.DHT_PORT}")
+            DhtService.broadcastMessage("PUBLISH|$yesterdayHash|$myIp|${DhtService.DHT_PORT}")
+            LogBuffer.add("DISCOVERY", "Broadcast de presencia enviado para $myId desde IP $myIp")
         }
     }
 
     fun searchByPhone(phoneNumber: String): String? {
         val todayHash = hashForDay(phoneNumber, 0)
         val yesterdayHash = hashForDay(phoneNumber, -1)
+        DhtService.findDiscovery(todayHash)?.let { return it }
+        DhtService.findDiscovery(yesterdayHash)?.let { return it }
+        DhtService.broadcastMessage("FIND|$todayHash")
+        DhtService.broadcastMessage("FIND|$yesterdayHash")
+        LogBuffer.add("DISCOVERY", "Broadcast FIND enviado para $phoneNumber")
+        Thread.sleep(200)
         return DhtService.findDiscovery(todayHash) ?: DhtService.findDiscovery(yesterdayHash)
     }
 
